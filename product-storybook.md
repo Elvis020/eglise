@@ -64,6 +64,7 @@ The administrator will do most detailed work on a desktop. Service-day check-in 
 - Visitor-to-member conversion: administrator-recorded membership within 90 days.
 - Administrators operate reports and discuss them with pastors and leaders.
 - Tithes plus welfare contributions and assistance in V1. Pastors see financial totals only.
+- Supabase Auth manages staff credentials. The first administrator completes a protected one-time setup; later staff accounts are created by an administrator.
 - WhatsApp and Telegram remain the communication channels for now.
 
 ## Current discussion, not implementation

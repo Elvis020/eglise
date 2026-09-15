@@ -65,6 +65,7 @@ One shared person record connects the journey. Access stays appropriate to each 
 - Attendance totals come from distinct check-ins and represent the registered pilot population, not everyone physically present.
 - Administrators operate attendance and growth reports, then discuss the findings with pastors and leaders.
 - Individual tithe and welfare records remain restricted; pastors see summary totals only.
+- Staff authenticate with an Eglise username and password managed by Supabase Auth; only the first administrator uses the protected setup flow.
 - WhatsApp and Telegram remain the communication channels for now.
 
 ## Read the product book
