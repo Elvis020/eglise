@@ -36,11 +36,11 @@ Ama may continue through other classes, contribute financially, receive welfare 
 
 | Moment | What happens | What Eglise contributes |
 | --- | --- | --- |
-| Before Sunday | Staff prepare services and add or import eligible people. | Sunday sessions and the shared people directory are ready. |
-| During Sunday | Staff find people and mark them present. | Recorded attendance updates from individual check-ins. |
-| After Sunday | Staff resolve mistakes and complete the service record. | Corrections remain traceable and summaries become reliable. |
+| Before Sunday | On a desktop or laptop, the administrator prepares services and adds or imports eligible people. | Sunday sessions and the shared people directory are ready. |
+| During Sunday | Staff use a phone, tablet, or desktop to find people and mark them present, including over 3G. | Recorded attendance updates from individual check-ins. |
+| After Sunday | Primarily on desktop, staff resolve mistakes and complete the service record. | Corrections remain traceable and summaries become reliable. |
 | During the week | Administration, finance, and existing care processes continue. | V1 recordkeeping; V2 later adds care and learning visibility. |
-| At month end | The administrator prepares reports and sits with pastors and leaders. | 30-day return, 90-day conversion, attendance trends, and the agreed long-term retention comparison. |
+| At month end | On desktop, the administrator prepares reports and sits with pastors and leaders. | 30-day return, 90-day conversion, attendance trends, and the agreed long-term retention comparison. |
 
 ## V1's central operational journey
 

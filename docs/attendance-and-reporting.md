@@ -8,6 +8,8 @@ Record Sunday participation consistently, calculate trustworthy totals, and give
 
 ## Sunday check-in story
 
+Check-in may happen on a phone, tablet, or desktop and must remain efficient over ordinary 3G. The administrator's later correction, reconciliation, and reporting work is expected to happen mainly on a desktop or laptop.
+
 ```mermaid
 flowchart LR
     directory["Shared people directory"] --> service["Select Sunday service"]

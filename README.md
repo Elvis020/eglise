@@ -58,6 +58,7 @@ One shared person record connects the journey. Access stays appropriate to each 
 - The first launch serves one church.
 - V1 focuses on administration; Discipleship and Word Digest follow in V2.
 - Sunday services come first, with other days configurable later.
+- Administration-heavy work is designed primarily for desktop, while check-in remains fast and usable on phones and tablets over 3G.
 - A valid Ghanaian or international phone number is required; shared numbers are allowed.
 - Minimum registration age starts at 16 and can change. Existing people keep eligibility after an increase.
 - Date of birth is stored privately to apply the age rule and is never displayed or exported.
@@ -77,6 +78,7 @@ The main [Product Storybook](product-storybook.md) is intentionally short. It li
 5. [Discipleship and Word Digest](docs/discipleship-and-word-digest.md)
 6. [Communication and later possibilities](docs/communication-and-future.md)
 7. [End-to-end journeys](docs/user-journeys.md)
+8. [Technical approach](docs/technical-approach.md)
 
 For detailed rules, edge cases, and acceptance criteria, see [requirements.md](requirements.md). The original [voice notes](voice_notes.md) remain preserved as source material.
 

@@ -49,6 +49,15 @@ One person may perform several roles.
 | Word Digest coordinator or facilitator | Manage learners, participation, results, and progression. |
 | Visitor or member | Be recognized, supported, and guided, even before having direct application access. |
 
+## Device strategy
+
+Eglise is one responsive web application with two important working contexts:
+
+- **Desktop administration:** The church administrator will spend most working time on a desktop or laptop. Imports, directory maintenance, reconciliation, reports, configuration, finance, and batch membership actions should use the available space for clear tables, filters, comparisons, and keyboard-friendly operation.
+- **Service-day check-in:** Attendance staff may use phones, tablets, or desktops. Finding a person and marking them present must remain quick on smaller screens and ordinary 3G connections.
+
+Responsive design does not mean forcing every screen into the same layout. Each task should use the device appropriately while preserving the same permissions and records.
+
 ## Release story
 
 ### V1 — Run administration with reliable records

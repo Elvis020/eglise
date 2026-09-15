@@ -27,6 +27,8 @@ flowchart TB
 
 V1 helps the administrator run the church's core records. V2 connects those same people to care and learning. Later features are considered only after the pilot shows a real need.
 
+The administrator will do most detailed work on a desktop. Service-day check-in must also work smoothly on phones and tablets, including ordinary 3G connections.
+
 ## Read the book
 
 | Chapter | What it explains |
@@ -38,6 +40,7 @@ V1 helps the administrator run the church's core records. V2 connects those same
 | [5. Discipleship and Word Digest](docs/discipleship-and-word-digest.md) | V2 care assignments, follow-up, classes, results, and progression. |
 | [6. Communication and later possibilities](docs/communication-and-future.md) | WhatsApp/Telegram decisions, resource links, member access, and deferred scope. |
 | [7. End-to-end journeys](docs/user-journeys.md) | Ama's journey and a week in church administration. |
+| [8. Technical approach](docs/technical-approach.md) | Desktop administration, mobile check-in, PWA delivery, and a domain-only operating budget. |
 
 ## What V1 looks like at a glance
 
