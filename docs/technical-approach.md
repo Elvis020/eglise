@@ -179,6 +179,6 @@ The proof succeeds only when the security, recovery, performance, and free-allow
 - [Cloudflare Workers pricing and free limits](https://developers.cloudflare.com/workers/platform/pricing/)
 - [PWA offline and background-operation limitations](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation)
 
-## Decision still needed
+## Recovery ownership
 
-Name the person who controls the first-administrator bootstrap secret and the final-administrator recovery process. This person needs access to the deployment and Supabase project without using the Eglise account being recovered.
+The project owner, Elvis020, controls the first-administrator bootstrap secret and final-administrator recovery process. This owner-level access is separate from the Eglise administrator account being recovered and requires access to the deployment and Supabase project.

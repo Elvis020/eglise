@@ -10,7 +10,7 @@ Eglise is a church administration platform designed around a simple idea: give a
 ![Pilot](https://img.shields.io/badge/pilot-one_church-2F6F62?style=flat-square)
 ![Implementation](https://img.shields.io/badge/implementation-not_started-A15C38?style=flat-square)
 
-[Read the Storybook](product-storybook.md) · [Review the Requirements](requirements.md) · [Open the Project Board](https://github.com/users/Elvis020/projects/8/views/1)
+[Read the Storybook](product-storybook.md) · [Review the Requirements](requirements.md) · [Technical Scope](docs/technical-scope.md) · [Open the Project Board](https://github.com/users/Elvis020/projects/8/views/1)
 
 </div>
 
@@ -79,7 +79,8 @@ The main [Product Storybook](product-storybook.md) is intentionally short. It li
 5. [Discipleship and Word Digest](docs/discipleship-and-word-digest.md)
 6. [Communication and later possibilities](docs/communication-and-future.md)
 7. [End-to-end journeys](docs/user-journeys.md)
-8. [Technical approach](docs/technical-approach.md)
+8. [Technical scope and decisions](docs/technical-scope.md)
+9. [Detailed technical approach](docs/technical-approach.md)
 
 For detailed rules, edge cases, and acceptance criteria, see [requirements.md](requirements.md). The original [voice notes](voice_notes.md) remain preserved as source material.
 

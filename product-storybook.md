@@ -40,7 +40,8 @@ The administrator will do most detailed work on a desktop. Service-day check-in 
 | [5. Discipleship and Word Digest](docs/discipleship-and-word-digest.md) | V2 care assignments, follow-up, classes, results, and progression. |
 | [6. Communication and later possibilities](docs/communication-and-future.md) | WhatsApp/Telegram decisions, resource links, member access, and deferred scope. |
 | [7. End-to-end journeys](docs/user-journeys.md) | Ama's journey and a week in church administration. |
-| [8. Technical approach](docs/technical-approach.md) | Desktop administration, mobile check-in, PWA delivery, and a domain-only operating budget. |
+| [8. Technical scope and decisions](docs/technical-scope.md) | The PM view of the chosen stack, decision reasons, V1 boundaries, and accepted risks. |
+| [9. Detailed technical approach](docs/technical-approach.md) | Desktop administration, mobile check-in, authentication, portability, recovery, and proof gates. |
 
 ## What V1 looks like at a glance
 
