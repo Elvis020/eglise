@@ -43,15 +43,15 @@ One shared person record connects the journey. Access stays appropriate to each 
 
 ## What V1 includes
 
-| Area | First release |
-| --- | --- |
-| 👥 People | Manual registration, spreadsheet import, visitor and membership history. |
-| ✅ Attendance | Individual Sunday check-in and automatically calculated totals. |
-| 📈 Growth | 30-day visitor return, 90-day membership conversion, and longer-term attendance retention. |
-| 🗂️ Membership | Administrator-managed cohort recognition after Assimilation paperwork. |
-| 💰 Tithes | Restricted person-level records and period totals. |
-| 🤝 Welfare | Member contributions and assistance given to members, recorded separately. |
-| 🔐 Access | Staff permissions, private data boundaries, audit history, backups, and recovery. |
+| Area          | First release                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| 👥 People     | Manual registration, spreadsheet import, visitor and membership history.                   |
+| ✅ Attendance | Individual Sunday check-in and automatically calculated totals.                            |
+| 📈 Growth     | 30-day visitor return, 90-day membership conversion, and longer-term attendance retention. |
+| 🗂️ Membership | Administrator-managed cohort recognition after Assimilation paperwork.                     |
+| 💰 Tithes     | Restricted person-level records and period totals.                                         |
+| 🤝 Welfare    | Member contributions and assistance given to members, recorded separately.                 |
+| 🔐 Access     | Staff permissions, private data boundaries, audit history, backups, and recovery.          |
 
 ## Decisions that shape the pilot
 
@@ -118,4 +118,6 @@ Every implementation item begins in the [Eglise Project](https://github.com/user
 
 Eglise is in **product discovery**. The storybook, requirements, and Project tasks are being refined together before technology choices or application implementation begin.
 
-The stakeholder site is published at [https://elvis020.github.io/eglise/](https://elvis020.github.io/eglise/). Updates to `index.html`, `styles.css`, or `script.js` deploy automatically when pushed to `main`; deployments can also be started manually from GitHub Actions.
+## Stakeholder site publishing
+
+The stakeholder site is available at [https://elvis020.github.io/eglise-site/](https://elvis020.github.io/eglise-site/). This private repository is canonical. GitHub Actions syncs only `index.html`, `styles.css`, and `script.js` to the public `Elvis020/eglise-site` repository when one of those files or the sync workflow changes on `main`; the workflow can also be run manually from Actions. Direct edits to those public site assets are overwritten by the next sync. The `EGLISE_SITE_DEPLOY_KEY` secret is a limited deploy key for the public repository and should be rotated or revoked if compromised.
