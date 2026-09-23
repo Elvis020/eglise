@@ -117,3 +117,5 @@ Every implementation item begins in the [Eglise Project](https://github.com/user
 ## Current status
 
 Eglise is in **product discovery**. The storybook, requirements, and Project tasks are being refined together before technology choices or application implementation begin.
+
+The stakeholder site is published at [https://elvis020.github.io/eglise/](https://elvis020.github.io/eglise/). Updates to `index.html`, `styles.css`, or `script.js` deploy automatically when pushed to `main`; deployments can also be started manually from GitHub Actions.
