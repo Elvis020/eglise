@@ -602,6 +602,27 @@ button:focus-visible {
   font-size: 15px;
   line-height: 1.65;
 }
+.detail-start {
+  max-width: 68ch;
+  margin-top: 24px;
+  padding-left: 16px;
+  border-left: 1px solid #c8c9b9;
+}
+.detail-start h3 {
+  margin: 0;
+  color: #464b40;
+  font: 600 14px/1.5 var(--sans);
+}
+.detail-start p {
+  margin: 6px 0 0;
+  color: #66685d;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.detail-start strong {
+  color: #52594a;
+  font-weight: 700;
+}
 .boundary-note {
   margin-top: 0;
   padding: 28px 0 33px;
@@ -740,6 +761,9 @@ button:focus-visible {
   }
   .detail-flow {
     padding: 34px 0;
+  }
+  .detail-start {
+    margin-top: 20px;
   }
   .flow-list {
     grid-template-columns: 1fr;

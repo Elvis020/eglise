@@ -70,6 +70,10 @@ const features = {
       "Which import format and review roles would fit the team’s current way of working?",
       "What evidence should support recording membership recognition?",
     ],
+    validate: {
+      title: "Begin with a small sample import.",
+      text: "Review a shared household phone number and one invalid row, keeping the useful contact details and identifying what needs correction.",
+    },
     boundary:
       "Attendance by itself never changes a person’s membership status.",
   },
@@ -121,6 +125,10 @@ const features = {
       "When should named attendance and a manual headcount be reconciled, if at all?",
       "How should a late entry or correction be shown to the person reviewing the record?",
     ],
+    validate: {
+      title: "Start with one gathering.",
+      text: "Compare its named list with a separately labelled headcount, so both meanings stay clear without being added together.",
+    },
     boundary:
       "Recorded activity should be clear about what it includes and what it does not.",
   },
@@ -168,6 +176,10 @@ const features = {
       "Which definitions need to sit beside every report so they are understood consistently?",
       "Who should receive a follow-up handoff, and what is the minimum context they need?",
     ],
+    validate: {
+      title: "Read one sample weekly report.",
+      text: "Check that its definitions and gaps are understandable, then consider whether it points to a thoughtful human follow-up.",
+    },
     boundary:
       "A report can describe recorded activity; it cannot measure every part of a person’s journey.",
   },
@@ -219,6 +231,10 @@ const features = {
       "How should payment status be represented without replacing the church’s payment process?",
       "Which approvals, frequencies, and correction details need to be visible to the welfare team?",
     ],
+    validate: {
+      title: "Compare two kinds of support.",
+      text: "Use a recurring commitment and an urgent request to see whether their different rhythms remain clear to the responsible team.",
+    },
     boundary:
       "The right safeguards and process are still part of the discovery work.",
   },
@@ -266,6 +282,10 @@ const features = {
       "What access should a facilitator have to the material and its links?",
       "What does participation mean for each group, and how should it remain distinct from service attendance?",
     ],
+    validate: {
+      title: "Find the material for one session.",
+      text: "Check that a facilitator can reach the current study material and link, with participation kept distinct from service attendance.",
+    },
     boundary:
       "A useful learning journey needs the church’s own language and practice, not a fixed template.",
   },
@@ -317,6 +337,10 @@ const features = {
       "How should the church describe readiness for the next step?",
       "Which scheduling details and history are useful to retain for a coordinator?",
     ],
+    validate: {
+      title: "Follow an incomplete journey.",
+      text: "Review remaining topics, discuss readiness, and make the next scheduling step easy for a coordinator to find.",
+    },
     boundary: "The details are still being explored with the church.",
   },
   resources: {
@@ -367,6 +391,10 @@ const features = {
       "Who owns keeping an item current, and how should that ownership be shown?",
       "When should an announcement expire, and how should outgoing links be reviewed?",
     ],
+    validate: {
+      title: "Find the current essentials.",
+      text: "Locate a Church Note, an audio link, and a current announcement, then make clear who owns keeping each one current.",
+    },
     boundary:
       "This is about making existing resources easier to find, not replacing every communication channel.",
   },
@@ -439,6 +467,10 @@ function renderFeature(key) {
             </li>`,
         )
         .join("")}</ol>
+    </section>
+    <section class="detail-start" aria-labelledby="start-title">
+      <h3 id="start-title">Start here</h3>
+      <p><strong>${feature.validate.title}</strong> ${feature.validate.text}</p>
     </section>
     <section class="detail-decisions" aria-labelledby="decisions-title">
       <h2 id="decisions-title">Open questions</h2>
