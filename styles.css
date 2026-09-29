@@ -490,18 +490,9 @@ button:focus-visible {
   max-width: 760px;
   padding: 46px 0 42px;
 }
-.detail-why .eyebrow,
-.detail-scope > .eyebrow,
-.detail-decisions > .eyebrow,
-.detail-flow > .eyebrow,
-.validation-panel .eyebrow,
-.boundary-note .eyebrow {
-  margin-bottom: 10px;
-}
 .detail-why h2,
 .detail-columns h2,
 .detail-flow h2,
-.validation-panel h2,
 .boundary-note h2 {
   margin: 0;
   font: 500 clamp(27px, 3vw, 35px)/1.16 var(--serif);
@@ -610,21 +601,6 @@ button:focus-visible {
   color: #65675c;
   font-size: 15px;
   line-height: 1.65;
-}
-.validation-panel {
-  margin: 0 0 28px;
-  padding: clamp(24px, 4vw, 38px);
-  border: 1px solid #c9c7b6;
-  border-left: 4px solid #7d8a6c;
-  border-radius: var(--radius-sm);
-  background: #e8ebdf;
-}
-.validation-panel > p:last-child {
-  max-width: 790px;
-  margin: 15px 0 0;
-  color: #555c4d;
-  font-size: 16px;
-  line-height: 1.75;
 }
 .boundary-note {
   margin-top: 0;
@@ -759,7 +735,6 @@ button:focus-visible {
   .scope-list dd,
   .decision-list li,
   .flow-list p,
-  .validation-panel > p:last-child,
   .boundary-note > p:last-child {
     font-size: 15px;
   }
@@ -773,10 +748,6 @@ button:focus-visible {
   }
   .flow-list li {
     padding: 17px;
-  }
-  .validation-panel {
-    margin-bottom: 22px;
-    padding: 23px 20px;
   }
   .boundary-note {
     padding: 25px 0 28px;

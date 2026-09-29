@@ -70,10 +70,6 @@ const features = {
       "Which import format and review roles would fit the team’s current way of working?",
       "What evidence should support recording membership recognition?",
     ],
-    validate: {
-      title: "Test a fictional import before trusting the shape",
-      text: "Use fictional records that include a shared phone number and one invalid row. The team should be able to keep the valid household contact, spot the invalid entry, and make a deliberate review decision.",
-    },
     boundary:
       "Attendance by itself never changes a person’s membership status.",
   },
@@ -125,10 +121,6 @@ const features = {
       "When should named attendance and a manual headcount be reconciled, if at all?",
       "How should a late entry or correction be shown to the person reviewing the record?",
     ],
-    validate: {
-      title: "Try one real-shaped gathering without combining counts",
-      text: "Use a single fictional service with a short named list and a separately labelled manual headcount. Confirm that the review makes their different meanings obvious and does not add them together.",
-    },
     boundary:
       "Recorded activity should be clear about what it includes and what it does not.",
   },
@@ -176,10 +168,6 @@ const features = {
       "Which definitions need to sit beside every report so they are understood consistently?",
       "Who should receive a follow-up handoff, and what is the minimum context they need?",
     ],
-    validate: {
-      title: "Read one sample weekly report together",
-      text: "Use fictional records to review a single weekly view. A leader should be able to explain each definition, identify what is incomplete, and decide whether a human follow-up handoff is warranted.",
-    },
     boundary:
       "A report can describe recorded activity; it cannot measure every part of a person’s journey.",
   },
@@ -231,10 +219,6 @@ const features = {
       "How should payment status be represented without replacing the church’s payment process?",
       "Which approvals, frequencies, and correction details need to be visible to the welfare team?",
     ],
-    validate: {
-      title: "Contrast one recurring commitment with one urgent request",
-      text: "Use fictional records for recurring home or mission support and a separate urgent assistance request. Check that their different purposes, frequencies, and correction histories remain understandable in one review.",
-    },
     boundary:
       "The right safeguards and process are still part of the discovery work.",
   },
@@ -282,10 +266,6 @@ const features = {
       "What access should a facilitator have to the material and its links?",
       "What does participation mean for each group, and how should it remain distinct from service attendance?",
     ],
-    validate: {
-      title: "Ask a facilitator to find the material unaided",
-      text: "Use a fictional sermon and midweek outline. A facilitator should be able to find the current material and its link quickly, then explain the participation question without confusing it with service attendance.",
-    },
     boundary:
       "A useful learning journey needs the church’s own language and practice, not a fixed template.",
   },
@@ -337,10 +317,6 @@ const features = {
       "How should the church describe readiness for the next step?",
       "Which scheduling details and history are useful to retain for a coordinator?",
     ],
-    validate: {
-      title: "Walk through one fictional partial journey",
-      text: "Use a fictional participant who has completed some, but not all, of the agreed units. A coordinator should be able to see the remaining work, discuss readiness without assumption, and identify the next scheduling step.",
-    },
     boundary: "The details are still being explored with the church.",
   },
   resources: {
@@ -391,10 +367,6 @@ const features = {
       "Who owns keeping an item current, and how should that ownership be shown?",
       "When should an announcement expire, and how should outgoing links be reviewed?",
     ],
-    validate: {
-      title: "Try finding the right item after one gathering",
-      text: "Use a fictional Church Note, a separate audio link, and one current announcement. A person should be able to identify each item’s purpose, find the current announcement, and understand who owns its review.",
-    },
     boundary:
       "This is about making existing resources easier to find, not replacing every communication channel.",
   },
@@ -439,14 +411,12 @@ function renderFeature(key) {
       </aside>
     </div>
     <section class="detail-why" aria-labelledby="why-title">
-      <p class="eyebrow">The current problem</p>
-      <h2 id="why-title">Why this matters</h2>
+      <h2 id="why-title">The need</h2>
       <p>${feature.why}</p>
     </section>
     <div class="detail-columns">
       <section class="detail-scope" aria-labelledby="scope-title">
-        <p class="eyebrow">The possible shape</p>
-        <h2 id="scope-title">What this would cover</h2>
+        <h2 id="scope-title">Proposed features</h2>
         <dl class="scope-list">${feature.scope
           .map(
             (item) => `
@@ -459,8 +429,7 @@ function renderFeature(key) {
       </section>
     </div>
     <section class="detail-flow" aria-labelledby="flow-title">
-      <p class="eyebrow">A proposed, not final, workflow</p>
-      <h2 id="flow-title">A possible day-to-day flow</h2>
+      <h2 id="flow-title">How it could work</h2>
       <ol class="flow-list">${feature.flow
         .map(
           (step) => `
@@ -472,20 +441,13 @@ function renderFeature(key) {
         .join("")}</ol>
     </section>
     <section class="detail-decisions" aria-labelledby="decisions-title">
-      <p class="eyebrow">Still to decide</p>
-      <h2 id="decisions-title">Decisions to make together</h2>
+      <h2 id="decisions-title">Open questions</h2>
       <ul class="decision-list">${feature.decisions
         .map((decision) => `<li>${decision}</li>`)
         .join("")}</ul>
     </section>
-    <aside class="validation-panel" aria-labelledby="validation-title">
-      <p class="eyebrow">First thing to validate</p>
-      <h2 id="validation-title">${feature.validate.title}</h2>
-      <p>${feature.validate.text}</p>
-    </aside>
     <section class="boundary-note" aria-labelledby="boundary-title">
-      <p class="eyebrow">Keep this clear</p>
-      <h2 id="boundary-title">A clear boundary</h2>
+      <h2 id="boundary-title">Limitations</h2>
       <p>${feature.boundary}</p>
     </section>`;
 
