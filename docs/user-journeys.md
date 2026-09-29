@@ -2,64 +2,37 @@
 
 [← Back to the Product Storybook](../product-storybook.md)
 
-## Ama's journey
-
-Ama is an illustrative person who shows how the product areas connect. Her story does not mean every person follows the same path.
-
-### 1. “I am new here”
-
-Ama meets the configured minimum age and has access to a valid phone number. An administrator or designated leader enters her name, phone, and hidden date of birth. Alternatively, her valid record may already have been imported.
-
-The product creates one shared person identity. It does not yet make her a member or give her an account.
-
-### 2. “You remember me”
-
-Staff find Ama by name and check her into a Sunday service. The service's recorded attendance increases by one.
-
-When Ama returns on a different date within 30 days, the administrator's report recognizes her as a returning visitor. Attending two services on her first Sunday does not count as returning.
-
-### 3. “Someone is walking with me”
-
-In V2, a coordinator assigns Ama to a discipler. Follow-up and next actions become visible to the people responsible for her care.
-
-### 4. “I am learning and becoming part of the church”
-
-In V2, Ama moves through Word Digest. After the Assimilation cohort completes the agreed process, the administrator reviews the paperwork and marks eligible cohort members together.
-
-If Ama's membership recognition is recorded within 90 days of her first visit, she contributes to the 90-day conversion measure. Attendance alone never changes her membership standing.
-
-### 5. “I continue growing and contributing”
-
-Ama may continue through other classes, contribute financially, receive welfare assistance, or later serve. These are possible paths, not requirements imposed on every person. Giving is never a condition of membership or care.
-
-## A week in church administration
-
-| Moment | What happens | What Eglise contributes |
-| --- | --- | --- |
-| Before Sunday | On a desktop or laptop, the administrator prepares services and adds or imports eligible people. | Sunday sessions and the shared people directory are ready. |
-| During Sunday | Staff use a phone, tablet, or desktop to find people and mark them present, including over 3G. | Recorded attendance updates from individual check-ins. |
-| After Sunday | Primarily on desktop, staff resolve mistakes and complete the service record. | Corrections remain traceable and summaries become reliable. |
-| During the week | Administration, finance, and existing care processes continue. | V1 recordkeeping; V2 later adds care and learning visibility. |
-| At month end | On desktop, the administrator prepares reports and sits with pastors and leaders. | 30-day return, 90-day conversion, attendance trends, and the agreed long-term retention comparison. |
-
-## V1's central operational journey
+## The immediate pilot journey
 
 ```mermaid
 flowchart LR
-    create["Add or import eligible person"] --> sunday["Open Sunday service"]
-    sunday --> find["Find person by name"]
-    find --> checkin["Mark present"]
-    checkin --> reconcile["Correct and complete service"]
-    reconcile --> report["Administrator reviews reports"]
-    report --> meeting["Discuss with pastors and leaders"]
+    person["Add or import a person"] --> review["Review record"]
+    review --> directory["Use shared directory"]
+    directory --> learn["Capture feedback for attendance"]
+    learn --> monday["Monday review with Sandra"]
 ```
 
-## Open journey details
+1. A designated staff member adds or imports a person using the confirmed name, phone, and private age-eligibility rules.
+2. The church reviews whether the directory fits its real records, exceptions, and membership process.
+3. The next slice tests attendance across the church's actual services or events, including individual records and/or manual headcounts as agreed.
+4. Sandra brings feedback to the Monday review; the team records a decision and chooses the next smallest useful change.
 
-- Service-day devices, connectivity, and fallback.
-- Long-term retention comparison periods.
-- Exact spreadsheet mappings and migration history.
-- Whether pastors and leaders need direct accounts for reports.
-- Detailed finance fields, approvals, and reconciliation.
+## Attendance discovery journey
 
-See [requirements.md](../requirements.md) for the decision register and acceptance criteria.
+| Moment          | Question to test                                               | Guardrail                                             |
+| --------------- | -------------------------------------------------------------- | ----------------------------------------------------- |
+| Before an event | Which service/event is being recorded, and who is responsible? | Do not assume Sunday is the only event type.          |
+| During it       | Is individual attendance, a manual headcount, or both needed?  | Label the source; do not double-count the two.        |
+| After it        | Who reconciles mistakes or delayed records?                    | Preserve a clear correction history when roles exist. |
+| Reporting       | What will leaders use to act, including DigiReach follow-up?   | Use definitions and incomplete-data warnings.         |
+
+## Later discovery journeys
+
+- A facilitator turns an agreed sermon into Bible-study material and records only the participation information the church needs.
+- A welfare team considers recurring home/mission support or emergency assistance after reminder, approval, and privacy rules are agreed.
+- A resource owner posts an announcement or Telegram link once the intended audience and publishing permissions are known.
+- A designated minister uses the separate clinic process only after its restricted-access and retention decisions are approved.
+
+## Pilot access caveat
+
+The shared pilot account can support a low-friction test, but records created through it do not identify an individual actor. It must not be used for a workflow that needs named accountability, especially clinic or sensitive welfare information.

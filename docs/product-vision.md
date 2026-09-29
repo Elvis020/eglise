@@ -2,110 +2,63 @@
 
 [← Back to the Product Storybook](../product-storybook.md)
 
-## The product as a house
+## The sequence
 
-The house is a way to understand the product, not a proposal for a literal house-shaped interface. Each room has a clear responsibility, and every room uses the same trusted people records.
+Eglise is deliberately moving from certainty to discovery:
 
 ```mermaid
-flowchart TB
-    vision["Know people · organize church life · support growth"]
-
-    subgraph upper["Upper floor · V2: care and learning"]
-        care["Care room — Discipleship"]
-        learning["Learning room — Word Digest"]
-    end
-
-    subgraph ground["Ground floor · V1: church administration"]
-        welcome["Welcome desk — People and membership"]
-        gathering["Gathering room — Services and attendance"]
-        treasury["Treasury — Tithes and welfare"]
-        overview["Leadership desk — Reports and growth"]
-    end
-
-    notice["Proposed V1.1 · Church Notes and sermon links"]
-    doorway["Possible later release · Member self-service"]
-    foundation["Foundation · shared records, appropriate access, trustworthy history"]
-
-    vision --- upper
-    upper --- ground
-    ground --- foundation
-    ground --- notice
-    notice --- doorway
+flowchart LR
+    people["Start now\nPeople and membership"] --> attendance["Next\nAttendance"]
+    attendance --> explore["Explore together\nCare, learning and resources"]
+    people --> feedback["Monday feedback\nwith Sandra"]
+    attendance --> feedback
+    explore --> feedback
 ```
 
-The ground floor must be useful on its own. The upper floor adds structured care and learning without creating another people database.
+**Confirmed:** one church, a shared people foundation, and iterative feedback. **Discovery:** the detailed workflows, data rules, and release order beyond the first two slices.
 
-## Who the product serves
+## Who it serves
 
-One person may perform several roles.
-
-| Person | What Eglise helps them do |
-| --- | --- |
-| Church administrator | Maintain records, prepare attendance and growth reports, and discuss findings with pastors and leaders. |
-| Attendance leader | Record Sunday participation with minimal interruption. |
-| Pastor or ministry leader | Discuss attendance, growth, church direction, and care coverage with the administrator. Pastors see financial totals without individual financial details. |
-| Finance or welfare officer | Maintain restricted records and explain period totals. |
-| Discipleship coordinator or discipler | Know who is responsible for each person and what follow-up is due. |
-| Word Digest coordinator or facilitator | Manage learners, participation, results, and progression. |
-| Visitor or member | Be recognized, supported, and guided, even before having direct application access. |
-
-## Device strategy
-
-Eglise is one responsive web application with two important working contexts:
-
-- **Desktop administration:** The church administrator will spend most working time on a desktop or laptop. Imports, directory maintenance, reconciliation, reports, configuration, finance, and batch membership actions should use the available space for clear tables, filters, comparisons, and keyboard-friendly operation.
-- **Service-day check-in:** Attendance staff may use phones, tablets, or desktops. Finding a person and marking them present must remain quick on smaller screens and ordinary 3G connections.
-
-Responsive design does not mean forcing every screen into the same layout. Each task should use the device appropriately while preserving the same permissions and records.
-
-## Release story
-
-### V1 — Run administration with reliable records
-
-- Staff access and permissions.
-- People and membership records.
-- Spreadsheet import.
-- Sunday service check-in and calculated attendance.
-- Administrator-operated attendance and growth reports.
-- Tithes, welfare contributions, and assistance given to members.
-- Audit history, backups, and recovery.
-
-Existing WhatsApp, Telegram, discipleship, and Word Digest processes continue outside the application during V1.
-
-### Proposed V1.1 — Make existing resources easier to find
-
-Curated Church Notes, sermon, and channel links may follow after the pilot. The audience and value still need agreement.
-
-### V2 — See responsibility and progress
-
-- Discipleship assignments and follow-up.
-- Word Digest classes, attendance, assessments, and progression.
-- Connected Assimilation cohort and membership recognition records.
-
-### Possible later releases
-
-- Member accounts and self-service details.
-- QR check-in.
-- Direct messaging integrations, if the existing channels leave a demonstrated gap.
-- Multi-branch support.
-
-These are product boundaries, not delivery dates.
+| Person                                   | Current role in the picture                                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Church administrator or designated staff | Maintains people records and helps shape the first attendance workflow.                                      |
+| Attendance or event team                 | Records individual participation and/or an agreed headcount for each service or event.                       |
+| Sandra, church representative            | Brings feedback and helps agree the next slice at the Monday cadence.                                        |
+| Facilitators and ministry teams          | Discover the needs of Bible study, care-school, welfare, and resource work before those tools are specified. |
+| Pastors and leaders                      | Use agreed summaries and guide boundaries; their detailed access is not yet decided.                         |
 
 ## Product principles
 
-- One shared person identity connects attendance, membership, care, learning, and permitted finance records.
-- Access follows responsibility. Sensitive finance and welfare details are not visible merely because someone is a leader.
-- Reports explain what they measure and what they exclude.
-- Historical records retain the rule that applied at the time.
-- The current phase is product discovery. GitHub tasks remain Todo until discussion is complete and implementation begins.
+- Start with the smallest useful workflow and learn from the church's use of it.
+- Keep one person record, but do not assume every module needs the same fields or audience.
+- State whether a total is an individual count, a manually entered headcount, or both.
+- Protect sensitive information by design; unresolved access, retention, permission, and export rules are blockers for sensitive rollout.
+- Keep care-school activity separate from confidential clinic records.
+- Preserve existing Telegram and WhatsApp practices until a replacement solves a demonstrated problem.
 
-## Related chapters
+## Current scope picture
 
-- [People and membership](people-and-membership.md)
-- [Sunday attendance and reporting](attendance-and-reporting.md)
-- [Tithes and welfare](finance-and-welfare.md)
-- [Discipleship and Word Digest](discipleship-and-word-digest.md)
-- [Communication and later possibilities](communication-and-future.md)
-- [End-to-end journeys](user-journeys.md)
+### Start now — people and membership
 
-Detailed rules and acceptance criteria live in [requirements.md](../requirements.md).
+Manual entry, spreadsheet import, an adjustable age rule beginning at 16, shared phone numbers, private date of birth, and administrator-recorded membership recognition are confirmed foundations.
+
+### Next — attendance
+
+Attendance must support more than a single Sunday-only assumption: the church can use multiple services and other agreed event types. Individual attendance and a manual event/service headcount both need validation. Reporting definitions and DigiReach follow-up are discovery work.
+
+### Explore together — care, learning, and resources
+
+- Welfare: recurring home/mission support and emergency assistance.
+- Bible study: materials derived from sermons, facilitator access, and participation.
+- Care school: topics, progress, readiness, and booking.
+- Resources: Church Notes, edited sermon-audio links, Telegram links, and announcements.
+
+The Healing and Deliverance Clinic is not a general care feature: its forms, history, and reporting are separately restricted to designated ministers.
+
+## Access and release posture
+
+The pilot can operate with a temporary shared account. It cannot offer named attribution through that account. Eventual role-based access is the direction, but the permission matrix, audit model, retention, exports, and detailed privacy rules are unresolved and must be agreed before wider or sensitive use.
+
+## Not a calendar promise
+
+The headings above describe priority and discovery, not dates. Each Monday review can retain, refine, defer, or stop a proposed area based on evidence.

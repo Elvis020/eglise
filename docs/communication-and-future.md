@@ -1,55 +1,24 @@
-# Communication and later possibilities
+# Communication, resources, and future work
 
 [← Back to the Product Storybook](../product-storybook.md)
 
-## Communication decision
+## Status: explore together
 
-WhatsApp and Telegram remain the church's communication channels for now.
+WhatsApp and Telegram continue as the church's communication channels. Eglise should first make existing material and announcements easier to find, not replace those channels without evidence.
 
-V1 does not include:
+## Initial resource direction
 
-- Direct bulk messaging from Eglise.
-- WhatsApp or Telegram integration.
-- SMS or email sending.
-- Built-in chat.
-- Automated follow-up campaigns.
+- Church Notes and edited sermon audio can initially be shared as Telegram links.
+- Announcements are a proposed resource area; their audience, publishing owner, timing, and approval path remain open.
+- Sermon-derived Bible-study material is related but has its own facilitator and participation discovery. See [Discipleship and Bible study](discipleship-and-word-digest.md).
 
-Messaging can be reconsidered after the pilot if the existing channels leave a demonstrated problem.
+## What is not decided
 
-## Proposed resource links
+- Whether resources and announcements are public, for authenticated members, for staff, or have different audiences.
+- Link review, expiry, removal, ownership, and reporting.
+- Whether a public resource page, member accounts, direct messaging, or integration with Telegram/WhatsApp solves a demonstrated need.
+- The privacy, retention, permission, and export rules for announcements, links, and any audience data.
 
-A later release may organize links to:
+## Boundary
 
-- Church Notes.
-- Sermon audio.
-- Telegram channels.
-- Other approved church resources.
-
-The application would link to existing content rather than replace Telegram, host audio, transcribe sermons, or generate notes.
-
-### Open question
-
-The audience must be decided: staff, authenticated members, or the public. A staff-only application does not solve member access to Church Notes.
-
-## Member-facing possibilities
-
-After the pilot, the church may evaluate:
-
-- Member accounts.
-- Self-service contact details.
-- Personalized resources.
-- QR check-in.
-
-These are possibilities, not approved requirements. Each needs evidence of demand, a support plan, and clear privacy boundaries.
-
-## Other scope boundaries
-
-The pilot does not currently include:
-
-- Native mobile applications.
-- Offline synchronization.
-- Online payments.
-- Multi-branch or unrelated-church tenancy.
-- Payroll or accounting.
-
-See the complete rules in [requirements.md](../requirements.md#82-communication-decision-and-proposed-resource-links).
+V1 does not assume bulk messaging, built-in chat, hosted audio, sermon transcription, AI-generated notes, direct channel integration, or a member portal. Those are separate decisions after the pilot shows why they are needed.

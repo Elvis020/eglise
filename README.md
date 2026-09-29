@@ -4,120 +4,70 @@
 
 ### Know people. Organize church life. Support growth.
 
-Eglise is a church administration platform designed around a simple idea: give administrators reliable records, then give pastors and leaders a clear picture of the people behind the numbers.
+Eglise is a church administration product in discovery. It starts with dependable people records and grows, with church feedback, into attendance, care, learning, resources, and other agreed work.
 
 ![Stage](https://img.shields.io/badge/stage-product_discovery-6B5B95?style=flat-square)
 ![Pilot](https://img.shields.io/badge/pilot-one_church-2F6F62?style=flat-square)
 ![Implementation](https://img.shields.io/badge/implementation-not_started-A15C38?style=flat-square)
 
-[Read the Storybook](product-storybook.md) · [Review the Requirements](requirements.md) · [Technical Scope](docs/technical-scope.md) · [Open the Project Board](https://github.com/users/Elvis020/projects/8/views/1)
+[Read the Storybook](product-storybook.md) · [Review the Requirements](requirements.md) · [Technical Scope](docs/technical-scope.md)
 
 </div>
 
 ---
 
-## The product picture
+## What happens first
 
-Eglise starts with the church's administrative foundation and grows into care and learning without creating disconnected systems.
+1. **People and membership:** establish the shared directory, respectful membership history, and the import path.
+2. **Attendance:** validate a flexible event/service workflow with individual attendance and manual headcounts where the church needs them.
+3. **Explore together:** use pilot feedback to shape welfare, Bible study, care-school work, Church Notes, sermon audio, announcements, and other resources.
 
-```mermaid
-flowchart LR
-    People["People directory"] --> Attendance["Sunday attendance"]
-    People --> Membership["Membership"]
-    People --> Finance["Tithes and welfare"]
-    Attendance --> Reports["Growth reports"]
-    Membership --> Reports
-    People -. V2 .-> Care["Discipleship"]
-    People -. V2 .-> Learning["Word Digest"]
-```
+This is iterative discovery, not a promised release schedule. Sandra is the church's representative for feedback, with a Monday review cadence; the team records decisions and adjusts the next slice from observed use.
 
-One shared person record connects the journey. Access stays appropriate to each responsibility.
+## Confirmed foundation
 
-## V1 in one Sunday
+- One-church pilot; product discovery precedes implementation.
+- Name, valid Ghanaian or international phone number, and privately held date of birth support the people directory. Shared phone numbers remain valid, and the adjustable minimum age starts at 16.
+- Membership is recognized through the church's process; attendance does not create membership.
+- Administration is desktop-friendly; service/event work must remain practical on phones and tablets over ordinary 3G.
+- Existing WhatsApp and Telegram communication continues while Eglise evaluates links, announcements, and access needs.
+- The temporary pilot may use one shared account. It does **not** provide individual action attribution. Role-based access, audit attribution, retention, permissions, and export rules remain required discovery before a wider rollout.
 
-1. An administrator adds an eligible person or imports existing records from a spreadsheet.
-2. Staff open the correct Sunday service and find the person by name.
-3. Staff mark the person present; Eglise calculates recorded attendance automatically.
-4. The administrator corrects mistakes and completes the service record.
-5. Eglise turns those records into reports the administrator discusses with pastors and leaders.
+## Product boundaries in discussion
 
-## What V1 includes
-
-| Area          | First release                                                                              |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| 👥 People     | Manual registration, spreadsheet import, visitor and membership history.                   |
-| ✅ Attendance | Individual Sunday check-in and automatically calculated totals.                            |
-| 📈 Growth     | 30-day visitor return, 90-day membership conversion, and longer-term attendance retention. |
-| 🗂️ Membership | Administrator-managed cohort recognition after Assimilation paperwork.                     |
-| 💰 Tithes     | Restricted person-level records and period totals.                                         |
-| 🤝 Welfare    | Member contributions and assistance given to members, recorded separately.                 |
-| 🔐 Access     | Staff permissions, private data boundaries, audit history, backups, and recovery.          |
-
-## Decisions that shape the pilot
-
-- The first launch serves one church.
-- V1 focuses on administration; Discipleship and Word Digest follow in V2.
-- Sunday services come first, with other days configurable later.
-- Administration-heavy work is designed primarily for desktop, while check-in remains fast and usable on phones and tablets over 3G.
-- A valid Ghanaian or international phone number is required; shared numbers are allowed.
-- Minimum registration age starts at 16 and can change. Existing people keep eligibility after an increase.
-- Date of birth is stored privately to apply the age rule and is never displayed or exported.
-- Attendance totals come from distinct check-ins and represent the registered pilot population, not everyone physically present.
-- Administrators operate attendance and growth reports, then discuss the findings with pastors and leaders.
-- Individual tithe and welfare records remain restricted; pastors see summary totals only.
-- Staff authenticate with an Eglise username and password managed by Supabase Auth; only the first administrator uses the protected setup flow.
-- WhatsApp and Telegram remain the communication channels for now.
+| Area                        | Current direction                                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| People and membership       | Start now; validate manual entry and spreadsheet import.                                                      |
+| Attendance                  | Next; support multiple services or event types, individual records, and manual headcounts.                    |
+| Reports and follow-up       | Define trustworthy measures and explore DigiReach follow-up needs.                                            |
+| Welfare                     | Include recurring home/mission support and emergency assistance; reminders and approval mechanics are open.   |
+| Bible study                 | Explore sermon-derived materials, facilitator access, and participation.                                      |
+| Care school and clinic      | Keep school topics, progress, readiness, and booking distinct from the separately restricted clinic workflow. |
+| Resources and announcements | Start with Telegram links for Church Notes and edited sermon audio; audience and access rules are open.       |
 
 ## Read the product book
 
-The main [Product Storybook](product-storybook.md) is intentionally short. It links to focused chapters:
-
 1. [Product vision and roadmap](docs/product-vision.md)
 2. [People and membership](docs/people-and-membership.md)
-3. [Sunday attendance and reporting](docs/attendance-and-reporting.md)
-4. [Tithes and welfare](docs/finance-and-welfare.md)
-5. [Discipleship and Word Digest](docs/discipleship-and-word-digest.md)
-6. [Communication and later possibilities](docs/communication-and-future.md)
-7. [End-to-end journeys](docs/user-journeys.md)
-8. [Technical scope and decisions](docs/technical-scope.md)
-9. [Detailed technical approach](docs/technical-approach.md)
+3. [Attendance and reporting](docs/attendance-and-reporting.md)
+4. [Finance and welfare](docs/finance-and-welfare.md)
+5. [Discipleship and Bible study](docs/discipleship-and-word-digest.md)
+6. [Healing and deliverance](docs/healing-and-deliverance.md)
+7. [Communication, resources, and future work](docs/communication-and-future.md)
+8. [End-to-end journeys](docs/user-journeys.md)
+9. [Technical scope and decisions](docs/technical-scope.md)
+10. [Detailed technical approach](docs/technical-approach.md)
 
-For detailed rules, edge cases, and acceptance criteria, see [requirements.md](requirements.md). The original [voice notes](voice_notes.md) remain preserved as source material.
+The [requirements](requirements.md) are the decision register and acceptance starting point. The original [voice notes](voice_notes.md) remain preserved source material.
 
-## Releases as chapters
-
-```text
-V1      Administration — people, attendance, reports, tithes, welfare
-V1.1    Proposed resource links — Church Notes, sermons, church channels
-V2      Care and learning — Discipleship and Word Digest
-Later   Member access, QR check-in, and evidence-backed integrations
-```
-
-These are scope boundaries, not promised dates.
-
-## How work moves
+## Working rhythm
 
 ```text
-Todo → Discuss and agree → In Progress → Verify → Done
+Discuss → prototype the smallest useful slice → try it with the church → review on Monday → decide the next slice
 ```
 
-Every implementation item begins in the [Eglise Project](https://github.com/users/Elvis020/projects/8/views/1). Tasks remain **Todo** while the product picture is still being shaped. Moving a task to **In Progress** means implementation has actually begun; **Done** means its agreed acceptance criteria have been met.
-
-## Repository map
-
-```text
-.
-├── README.md                 Product introduction
-├── product-storybook.md      Short book cover and chapter index
-├── requirements.md           Detailed requirements and decisions
-├── voice_notes.md            Preserved source conversation
-└── docs/                     Focused product chapters
-```
-
-## Current status
-
-Eglise is in **product discovery**. The storybook, requirements, and Project tasks are being refined together before technology choices or application implementation begin.
+Confirmed decisions are labelled **Confirmed** in the chapters. Items labelled **Discovery** or **Open** are intentionally not implementation commitments.
 
 ## Stakeholder site publishing
 
-The stakeholder site is available at [https://elvis020.github.io/eglise-site/](https://elvis020.github.io/eglise-site/). This private repository is canonical. GitHub Actions syncs only `index.html`, `styles.css`, and `script.js` to the public `Elvis020/eglise-site` repository when one of those files or the sync workflow changes on `main`; the workflow can also be run manually from Actions. Direct edits to those public site assets are overwritten by the next sync. The `EGLISE_SITE_DEPLOY_KEY` secret is a limited deploy key for the public repository and should be rotated or revoked if compromised.
+The stakeholder site is available at [https://elvis020.github.io/eglise-site/](https://elvis020.github.io/eglise-site/). This private repository is canonical. GitHub Actions syncs only `index.html`, `styles.css`, and `script.js` to the public `Elvis020/eglise-site` repository when one of those files or the sync workflow changes on `main`; the workflow can also be run manually from Actions. Direct edits to those public site assets are overwritten by the next sync.

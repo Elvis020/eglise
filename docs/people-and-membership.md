@@ -2,89 +2,38 @@
 
 [← Back to the Product Storybook](../product-storybook.md)
 
-## Purpose
+## Status: start now
 
-Know who is part of the church community, recognize returning people, and preserve each person's membership journey.
+This is the first operational slice. It gives the church one dependable person record before attendance, care, or learning processes add their own activity.
 
-## The welcome desk
+## Confirmed foundation
 
-The people directory starts with two entry routes:
+- Staff can add a person manually or import an agreed spreadsheet shape.
+- Name and a valid Ghanaian or international phone number are required. A phone is contact information, not a unique identity; shared numbers remain valid.
+- Date of birth is held privately only to apply the adjustable minimum registration age, initially 16. It is not shown in ordinary profiles, search, reports, exports, or audit text.
+- A later age increase affects new registrations; people previously eligible retain their recorded attendance eligibility. No age-rule change deletes people or rewrites history.
+- Membership follows the church's recognition and paperwork process. Attendance does not create membership.
+
+## First workflow
 
 ```mermaid
 flowchart LR
-    manual["Add person"] --> directory["Shared people directory"]
-    spreadsheet["Import spreadsheet"] --> directory
-    directory --> membership["Visitor and membership history"]
+    add["Add or import a person"] --> review["Review duplicates and missing data"]
+    review --> directory["Shared people directory"]
+    directory --> membership["Record membership recognition when approved"]
 ```
 
-### Required information
+An import preview must show invalid rows and possible duplicates without treating shared numbers as duplicates automatically. Importing a person never records attendance.
 
-- Name.
-- Valid phone number.
-- Date of birth, stored privately to apply the adjustable minimum-age rule.
+## Pilot access limitation
 
-Ghana (`+233`) is the default phone context, but valid international numbers are supported. Two people may share the same phone number and remain separate records. Phone is contact information, not a unique identity.
+The temporary shared pilot account may create or edit records, but it cannot say which individual performed a change. That limitation must be visible in pilot documentation and is not acceptable as the eventual audit model.
 
-## Pilot audience and age rule
+## Discovery and open decisions
 
-- Minimum registration age starts at 16.
-- An authorized administrator can adjust the minimum later.
-- Raising it affects new registrations only. Existing people keep check-in eligibility.
-- Lowering it permits newly eligible registrations.
-- Age-rule changes never delete people or rewrite earlier records.
+- Existing spreadsheet columns, historical migration depth, merges, transfers, and inactive/archived status.
+- The final people fields and membership evidence to retain.
+- The privacy notice, retention period, correction/deletion process, permissions, and full-export process.
+- The role matrix and named attribution needed after the shared-account pilot.
 
-### Hidden date of birth
-
-An authorized administrator enters or corrects date of birth so the system can calculate eligibility. After saving, the exact date does not appear in:
-
-- Profiles or the directory.
-- Search or check-in results.
-- Reports or exports.
-- Audit descriptions or logs.
-
-Other users see only whether the person is eligible. A correction records that a change occurred without storing the date in the audit message.
-
-## Import story
-
-The church already has spreadsheets, but their exact structure has not been reviewed. Import begins with a name, phone, and hidden date-of-birth destination model.
-
-Before committing an import, the administrator sees:
-
-- Valid rows.
-- Missing or invalid phone numbers.
-- Missing or invalid dates of birth.
-- Possible duplicate people.
-- Repeated or shared phone numbers that are not automatically treated as duplicates.
-
-Importing someone creates a directory record. It does not record a visit or mark the person present.
-
-## Membership story
-
-Membership begins through the church's Assimilation and paperwork process, not through attendance frequency.
-
-In V1, the administrator:
-
-1. Selects the people covered by the completed paperwork.
-2. Reviews the cohort and removes any exceptions.
-3. Marks the eligible cohort as members in one action.
-4. Records the membership recognition date, basis, and responsible administrator for each person.
-
-No separate pastor approval step is required in the application. In V2, the same action connects to the actual Word Digest Assimilation cohort.
-
-## Boundaries
-
-- A person record does not automatically create an application account.
-- Attendance does not automatically make someone a member.
-- A shared phone number alone is not evidence of a duplicate.
-- Previously recorded visits remain visitor visits when someone later becomes a member.
-- Imported existing members need an agreed legacy classification; the system must not invent class history.
-
-## Open decisions
-
-- The exact fields and column names in the existing spreadsheets.
-- How much historical people and membership data to migrate.
-- Whether to record certificate number, issue date, or both.
-- Inactive, transferred, archived, and other record-status definitions.
-- Date-of-birth retention and deletion rules.
-
-See the complete rules in [requirements.md](../requirements.md#72-people-and-membership).
+See the detailed register in [requirements.md](../requirements.md#people-and-membership).

@@ -1,111 +1,151 @@
+const statusStyles = {
+  now: {
+    label: "Start now",
+    className: "status-now",
+    note: "Current discovery priority",
+  },
+  next: {
+    label: "Next",
+    className: "status-next",
+    note: "Next discovery priority",
+  },
+  explore: {
+    label: "Explore together",
+    className: "status-explore",
+    note: "Discovery area",
+  },
+};
+
+const routeAliases = {
+  discipleship: "school",
+  digest: "bible-study",
+};
+
 const features = {
   people: {
     number: "01 / PEOPLE & MEMBERSHIP",
+    status: "now",
     title: "A clearer record of the people in your church.",
     intro:
-      "A shared directory gives administrators a steadier starting point for welcoming people, keeping contact details current, and recognizing membership.",
-    release: "First release",
+      "A shared directory is the first step toward welcoming people, keeping contact details current, and recognizing membership with care.",
     overview:
-      "People records are the foundation for service attendance and church administration. Membership is a recognized standing recorded by an administrator.",
+      "People records give the church a dependable foundation for the conversations that follow. Membership remains a recognized standing, not an automatic result of attendance.",
     example:
-      "After the church completes its membership process, an administrator records the people who have been recognized. Visiting often does not automatically make someone a member.",
+      "A designated team member adds a new person or reviews an imported record, then the church can recognise membership through its existing process when that process is complete.",
     points: [
-      "Keep a usable directory for authorized staff.",
+      "Build a usable shared directory.",
+      "Review imports, missing details, and possible duplicates.",
       "Record membership after the church’s recognition process.",
-      "Use the person record as a reference for related church activity.",
     ],
     boundary:
       "Attendance by itself never changes a person’s membership status.",
   },
   attendance: {
-    number: "02 / SUNDAY ATTENDANCE",
-    title: "Count the check-ins that were actually recorded.",
+    number: "02 / ATTENDANCE",
+    status: "next",
+    title: "Find the clearest way to record a gathering.",
     intro:
-      "A service-day workflow could help staff find a person and record their attendance. Each service total comes from distinct individual check-ins.",
-    release: "First release",
+      "The next conversation is about practical attendance across the services and events that matter to the church.",
     overview:
-      "Sunday services are the starting point. If the same person is checked in twice for one service, that still counts as one recorded attendance for that service.",
+      "A future workflow may bring together individual attendance and an agreed headcount, while keeping each source clear rather than pretending they mean the same thing.",
     example:
-      "A team member records Ama at the 9:00 service. If she also attends the 11:00 service, each service total includes her, while the day’s unique-person count includes her once.",
+      "For one gathering, a team may record named attendance. For another, they may need a carefully labelled headcount. The church can decide the right pattern after trying the workflow.",
     points: [
-      "Record attendance person by person for a dated service.",
-      "Calculate service totals from distinct check-ins.",
-      "Correct a mistaken record so totals reflect the update.",
+      "Explore services and other event types together.",
+      "Keep named records and headcounts clearly distinct.",
+      "Make corrections and completion practical for the team.",
     ],
     boundary:
-      "Reports describe recorded attendance, not everyone physically present. Someone who was not checked in is not included.",
+      "Recorded activity should be clear about what it includes and what it does not.",
   },
   growth: {
-    number: "03 / GROWTH REPORTS",
-    title: "Make the numbers clear enough to discuss.",
+    number: "03 / REPORTS & FOLLOW-UP",
+    status: "explore",
+    title: "Make the next conversation easier to see.",
     intro:
-      "Reports could help administrators and leaders review what the records show, with each measure tied to a plain-language definition.",
-    release: "First release",
+      "Reports and follow-up are useful only when their definitions match the church’s real decisions.",
     overview:
-      "The first release is expected to include visitor return, membership conversion, and a longer-term attendance-retention view. These measures describe recorded activity; they do not prove spiritual or overall church growth.",
+      "The team can explore which attendance and membership patterns deserve attention, and what a thoughtful DigiReach follow-up handoff would need.",
     example:
-      "If someone first visits on 2 March and has another recorded visit on a different date within 30 days, they count as a returning visitor. A second service on 2 March alone does not count as a return.",
+      "A leader may review a clearly labelled view of recent activity, then decide whether a person or group needs a friendly follow-up through the church’s existing process.",
     points: [
-      "Returning visitor: a later recorded visit on a different date within 30 days of the first visit.",
-      "Membership conversion: membership recognized by an administrator within 90 days of the first visit.",
-      "Attendance retention: compare a defined group across two periods; the periods still need agreement.",
+      "Define useful reports before building them.",
+      "Make incomplete records visible rather than misleading.",
+      "Explore the right follow-up handoff with the church.",
     ],
     boundary:
-      "Attendance alone does not count as membership conversion. Reports should show when there is not enough complete data for a fair comparison.",
+      "A report can describe recorded activity; it cannot measure every part of a person’s journey.",
   },
   finance: {
-    number: "04 / TITHES & WELFARE",
-    title: "Keep financial records useful and appropriately private.",
+    number: "04 / WELFARE SUPPORT",
+    status: "explore",
+    title: "Explore support with care and clarity.",
     intro:
-      "The first release is expected to support organized recordkeeping for tithes, welfare contributions, and assistance given to members.",
-    release: "First release",
+      "The church is considering a clearer view of recurring support and emergency help, shaped by the people who carry that responsibility.",
     overview:
-      "Authorized finance and welfare staff would work with detailed records. Pastors would see summary totals only, protecting person-level financial information.",
+      "This conversation can include support for homes or missions and emergency assistance, without deciding the detailed process before it has been understood.",
     example:
-      "An authorized finance officer records contributions and assistance. A pastor reviews period totals without seeing individual contributor or recipient details.",
+      "A welfare team might map the information it needs to review a recurring commitment and the different information needed when urgent help is requested.",
     points: [
-      "Keep tithe and welfare activity as distinct records.",
-      "Include welfare contributions and assistance given to members.",
-      "Give pastors summary totals only.",
+      "Explore recurring support and emergency help.",
+      "Keep support records meaningful and appropriately private.",
+      "Agree reminders and approvals only when they solve a real need.",
     ],
     boundary:
-      "This is finance recordkeeping, not full welfare case management. Transaction details, staff permissions, and approval steps remain to be agreed.",
+      "The right safeguards and process are still part of the discovery work.",
   },
-  discipleship: {
-    number: "05 / DISCIPLESHIP",
-    title: "Help care teams see where follow-up is needed.",
+  "bible-study": {
+    number: "05 / BIBLE STUDY",
+    status: "explore",
+    title: "Let learning begin from the word already shared.",
     intro:
-      "A later chapter could help leaders coordinate pastoral follow-up and discipleship support around the same people records.",
-    release: "Next chapter",
+      "Bible study may grow from sermons, with materials and participation shaped around the church’s actual rhythm.",
     overview:
-      "This future idea could make care assignments and follow-up easier to coordinate after the first release establishes the administrative foundation.",
+      "The church can discover how facilitators prepare or share study material and what participation should mean for each group.",
     example:
-      "A care leader might review who has a follow-up conversation planned, note that it happened, and see where another check-in could help.",
+      "After a sermon, a facilitator could use an agreed study outline or resource link to guide a group and reflect on the participation the group finds meaningful.",
     points: [
-      "Explore care assignments and follow-up.",
-      "Give ministry leaders a useful view of care coverage.",
-      "Shape the workflow with church leaders before implementation.",
+      "Explore sermon-based study materials.",
+      "Shape facilitator and group needs together.",
+      "Keep learning activity distinct from service attendance.",
     ],
     boundary:
-      "Discipleship is not part of the first release and is not implemented. Its details need discovery with the people who would use it.",
+      "A useful learning journey needs the church’s own language and practice, not a fixed template.",
   },
-  digest: {
-    number: "06 / WORD DIGEST",
-    title: "A future view of learning and progression.",
+  school: {
+    number: "06 / CARE SCHOOL",
+    status: "explore",
+    title: "A considered path for care and readiness.",
     intro:
-      "Word Digest is a proposed later feature for organizing class participation and learning journeys.",
-    release: "Next chapter",
+      "A future care-school experience could help the church organise learning topics, progress, readiness, and the next step.",
     overview:
-      "A future version could bring class enrollment, class attendance, results, and progression into a clearer shared picture for coordinators and facilitators.",
+      "This is an area to shape slowly with the people who lead it, keeping the experience compassionate and easy to understand.",
     example:
-      "A coordinator might review a learner’s class attendance and recorded results across a study cycle, then discuss the next step with the appropriate leader.",
+      "A coordinator may want to see where someone is in an agreed path and whether it is time to plan the next conversation or session.",
     points: [
-      "Explore class groups, enrollment, and session attendance.",
-      "Keep class attendance separate from Sunday service attendance.",
-      "Support recorded learning results and progression.",
+      "Explore topics and learning paths.",
+      "Consider progress and readiness together.",
+      "Understand how booking or next steps should feel.",
+    ],
+    boundary: "The details are still being explored with the church.",
+  },
+  resources: {
+    number: "07 / RESOURCES & ANNOUNCEMENTS",
+    status: "explore",
+    title: "Make the useful things easier to find.",
+    intro:
+      "Church Notes, sermon links, and announcements may become a simple shared place to return to what matters.",
+    overview:
+      "The first idea is to organise existing material and links, then learn who needs to see them and how the church wants to keep them current.",
+    example:
+      "After a gathering, someone could find an approved sermon-audio link or a current announcement without replacing the church’s familiar communication channels.",
+    points: [
+      "Bring useful notes and sermon links together.",
+      "Explore a simple rhythm for announcements.",
+      "Decide the right audience with the church.",
     ],
     boundary:
-      "Word Digest is a future chapter, not part of the first release and not implemented. Class sequence and progression rules still need confirmation.",
+      "This is about making existing resources easier to find, not replacing every communication channel.",
   },
 };
 
@@ -129,8 +169,12 @@ function renderFeature(key) {
   }
 
   const feature = features[key];
+  const status = statusStyles[feature.status];
 
-  const future = feature.release === "Next chapter";
+  if (!status) {
+    return false;
+  }
+
   detailContent.innerHTML = `
     <div class="detail-hero">
       <div>
@@ -138,7 +182,10 @@ function renderFeature(key) {
         <h1 id="detail-title" tabindex="-1">${feature.title}</h1>
         <p class="detail-intro">${feature.intro}</p>
       </div>
-      <aside class="detail-stamp"><span class="release-tag ${future ? "next" : ""}">${feature.release}</span><p>Proposed direction · Currently in discovery</p></aside>
+      <aside class="detail-stamp">
+        <span class="release-tag ${status.className}">${status.label}</span>
+        <p>${status.note} · Still in discovery</p>
+      </aside>
     </div>
     <div class="detail-columns">
       <div>
@@ -147,16 +194,20 @@ function renderFeature(key) {
         <div class="example-box"><p class="eyebrow">Everyday example</p><p>${feature.example}</p></div>
         <div class="boundary-note"><strong>A clear boundary</strong><p>${feature.boundary}</p></div>
       </div>
-      <section class="capability-section" aria-labelledby="capability-title"><h2 id="capability-title">What could be included</h2><ul class="detail-list">${feature.points.map((point) => `<li>${point}</li>`).join("")}</ul></section>
+      <section class="capability-section" aria-labelledby="capability-title">
+        <h2 id="capability-title">What to explore</h2>
+        <ul class="detail-list">${feature.points.map((point) => `<li>${point}</li>`).join("")}</ul>
+      </section>
     </div>`;
 
   return true;
 }
 
 function showCurrentRoute({ moveFocus = true } = {}) {
-  const key = window.location.hash.slice(1);
+  const hashKey = window.location.hash.slice(1);
+  const key = routeAliases[hashKey] ?? hashKey;
 
-  if (key === "" || key === "overview") {
+  if (hashKey === "" || hashKey === "overview") {
     showView("overview");
 
     if (moveFocus) {
@@ -205,8 +256,9 @@ document.querySelectorAll("[data-feature-link]").forEach((link) => {
 });
 
 backLink.addEventListener("click", () => {
-  if (originFeature) return;
-  originFeature = null;
+  if (!originFeature) {
+    originFeature = null;
+  }
 });
 
 window.addEventListener("hashchange", () => showCurrentRoute());
