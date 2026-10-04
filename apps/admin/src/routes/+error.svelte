@@ -20,28 +20,34 @@
   <title>{label} | Eglise</title>
 </svelte:head>
 
-<section class="not-found-page" aria-labelledby="not-found-title">
-  <div class="not-found-mark" aria-hidden="true">
-    <IconMapPinOff size={28} stroke={1.6} />
-  </div>
+<main class="not-found-page" id="main-content" tabindex="-1" aria-labelledby="not-found-title">
+  <section class="not-found-content">
+    <div class="not-found-mark" aria-hidden="true">
+      <IconMapPinOff size={28} stroke={1.6} />
+    </div>
 
-  <p class="eyebrow">{status} · {label}</p>
-  <h1 id="not-found-title">{title}</h1>
-  <p class="page-intro">{description}</p>
+    <p class="eyebrow">{status} · {label}</p>
+    <h1 id="not-found-title">{title}</h1>
+    <p class="page-intro">{description}</p>
 
-  <a class="button primary not-found-action" href="/people">
-    <IconArrowLeft aria-hidden="true" size={18} stroke={2} />
-    Return to People directory
-  </a>
-</section>
+    <a class="button primary not-found-action" href="/people">
+      <IconArrowLeft aria-hidden="true" size={18} stroke={2} />
+      Return to People directory
+    </a>
+  </section>
+</main>
 
 <style>
   .not-found-page {
     display: grid;
-    align-content: center;
-    max-width: 560px;
-    min-height: min(580px, calc(100dvh - 168px));
-    padding: clamp(32px, 8vw, 96px) 0;
+    min-height: 100svh;
+    place-items: center;
+    padding: clamp(32px, 8vw, 112px);
+    background: var(--canvas);
+  }
+
+  .not-found-content {
+    width: min(100%, 560px);
     animation: not-found-enter 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
@@ -103,7 +109,7 @@
 
   @media (max-width: 960px) {
     .not-found-page {
-      min-height: min(520px, calc(100dvh - 120px));
+      padding: 32px 24px;
     }
   }
 </style>

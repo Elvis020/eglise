@@ -43,8 +43,9 @@
   const isAuthenticationRoute = $derived(
     page.url.pathname === '/login' || page.url.pathname === '/signup'
   );
+  const isErrorRoute = $derived(page.status >= 400);
   const requiresAuthentication = $derived(
-    !isAuthenticationRoute && page.url.pathname !== '/offline'
+    !isAuthenticationRoute && !isErrorRoute && page.url.pathname !== '/offline'
   );
   const churchName = $derived($prototypeSession.churchName);
 
@@ -251,7 +252,7 @@
 
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
-{#if isAuthenticationRoute}
+{#if isAuthenticationRoute || isErrorRoute}
   {@render children()}
 {:else}
   <div
@@ -406,4 +407,6 @@
   </div>
 {/if}
 
-<AppToaster />
+{#if !isErrorRoute}
+  <AppToaster />
+{/if}
