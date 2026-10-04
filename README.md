@@ -10,7 +10,7 @@ Eglise is a church administration product in discovery. It starts with dependabl
 ![Pilot](https://img.shields.io/badge/pilot-one_church-2F6F62?style=flat-square)
 ![Implementation](https://img.shields.io/badge/implementation-not_started-A15C38?style=flat-square)
 
-[Read the Storybook](product-storybook.md) · [Review the Requirements](requirements.md) · [Technical Scope](docs/technical-scope.md)
+[Read the Storybook](product-storybook.md) · [Review the Requirements](requirements.md) · [Technical Scope](docs/technical-scope.md) · [Application UI Guidelines](docs/ui-guidelines.md)
 
 </div>
 
@@ -57,6 +57,7 @@ This is iterative discovery, not a promised release schedule. Sandra is the chur
 8. [End-to-end journeys](docs/user-journeys.md)
 9. [Technical scope and decisions](docs/technical-scope.md)
 10. [Detailed technical approach](docs/technical-approach.md)
+11. [Application UI guidelines](docs/ui-guidelines.md)
 
 The [requirements](requirements.md) are the decision register and acceptance starting point. The original [voice notes](voice_notes.md) remain preserved source material.
 
