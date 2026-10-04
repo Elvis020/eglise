@@ -62,6 +62,188 @@ export const initialPeople: Person[] = [
     phone: '+233 20 778 0021',
     neighbourhood: 'Dansoman',
     membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'adwoa-nyarko',
+    name: 'Adwoa Nyarko',
+    phone: '+233 24 612 4301',
+    neighbourhood: 'Osu',
+    membership: {
+      recognised: true,
+      evidence: 'Recognition register, 2025',
+      recognisedOn: '2025-11-09',
+      correctionNote: ''
+    }
+  },
+  {
+    id: 'kwame-osei',
+    name: 'Kwame Osei',
+    phone: '+233 25 408 7126',
+    neighbourhood: 'Madina',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'efua-danquah',
+    name: 'Efua Danquah',
+    phone: '+233 24 732 1905',
+    neighbourhood: 'Labone',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'kofi-appiah',
+    name: 'Kofi Appiah',
+    phone: '+233 20 519 8430',
+    neighbourhood: 'Kaneshie',
+    membership: {
+      recognised: true,
+      evidence: 'Membership form, 2024',
+      recognisedOn: '2024-10-02',
+      correctionNote: ''
+    }
+  },
+  {
+    id: 'akua-sarpong',
+    name: 'Akua Sarpong',
+    phone: '+233 24 880 3614',
+    neighbourhood: 'Nungua',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'nana-yeboah',
+    name: 'Nana Yeboah',
+    phone: '+233 25 661 9072',
+    neighbourhood: 'Achimota',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'abena-osei',
+    name: 'Abena Osei',
+    phone: '+233 24 304 5186',
+    neighbourhood: 'Tema Community 12',
+    membership: {
+      recognised: true,
+      evidence: 'Recognition register, 2026',
+      recognisedOn: '2026-01-18',
+      correctionNote: ''
+    }
+  },
+  {
+    id: 'samuel-cole',
+    name: 'Samuel Cole',
+    phone: '+44 7700 900 518',
+    neighbourhood: 'East Legon',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'esi-tetteh',
+    name: 'Esi Tetteh',
+    phone: '+233 20 446 8709',
+    neighbourhood: 'Teshie',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'daniel-ansah',
+    name: 'Daniel Ansah',
+    phone: '+233 24 905 2176',
+    neighbourhood: 'Dzorwulu',
+    membership: {
+      recognised: true,
+      evidence: 'Membership form, 2025',
+      recognisedOn: '2025-06-22',
+      correctionNote: ''
+    }
+  },
+  {
+    id: 'comfort-adu',
+    name: 'Comfort Adu',
+    phone: '+233 25 277 4938',
+    neighbourhood: 'Dansoman',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'michael-addai',
+    name: 'Michael Addai',
+    phone: '+1 202 555 0149',
+    neighbourhood: 'Cantonments',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'gladys-baah',
+    name: 'Gladys Baah',
+    phone: '+233 24 641 0293',
+    neighbourhood: 'Adenta',
+    membership: {
+      recognised: true,
+      evidence: 'Recognition register, 2024',
+      recognisedOn: '2024-08-07',
+      correctionNote: ''
+    }
+  },
+  {
+    id: 'isaac-bediako',
+    name: 'Isaac Bediako',
+    phone: '+233 20 833 7451',
+    neighbourhood: 'Spintex',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'mercy-quaye',
+    name: 'Mercy Quaye',
+    phone: '+233 24 512 6087',
+    neighbourhood: 'La',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'josephine-arthur',
+    name: 'Josephine Arthur',
+    phone: '+233 25 934 2750',
+    neighbourhood: 'Ashaley Botwe',
+    membership: {
+      recognised: true,
+      evidence: 'Membership form, 2026',
+      recognisedOn: '2026-02-14',
+      correctionNote: ''
+    }
+  },
+  {
+    id: 'emmanuel-fosu',
+    name: 'Emmanuel Fosu',
+    phone: '+233 24 769 1502',
+    neighbourhood: 'Kotobabi',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'ruth-mensah',
+    name: 'Ruth Mensah',
+    phone: '+233 20 395 8264',
+    neighbourhood: 'Airport Residential',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'paul-kumi',
+    name: 'Paul Kumi',
+    phone: '+233 24 857 3046',
+    neighbourhood: 'Sakumono',
+    membership: {
+      recognised: true,
+      evidence: 'Recognition register, 2025',
+      recognisedOn: '2025-03-29',
+      correctionNote: ''
+    }
+  },
+  {
+    id: 'lydia-akwasi',
+    name: 'Lydia Akwasi',
+    phone: '+233 25 420 6819',
+    neighbourhood: 'Haatso',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+  },
+  {
+    id: 'peter-boateng',
+    name: 'Peter Boateng',
+    phone: '+233 24 236 9758',
+    neighbourhood: 'Adabraka',
+    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
   }
 ];
 

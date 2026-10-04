@@ -1,10 +1,16 @@
 <script lang="ts">
   import { beforeNavigate, goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
+  import IconDeviceFloppy from '@tabler/icons-svelte-runes/icons/device-floppy';
+  import IconEdit from '@tabler/icons-svelte-runes/icons/edit';
+  import IconTrash from '@tabler/icons-svelte-runes/icons/trash';
 
   import { MINIMUM_AGE, createPerson, isEligible, isValidPhone } from '$lib/domain';
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { addPerson } from '$lib/people';
   import { showToast } from '$lib/toast';
+  import EgliseDatePicker from '$lib/components/EgliseDatePicker.svelte';
 
   let form: HTMLFormElement;
   let leaveDialog: HTMLDialogElement;
@@ -74,7 +80,13 @@
     if (!dirty || navigation.type === 'leave') return;
 
     navigation.cancel();
-    pendingNavigation = () => void goto(navigation.to?.url.pathname ?? '/people');
+    pendingNavigation = () => {
+      const destination = navigation.to?.url;
+
+      void goto(
+        destination ? `${destination.pathname}${destination.search}${destination.hash}` : '/people'
+      );
+    };
     leaveDialog.showModal();
   });
 </script>
@@ -82,9 +94,12 @@
 <svelte:head><title>Add a person — Eglise</title></svelte:head>
 
 <section class="page">
+  <Breadcrumbs
+    items={[{ label: 'People & Membership', href: '/people' }, { label: 'Add a person' }]}
+  />
+
   <header class="page-head">
     <div>
-      <p class="eyebrow">People &amp; Membership</p>
       <h1 tabindex="-1">Add a person</h1>
       <p class="page-intro">
         Create a fictional record. Date of birth is used only for the age check, then discarded.
@@ -93,7 +108,7 @@
   </header>
 
   <form
-    class="panel"
+    class="panel person-entry-form"
     bind:this={form}
     on:submit|preventDefault={submit}
     on:input={() => (dirty = true)}
@@ -102,7 +117,7 @@
     {#if Object.keys(errors).length}
       <p class="error" role="alert">Please correct the highlighted fields.</p>
     {/if}
-    <div class="form-grid">
+    <div class="person-entry-fields">
       <div class="field">
         <label for="name">Full name</label>
         <input
@@ -141,12 +156,12 @@
       </div>
       <div class="field">
         <label for="dateOfBirth">Date of birth</label>
-        <input
+        <EgliseDatePicker
           id="dateOfBirth"
           bind:value={dateOfBirth}
-          type="date"
-          aria-invalid={Boolean(errors.dateOfBirth)}
-          aria-describedby="dob-help dob-error"
+          ariaInvalid={Boolean(errors.dateOfBirth)}
+          ariaDescribedby="dob-help dob-error"
+          onchange={() => (dirty = true)}
         />
         <p class="help" id="dob-help">
           Private: checked against the pilot minimum age of {MINIMUM_AGE}; never shown, stored, or
@@ -155,25 +170,31 @@
         <p class="error" id="dob-error">{errors.dateOfBirth ?? ''}</p>
       </div>
     </div>
-    <div class="form-actions">
-      <a class="button secondary" href="/people">Cancel</a><button
-        class="button primary"
-        type="submit">Save person</button
-      >
+    <div class="form-actions person-entry-actions">
+      <a class="button secondary" href="/people">
+        <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
+        Cancel
+      </a><button class="button primary" type="submit">
+        <IconDeviceFloppy aria-hidden="true" size={18} stroke={1.8} />
+        Save person
+      </button>
     </div>
   </form>
 </section>
 
 <dialog bind:this={leaveDialog} aria-labelledby="leave-title">
   <form method="dialog">
+    <p class="dialog-context">People &amp; Membership · Add a person</p>
     <h2 id="leave-title">Leave unsaved entry?</h2>
     <p>Your fictional entry will be lost. It is not stored anywhere.</p>
     <div class="dialog-actions">
-      <button class="button secondary" type="button" on:click={stay}>Keep editing</button><button
-        class="button danger-button"
-        type="button"
-        on:click={discard}>Discard entry</button
-      >
+      <button class="button secondary" type="button" on:click={stay}>
+        <IconEdit aria-hidden="true" size={18} stroke={1.8} />
+        Keep editing
+      </button><button class="button danger-button" type="button" on:click={discard}>
+        <IconTrash aria-hidden="true" size={18} stroke={1.8} />
+        Discard entry
+      </button>
     </div>
   </form>
 </dialog>

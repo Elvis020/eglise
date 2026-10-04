@@ -8,6 +8,12 @@ Eglise should feel calm, grounded, and trustworthy without becoming beige or vis
 
 The public stakeholder site is editorial. The application shares its warmth and considered tone, but is a practical administration workspace: it prioritises legibility, data entry, feedback, and quick scanning.
 
+## Product constraints
+
+- **Editorial minimalism:** Use calm hierarchy, purposeful whitespace, restrained colour, and a small number of clearly grouped actions. Minimalism must make work easier to scan; it must never hide essential context, validation, or recovery actions.
+- **Inclusive device baseline:** Design for ordinary Android phones, older phones, tablets, and desktops—not only recent iPhones or high-end devices. Functional workflows must remain legible, touch-friendly, and efficient on small or lower-powered screens.
+- **Unreliable-network baseline:** Assume some staff will work with slow, intermittent, or expensive connections. Keep pages and assets lightweight, avoid unnecessary remote dependencies and large media, make loading and retry states clear, and never make animation or a permanently available connection the only way to complete or understand a task.
+
 ## Foundations
 
 ### Colour tokens
@@ -47,6 +53,7 @@ Use the existing system-first type stack so the prototype does not depend on rem
 - Do not use the display face for labels, controls, dense lists, or data tables.
 - Default body size is 16px with a comfortable line height. Do not make functional UI text smaller than 14px; use 12px only for genuinely secondary, non-essential metadata.
 - Use clear weight and size changes before adding extra colour or letter spacing. Avoid all-caps for paragraphs and primary actions.
+- Use balanced wrapping (`text-wrap: pretty`) for ordinary reading copy. Dense controls, navigation, table cells, breadcrumbs, and compact pilot context use `text-wrap-style: auto`; keep existing single-line ellipsis patterns intact.
 
 ### Layout, shape, and motion
 
@@ -72,7 +79,8 @@ The admin shell is a Phase 1 deliverable.
 
 - The active workspace is **People & Membership**.
 - Attendance, Reports, Welfare, Bible Study, Care School, Resources, and Announcements can be visible as muted future areas to demonstrate the intended information architecture.
-- A muted area must state its status, such as “Planned next” or “In discovery”, and may provide a short plain-language description.
+- Group sidebar areas with quiet, non-interactive labels: Essentials; Care & formation; Communication & resources. Hide those labels in the collapsed rail without reserving their vertical space.
+- A muted area is intentionally unavailable in the pilot: show its icon and name with restrained contrast, keep it non-navigable, and expose a concise assistive description such as “Not part of this pilot”. Do not add visible status copy to every row.
 - Do not add fake charts, dummy completion percentages, inactive forms, or decorative dashboard metrics to future areas.
 - Do not make a muted area look like an access failure. It is intentional product scope, not a permissions error.
 
@@ -90,21 +98,28 @@ The admin shell is a Phase 1 deliverable.
 
 - Every field has a persistent visible label. Placeholder text is an example or hint, never the only label.
 - Use 16px input text, a minimum 44px control height, visible focus rings, and high-contrast text.
+- The desktop People directory filter panel is the approved dense exception: it may use 14px labels
+  and controls with a 40px minimum height. At 960px and below, it returns to 16px and 44px.
+  Reserve the 2px control border in both default and focus states so focus does not move adjacent
+  content.
 - Show help text before an error when it prevents a likely mistake; put the specific error directly beneath the affected field.
 - Preserve entered values after validation errors. Never clear a form as feedback.
 - Selects and custom dropdowns must support keyboard operation, Escape to close, a visible selected value, and a focus return path. Prefer native controls when they meet the interaction need.
+- Date fields use the shared `EgliseDatePicker`: an editable `DD/MM/YYYY` text input paired with an app-native calendar. Its month and year headings open internal month and decade-year grids; do not use native date inputs or select controls inside this pattern. Keep local format/date validation visible, support keyboard and outside-close behaviour, return focus after a date selection, and disable dates after today unless a future-date workflow is explicitly approved.
 - For sensitive fields such as date of birth, explain the purpose and surface only the minimum necessary information. Ordinary people views must not reveal DOB.
 
 ### Tables, directory lists, and search
 
 - Optimise for scanability: stable columns, clear headings, generous row height, and a distinct hover/focus state.
+- On desktop, the People directory may use approximately 8px vertical table-cell padding and a
+  document-scrolling sticky table header. Do not create a nested directory scroll area for this.
 - Keep the People directory practical rather than card-heavy. On narrow screens, change to a labelled stacked list instead of forcing a horizontally cramped table.
 - Show empty, loading, no-results, and error states with one plain explanation and a relevant next action.
 - Possible duplicates are a review state, not an automatic merge. Shared phone numbers are valid and must not be represented as errors.
 
 ### Status, badges, and validation
 
-- Use short, plain-language labels: “Member”, “Needs review”, “Import ready”, “Planned next”.
+- Use short, plain-language labels: “Member”, “Needs review”, “Import ready”.
 - A badge supplements context; it does not replace an explanation where the decision has consequences.
 - Keep warning, error, success, and information treatment consistent: icon, label, concise message, then an action where appropriate.
 
@@ -118,6 +133,9 @@ The admin shell is a Phase 1 deliverable.
 ### Navigation and responsive behaviour
 
 - Navigation must show the current workspace and make the active state clear without colour alone.
+- In the sidebar, use a small `accent-warm` dot plus modest type weight for the active item; do not turn ordinary navigation into a card or filled row.
+- At desktop widths, the sidebar is 248px expanded and 72px collapsed. At 960px and below, replace the desktop rail with the mobile top bar and drawer; never leave a desktop rail beside a narrow workspace.
+- Use breadcrumbs for in-workspace navigation beyond the primary sidebar. Place one compact, single-line breadcrumb row above the page title; use the UI font at 14px, muted separators, linked ancestor segments, and a non-linked current segment. On narrow screens, preserve the current segment and truncate earlier segments rather than wrapping the trail.
 - The People workflow is desktop-friendly and must remain usable on smaller screens. Prioritise readable forms, review states, and search over trying to reproduce a full desktop table on a phone.
 - Keep primary actions reachable on small screens without covering content. Do not rely on hover for essential actions.
 

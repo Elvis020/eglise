@@ -29,6 +29,10 @@ The existing working proposal is SvelteKit with TypeScript on Cloudflare Workers
 
 This remains a proposal until a synthetic-data proof demonstrates the actual workflow, recovery, performance, and free-tier viability. A change of provider is not a feature rewrite goal; it is a deliberately tested operational path.
 
+### Future configuration boundary
+
+The pilot is deliberately one church, not an early multi-church tenancy implementation. Still, product configuration that may vary by church—such as display identity, membership evidence labels, local policy copy, and future workflow settings—should be read through an application configuration boundary rather than scattered as tenant assumptions across components. For this pilot that boundary may resolve one fixed local configuration; it must not add organisation switching, tenant identifiers, cross-church queries, or multi-tenant authorization. Those are separate product, privacy, and security decisions requiring explicit scope and validation.
+
 ## Access evolution
 
 ### Temporary pilot

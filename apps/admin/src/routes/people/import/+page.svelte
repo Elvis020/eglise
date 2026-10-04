@@ -1,7 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
+  import IconFileCheck from '@tabler/icons-svelte-runes/icons/file-check';
+  import IconUsersPlus from '@tabler/icons-svelte-runes/icons/users-plus';
 
   import { createPerson, importRows } from '$lib/domain';
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import { addPerson } from '$lib/people';
   import { showToast } from '$lib/toast';
 
@@ -34,9 +38,12 @@
 <svelte:head><title>Review sample import — Eglise</title></svelte:head>
 
 <section class="page">
+  <Breadcrumbs
+    items={[{ label: 'People & Membership', href: '/people' }, { label: 'Review sample import' }]}
+  />
+
   <header class="page-head">
     <div>
-      <p class="eyebrow">People &amp; Membership</p>
       <h1 tabindex="-1">Review sample import</h1>
       <p class="page-intro">
         A deterministic fictional sample proves the review flow. It does not parse or upload a
@@ -107,13 +114,19 @@
       </table>
     </div>
     <div class="form-actions">
-      <a class="button secondary" href="/people">Cancel</a><button
+      <a class="button secondary" href="/people">
+        <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
+        Cancel
+      </a><button
         class="button primary"
         type="button"
         disabled={!duplicateChoice}
         aria-describedby="duplicate-decision-help"
-        on:click={confirmImport}>Confirm reviewed import</button
+        on:click={confirmImport}
       >
+        <IconFileCheck aria-hidden="true" size={18} stroke={1.8} />
+        Confirm reviewed import
+      </button>
     </div>
     <p id="duplicate-decision-help" class="help">
       Choose whether to create or exclude the possible duplicate before confirming this sample.
@@ -123,17 +136,20 @@
 
 <dialog bind:this={confirmDialog} aria-labelledby="import-title">
   <form method="dialog">
+    <p class="dialog-context">People &amp; Membership · Review sample import</p>
     <h2 id="import-title">Confirm reviewed import</h2>
     <p>
       {readyRows.length} fictional people will be created. Invalid rows remain excluded, and no membership
       or attendance is created.
     </p>
     <div class="dialog-actions">
-      <button class="button secondary" value="cancel">Cancel</button><button
-        class="button primary"
-        type="button"
-        on:click={createRecords}>Create fictional people</button
-      >
+      <button class="button secondary" value="cancel">
+        <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
+        Cancel
+      </button><button class="button primary" type="button" on:click={createRecords}>
+        <IconUsersPlus aria-hidden="true" size={18} stroke={1.8} />
+        Create fictional people
+      </button>
     </div>
   </form>
 </dialog>

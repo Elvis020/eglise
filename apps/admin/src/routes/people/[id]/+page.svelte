@@ -1,7 +1,16 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
+  import IconDeviceFloppy from '@tabler/icons-svelte-runes/icons/device-floppy';
+  import IconEdit from '@tabler/icons-svelte-runes/icons/edit';
+  import IconUserCheck from '@tabler/icons-svelte-runes/icons/user-check';
+  import IconUserX from '@tabler/icons-svelte-runes/icons/user-x';
 
   import type { Person } from '$lib/domain';
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import EgliseDatePicker from '$lib/components/EgliseDatePicker.svelte';
+  import EgliseSelect, { type EgliseSelectOption } from '$lib/components/EgliseSelect.svelte';
+  import PersonAvatar from '$lib/components/PersonAvatar.svelte';
   import { people, updatePerson } from '$lib/people';
   import { showToast } from '$lib/toast';
 
@@ -13,13 +22,20 @@
   let recognisedOn = '';
   let correctionNote = '';
   let membershipError = '';
+  let membershipRecord = 'not-recorded';
+
+  const membershipOptions: EgliseSelectOption[] = [
+    { value: 'recognised', label: 'Recognised member' },
+    { value: 'not-recorded', label: 'Not recorded' }
+  ];
 
   $: person = $people.find((record) => record.id === page.params.id);
+  $: recognised = membershipRecord === 'recognised';
 
   function openMembership(): void {
     if (!person) return;
 
-    recognised = person.membership.recognised;
+    membershipRecord = person.membership.recognised ? 'recognised' : 'not-recorded';
     evidence = person.membership.evidence;
     recognisedOn = person.membership.recognisedOn;
     correctionNote = '';
@@ -29,6 +45,7 @@
 
   function saveMembership(): void {
     if (!person) return;
+
     if (recognised && (!evidence.trim() || !recognisedOn)) {
       membershipError = 'Enter both recognition evidence and the recognition date.';
 
@@ -71,14 +88,20 @@
 >
 
 {#if person}
-  <section class="page">
-    <header class="page-head">
-      <div>
-        <p class="eyebrow">People &amp; Membership</p>
-        <h1 tabindex="-1">{person.name}</h1>
-        <p class="page-intro">
-          Fictional person record. Date of birth is not stored, displayed, or searchable.
-        </p>
+  <section class="page person-detail-page">
+    <Breadcrumbs
+      items={[{ label: 'People & Membership', href: '/people' }, { label: person.name }]}
+    />
+
+    <header class="page-head person-page-head">
+      <div class="person-heading">
+        <PersonAvatar size="large" />
+        <div>
+          <h1 tabindex="-1">{person.name}</h1>
+          <p class="page-intro">
+            Fictional person record. Date of birth is not stored, displayed, or searchable.
+          </p>
+        </div>
       </div>
     </header>
     <div class="panel person-summary">
@@ -88,13 +111,7 @@
         <dt>Neighbourhood</dt>
         <dd>{person.neighbourhood}</dd>
         <dt>Membership</dt>
-        <dd>
-          <span
-            class:member={person.membership.recognised}
-            class:not-member={!person.membership.recognised}
-            class="status">{person.membership.recognised ? '● Member' : '○ Not a member'}</span
-          >
-        </dd>
+        <dd class="membership-value">{person.membership.recognised ? 'Member' : 'Not a member'}</dd>
         {#if person.membership.recognised}<dt>Recognition evidence</dt>
           <dd>{person.membership.evidence}</dd>
           <dt>Recognised on</dt>
@@ -103,45 +120,57 @@
           </dt>
           <dd>{person.membership.correctionNote}</dd>{/if}
       </dl>
-      <button class="button primary" type="button" on:click={openMembership}
-        >{person.membership.recognised ? 'Correct membership' : 'Record membership'}</button
-      >
+      <button class="button primary" type="button" on:click={openMembership}>
+        {#if person.membership.recognised}
+          <IconEdit aria-hidden="true" size={18} stroke={1.8} />
+        {:else}
+          <IconUserCheck aria-hidden="true" size={18} stroke={1.8} />
+        {/if}
+        {person.membership.recognised ? 'Correct membership' : 'Record membership'}
+      </button>
     </div>
-    <div class="notice">
-      <strong>Church-recognised membership is deliberate.</strong>
-      <p>It is never inferred from imports, age, phone, attendance, or other activity.</p>
-    </div>
+    <p class="membership-note">
+      Membership is recorded only after church recognition. It is never inferred from imports or
+      attendance.
+    </p>
   </section>
 {:else}
   <section class="page">
+    <Breadcrumbs
+      items={[{ label: 'People & Membership', href: '/people' }, { label: 'Person not found' }]}
+    />
+
     <h1 tabindex="-1">Person not found</h1>
     <p class="page-intro">This fictional person is not in the current in-memory sample.</p>
-    <a class="button secondary" href="/people">Return to people directory</a>
+    <a class="button secondary" href="/people">
+      <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
+      Return to people directory
+    </a>
   </section>
 {/if}
 
 <dialog bind:this={membershipDialog} aria-labelledby="membership-title">
   <form method="dialog" on:submit|preventDefault={saveMembership}>
+    <p class="dialog-context">People &amp; Membership · {person?.name}</p>
     <h2 id="membership-title">
       {person?.membership.recognised ? 'Correct membership record' : 'Record recognised membership'}
     </h2>
     <div class="field">
-      <label for="membership-status">Membership record</label><select
+      <label for="membership-status">Membership record</label><EgliseSelect
         id="membership-status"
-        bind:value={recognised}
-        ><option value={true}>Recognised member</option><option value={false}>Not recorded</option
-        ></select
-      >
+        bind:value={membershipRecord}
+        options={membershipOptions}
+      />
     </div>
     {#if recognised}<div class="field">
         <label for="evidence">Recognition evidence or reference</label><input
           id="evidence"
           bind:value={evidence}
           placeholder="e.g. Recognition register, 2026"
-        /><label for="recognised-on">Recognition date</label><input
+        /><label for="recognised-on">Recognition date</label><EgliseDatePicker
           id="recognised-on"
-          type="date"
           bind:value={recognisedOn}
+          autocomplete="off"
         />
       </div>{:else if person?.membership.recognised}<div class="field">
         <label for="correction-note">Correction note</label><input
@@ -155,27 +184,33 @@
     </p>
     {#if membershipError}<p class="error" role="alert">{membershipError}</p>{/if}
     <div class="dialog-actions">
-      <button class="button secondary" value="cancel">Cancel</button><button
-        class="button primary"
-        type="submit">Save membership record</button
-      >
+      <button class="button secondary" value="cancel">
+        <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
+        Cancel
+      </button><button class="button primary" type="submit">
+        <IconDeviceFloppy aria-hidden="true" size={18} stroke={1.8} />
+        Save membership record
+      </button>
     </div>
   </form>
 </dialog>
 
 <dialog bind:this={removalDialog} aria-labelledby="removal-title">
   <form method="dialog">
+    <p class="dialog-context">People &amp; Membership · {person?.name}</p>
     <h2 id="removal-title">Confirm membership correction</h2>
     <p>
       This changes the record from recognised member to not recorded. The correction note remains
       visible.
     </p>
     <div class="dialog-actions">
-      <button class="button secondary" value="cancel">Cancel</button><button
-        class="button danger-button"
-        type="button"
-        on:click={updateMembership}>Mark as not recorded</button
-      >
+      <button class="button secondary" value="cancel">
+        <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
+        Cancel
+      </button><button class="button danger-button" type="button" on:click={updateMembership}>
+        <IconUserX aria-hidden="true" size={18} stroke={1.8} />
+        Mark as not recorded
+      </button>
     </div>
   </form>
 </dialog>
