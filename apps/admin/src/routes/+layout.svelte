@@ -396,7 +396,7 @@
         </section>
       </nav>
 
-      <AdministratorAccount onlogout={logOut} />
+      <AdministratorAccount collapsed={sidebarCollapsed} onlogout={logOut} />
     </aside>
 
     <main id="main-content" class="content" inert={isMobile && mobileNavigationOpen} tabindex="-1">

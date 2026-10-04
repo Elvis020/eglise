@@ -144,6 +144,8 @@
           bind:phone
           bind:neighbourhood
           {errors}
+          kindDisabled={true}
+          kindHelp="Update this through the person's journey so each stage has a date and note."
           onchange={() => (dirty = true)}
         />
       </div>

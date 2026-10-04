@@ -3,13 +3,21 @@ import { writable } from 'svelte/store';
 import {
   createPerson,
   initialPeople,
+  type JourneyEntry,
   type Person,
   type PersonDetails,
   type PersonKind
 } from './domain';
 
 function clonePeople(): Person[] {
-  return initialPeople.map((person) => ({ ...person, membership: { ...person.membership } }));
+  return initialPeople.map((person) => ({
+    ...person,
+    journey: person.journey.map((entry) => ({ ...entry })),
+    membership: {
+      ...person.membership,
+      history: person.membership.history.map((entry) => ({ ...entry }))
+    }
+  }));
 }
 
 export const people = writable<Person[]>(clonePeople());
@@ -72,5 +80,15 @@ export function updatePerson(updated: Person): void {
 export function updatePersonDetails(id: string, details: PersonDetails): void {
   people.update((records) =>
     records.map((person) => (person.id === id ? { ...person, ...details } : person))
+  );
+}
+
+export function recordJourneyStage(id: string, entry: JourneyEntry): void {
+  people.update((records) =>
+    records.map((person) =>
+      person.id === id
+        ? { ...person, kind: entry.stage, journey: [...person.journey, entry] }
+        : person
+    )
   );
 }

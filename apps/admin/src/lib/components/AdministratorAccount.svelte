@@ -7,8 +7,10 @@
   import AdministratorAvatar from './AdministratorAvatar.svelte';
 
   let {
+    collapsed = false,
     onlogout
   }: {
+    collapsed?: boolean;
     onlogout: () => void;
   } = $props();
 
@@ -62,6 +64,18 @@
     </div>
     <IconDots aria-hidden="true" class="administrator-menu-icon" size={20} stroke={1.8} />
   </button>
+
+  {#if collapsed}
+    <button
+      aria-label="Log out"
+      class="administrator-compact-logout"
+      onclick={onlogout}
+      title="Log out"
+      type="button"
+    >
+      <IconLogout aria-hidden="true" size={20} stroke={1.8} />
+    </button>
+  {/if}
 
   {#if menuOpen}
     <div class="administrator-menu" id="administrator-menu" role="menu">

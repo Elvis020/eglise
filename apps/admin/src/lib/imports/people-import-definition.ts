@@ -35,7 +35,7 @@ export const peopleImportColumns: PeopleImportColumn[] = [
 
 export const peopleImportTemplateExample = [
   'Example Person',
-  'Person',
+  'Regular attendee',
   '024 555 0142',
   'Adabraka',
   '01/01/1990'
@@ -75,7 +75,7 @@ function text(value: unknown): string {
 function personKind(value: unknown): PersonKind | null {
   const normalised = text(value).toLocaleLowerCase();
 
-  if (normalised === 'person') return 'person';
+  if (normalised === 'person' || normalised === 'regular attendee') return 'person';
   if (normalised === 'visitor') return 'visitor';
   if (
     normalised === 'first-timer' ||
@@ -163,7 +163,7 @@ export function validatePeopleImportRow(
       phone,
       neighbourhood,
       state: 'excluded',
-      reason: 'Choose Person, Visitor, or First-time visitor.'
+      reason: 'Choose Regular attendee, Visitor, or First-time visitor.'
     };
   }
 

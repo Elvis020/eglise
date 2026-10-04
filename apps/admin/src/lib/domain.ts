@@ -6,15 +6,34 @@ export type Membership = {
   evidence: string;
   recognisedOn: string;
   correctionNote: string;
+  history: MembershipHistoryEntry[];
 };
 
 export type PersonKind = 'person' | 'visitor' | 'first-timer';
 
+export type JourneyEntry = {
+  stage: PersonKind;
+  recordedOn: string;
+  note: string;
+};
+
+export type MembershipHistoryEntry = {
+  action: 'recognised' | 'corrected';
+  recordedOn: string;
+  note: string;
+};
+
 export const personKindLabels: Record<PersonKind, string> = {
-  person: 'Person',
+  person: 'Regular attendee',
   visitor: 'Visitor',
   'first-timer': 'First-time visitor'
 };
+
+export const journeyStages: PersonKind[] = ['visitor', 'first-timer', 'person'];
+
+export function nextJourneyStage(stage: PersonKind): PersonKind | undefined {
+  return journeyStages.at(journeyStages.indexOf(stage) + 1);
+}
 
 export type Person = {
   id: string;
@@ -22,6 +41,7 @@ export type Person = {
   kind: PersonKind;
   phone: string;
   neighbourhood: string;
+  journey: JourneyEntry[];
   membership: Membership;
 };
 
@@ -29,7 +49,12 @@ export type PersonDetails = Pick<Person, 'name' | 'kind' | 'phone' | 'neighbourh
 
 export type PersonDetailsErrors = Partial<Record<keyof PersonDetails, string>>;
 
-const initialPeopleRecords: Array<Omit<Person, 'kind'>> = [
+type InitialMembership = Omit<Membership, 'history'>;
+type InitialPerson = Omit<Person, 'kind' | 'journey' | 'membership'> & {
+  membership: InitialMembership;
+};
+
+const initialPeopleRecords: InitialPerson[] = [
   {
     id: 'ama-owusu',
     name: 'Ama Owusu',
@@ -357,15 +382,33 @@ const initialPeopleRecords: Array<Omit<Person, 'kind'>> = [
   }
 ];
 
-export const initialPeople: Person[] = initialPeopleRecords.map((person) => ({
-  ...person,
-  kind:
+export const initialPeople: Person[] = initialPeopleRecords.map((person) => {
+  const kind =
     person.id === 'akua-sarpong'
       ? 'visitor'
       : person.id === 'nana-yeboah'
         ? 'first-timer'
-        : 'person'
-}));
+        : 'person';
+  const startingDate = person.membership.recognisedOn || '2026-01-01';
+
+  return {
+    ...person,
+    kind,
+    journey: [{ stage: kind, recordedOn: startingDate, note: '' }],
+    membership: {
+      ...person.membership,
+      history: person.membership.recognised
+        ? [
+            {
+              action: 'recognised',
+              recordedOn: person.membership.recognisedOn,
+              note: person.membership.evidence
+            }
+          ]
+        : []
+    }
+  };
+});
 
 export function normalisePhone(phone: string): string {
   return phone.trim().replace(/[\s()-]/g, '');
@@ -450,12 +493,20 @@ export function createPerson(
     kind,
     phone: phone.trim(),
     neighbourhood: neighbourhood.trim(),
+    journey: [
+      {
+        stage: kind,
+        recordedOn: new Date().toISOString().slice(0, 10),
+        note: ''
+      }
+    ],
     membership: {
       recognised: false,
       assimilationCompletedOn: '',
       evidence: '',
       recognisedOn: '',
-      correctionNote: ''
+      correctionNote: '',
+      history: []
     }
   };
 }

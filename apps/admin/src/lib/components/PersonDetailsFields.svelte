@@ -7,6 +7,8 @@
   export let phone = '';
   export let neighbourhood = '';
   export let errors: PersonDetailsErrors = {};
+  export let kindDisabled = false;
+  export let kindHelp = 'This does not assign membership or a neighbourhood.';
   export let onchange: () => void = () => undefined;
 
   const personKindOptions: EgliseSelectOption[] = Object.entries(personKindLabels).map(
@@ -16,8 +18,14 @@
 
 <div class="field">
   <label for="person-kind">Person type</label>
-  <EgliseSelect id="person-kind" bind:value={kind} options={personKindOptions} {onchange} />
-  <p class="help">This does not assign membership or a neighbourhood.</p>
+  <EgliseSelect
+    id="person-kind"
+    bind:value={kind}
+    options={personKindOptions}
+    disabled={kindDisabled}
+    {onchange}
+  />
+  <p class="help">{kindHelp}</p>
 </div>
 
 <div class="field">
