@@ -26,7 +26,7 @@
 
 ### Stakeholder meeting notes
 
-- Local source: `voice_notes_2.md`
+- Local source: `voice/voice_notes_2.md`
 - Key points to validate against the product documents:
   - Start with People & Membership, followed by attendance.
   - A pilot may begin with a shared account; that does not provide individual attribution.
@@ -35,11 +35,11 @@
 
 ### Current product documentation
 
-- `docs/product-vision.md`
-- `requirements.md`
-- `docs/people-and-membership.md`
-- `docs/attendance-and-reporting.md`
-- `docs/technical-scope.md`
+- `../docs/product-vision.md`
+- `../requirements.md`
+- `../docs/people-and-membership.md`
+- `../docs/attendance-and-reporting.md`
+- `../docs/technical-scope.md`
 
 ## Working synthesis
 

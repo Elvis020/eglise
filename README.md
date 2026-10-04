@@ -59,7 +59,7 @@ This is iterative discovery, not a promised release schedule. Sandra is the chur
 10. [Detailed technical approach](docs/technical-approach.md)
 11. [Application UI guidelines](docs/ui-guidelines.md)
 
-The [requirements](requirements.md) are the decision register and acceptance starting point. The original [voice notes](voice_notes.md) remain preserved source material.
+The [requirements](requirements.md) are the decision register and acceptance starting point. The original [voice notes](notes/voice/voice_notes.md) remain preserved source material.
 
 ## Working rhythm
 

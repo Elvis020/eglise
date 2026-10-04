@@ -41,4 +41,4 @@ The pilot may use a shared account to reduce setup friction. Actions made throug
 | [9. Technical scope](docs/technical-scope.md)                           | Pilot constraints and unresolved data-governance work.                                           |
 | [10. Technical approach](docs/technical-approach.md)                    | The proposed architecture and proof gates.                                                       |
 
-The [requirements](requirements.md) consolidate the detailed decision register. The [voice notes](voice_notes.md) remain preserved source material.
+The [requirements](requirements.md) consolidate the detailed decision register. The [voice notes](notes/voice/voice_notes.md) remain preserved source material.

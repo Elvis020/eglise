@@ -24,7 +24,7 @@ Move the fictional-data Phase 1 prototype into a private SvelteKit progressive w
 - The frontend uses fictional data first. It does not introduce authentication, persistence, real personal data, or deployment.
 - The admin shell is an explicit deliverable. People & Membership is active; later modules are visible but muted and honestly labelled.
 - UI work follows `docs/ui-guidelines.md`, including the approved palette, type pairing, and temporary decorative background motif.
-- Private files matching `voice_notes*.md` must remain untracked.
+- Voice transcripts are grouped under `notes/voice/`.
 - The existing public stakeholder site remains unchanged. The private application is a self-contained static SvelteKit PWA at `apps/admin`; the superseded standalone admin files are removed after migration verification.
 - The prototype uses in-memory fictional fixtures only; refresh resets all state.
 - The next prototype iteration is a private SvelteKit PWA under `apps/admin`; this makes the frontend architecture real without selecting the production backend or enabling offline data persistence.

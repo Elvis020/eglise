@@ -2,7 +2,7 @@
 
 **Status:** Stakeholder-meeting update. Product discovery; implementation has not started.
 
-**Source material:** [voice_notes.md](voice_notes.md) and the stakeholder meeting. The voice notes remain preserved. This document separates **Confirmed** direction from **Discovery** work and **Open** governance decisions.
+**Source material:** [voice notes](notes/voice/voice_notes.md) and the stakeholder meeting. The voice notes remain preserved. This document separates **Confirmed** direction from **Discovery** work and **Open** governance decisions.
 
 ## Product outcome
 
