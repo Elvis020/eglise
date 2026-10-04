@@ -97,7 +97,7 @@
   });
 </script>
 
-<svelte:head><title>Add a person — Eglise</title></svelte:head>
+<svelte:head><title>Add a person | Eglise</title></svelte:head>
 
 <section class="page">
   <Breadcrumbs

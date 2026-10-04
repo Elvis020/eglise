@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head>
-  <title>{label} — Eglise</title>
+  <title>{label} | Eglise</title>
 </svelte:head>
 
 <section class="not-found-page" aria-labelledby="not-found-title">

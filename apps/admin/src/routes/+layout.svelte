@@ -244,7 +244,7 @@
 </script>
 
 <svelte:head>
-  <title>{churchName} — People &amp; Membership</title>
+  <title>{churchName} | People &amp; Membership</title>
 </svelte:head>
 
 <svelte:window onkeydown={handleKeydown} />

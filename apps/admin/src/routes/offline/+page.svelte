@@ -1,4 +1,4 @@
-<svelte:head><title>Offline — Eglise</title></svelte:head>
+<svelte:head><title>Offline | Eglise</title></svelte:head>
 
 <section class="page offline-page">
   <p class="eyebrow">People &amp; Membership pilot</p>

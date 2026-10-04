@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head
-  ><title>{person ? `${person.name} — Eglise` : 'Person not found — Eglise'}</title></svelte:head
+  ><title>{person ? `${person.name} | Eglise` : 'Person not found | Eglise'}</title></svelte:head
 >
 
 {#if person}

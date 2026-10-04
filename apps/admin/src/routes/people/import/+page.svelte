@@ -148,7 +148,7 @@
   }
 </script>
 
-<svelte:head><title>Import people — Eglise</title></svelte:head>
+<svelte:head><title>Import people | Eglise</title></svelte:head>
 
 <section class="page import-page">
   <Breadcrumbs

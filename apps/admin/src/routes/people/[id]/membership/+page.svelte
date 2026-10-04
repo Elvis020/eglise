@@ -203,7 +203,7 @@
 
 <svelte:head>
   <title
-    >{person ? `Record membership for ${person.name} — Eglise` : 'Person not found — Eglise'}</title
+    >{person ? `Record membership for ${person.name} | Eglise` : 'Person not found | Eglise'}</title
   >
 </svelte:head>
 

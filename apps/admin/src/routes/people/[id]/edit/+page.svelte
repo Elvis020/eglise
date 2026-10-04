@@ -104,7 +104,7 @@
 </script>
 
 <svelte:head
-  ><title>{person ? `Edit ${person.name} — Eglise` : 'Person not found — Eglise'}</title
+  ><title>{person ? `Edit ${person.name} | Eglise` : 'Person not found | Eglise'}</title
   ></svelte:head
 >
 

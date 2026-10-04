@@ -165,7 +165,7 @@
   });
 </script>
 
-<svelte:head><title>People directory — Eglise</title></svelte:head>
+<svelte:head><title>People directory | Eglise</title></svelte:head>
 
 <section bind:this={directoryPage} class="page directory-page">
   <header class="page-head">
