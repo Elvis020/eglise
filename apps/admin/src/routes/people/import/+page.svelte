@@ -1,154 +1,367 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
+  import IconDownload from '@tabler/icons-svelte-runes/icons/download';
   import IconFileCheck from '@tabler/icons-svelte-runes/icons/file-check';
+  import IconUpload from '@tabler/icons-svelte-runes/icons/upload';
   import IconUsersPlus from '@tabler/icons-svelte-runes/icons/users-plus';
+  import { get } from 'svelte/store';
 
-  import { createPerson, importRows } from '$lib/domain';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { addPerson } from '$lib/people';
-  import { showToast } from '$lib/toast';
+  import {
+    PEOPLE_IMPORT_MAX_FILE_SIZE_BYTES,
+    PEOPLE_IMPORT_MAX_ROWS,
+    PEOPLE_IMPORT_TEMPLATE_VERSION,
+    acceptedPersonKinds,
+    normalisePersonName,
+    type PeopleImportRow,
+    validatePeopleImportRow
+  } from '$lib/imports/people-import-definition';
+  import { downloadPeopleImportTemplate, parsePeopleWorkbook } from '$lib/imports/people-xlsx';
+  import { addPeople, people } from '$lib/people';
+  import { personKindLabels } from '$lib/domain';
 
-  let duplicateChoice: '' | 'create' | 'exclude' = '';
+  type DuplicateDecision = 'create' | 'exclude';
+
+  let rows: PeopleImportRow[] = [];
+  let warnings: string[] = [];
+  let uploadError = '';
+  let selectedFileName = '';
+  let isReading = false;
+  let isDownloading = false;
+  let decisions: Record<number, DuplicateDecision> = {};
+  let outcome: { created: number; excluded: number } | null = null;
   let confirmDialog: HTMLDialogElement;
 
-  $: readyRows = importRows.filter(
-    (row) => row.state === 'ready' || (row.state === 'review' && duplicateChoice === 'create')
-  );
+  const maximumFileSizeMegabytes = PEOPLE_IMPORT_MAX_FILE_SIZE_BYTES / (1024 * 1024);
 
-  function confirmImport(): void {
-    if (!duplicateChoice) return;
+  $: readyRows = rows.filter((row) => row.state === 'ready');
+  $: reviewRows = rows.filter((row) => row.state === 'review');
+  $: excludedRows = rows.filter((row) => row.state === 'excluded');
+  $: unresolvedReviews = reviewRows.filter((row) => !decisions[row.rowNumber]);
+  $: chosenReviewRows = reviewRows.filter((row) => decisions[row.rowNumber] === 'create');
+  $: importRows = [...readyRows, ...chosenReviewRows];
+  $: totalExcluded =
+    excludedRows.length + reviewRows.filter((row) => decisions[row.rowNumber] === 'exclude').length;
+
+  async function downloadTemplate(): Promise<void> {
+    isDownloading = true;
+    uploadError = '';
+
+    try {
+      await downloadPeopleImportTemplate();
+    } catch {
+      uploadError = 'The template could not be downloaded. Please try again.';
+    } finally {
+      isDownloading = false;
+    }
+  }
+
+  async function readFile(event: Event): Promise<void> {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+
+    rows = [];
+    warnings = [];
+    decisions = {};
+    outcome = null;
+    uploadError = '';
+    selectedFileName = '';
+
+    if (!file) return;
+
+    if (!file.name.toLocaleLowerCase().endsWith('.xlsx')) {
+      uploadError = 'Choose an .xlsx workbook.';
+      input.value = '';
+
+      return;
+    }
+
+    if (file.size > PEOPLE_IMPORT_MAX_FILE_SIZE_BYTES) {
+      uploadError = `Choose a workbook smaller than ${maximumFileSizeMegabytes} MB.`;
+      input.value = '';
+
+      return;
+    }
+
+    isReading = true;
+
+    try {
+      const workbook = await parsePeopleWorkbook(file);
+      const currentPeople = get(people);
+      const nameCounts = new Map<string, number>();
+
+      workbook.rows.forEach(({ values }) => {
+        const name =
+          typeof values.name === 'string' || typeof values.name === 'number'
+            ? normalisePersonName(String(values.name))
+            : '';
+
+        if (name) nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+      });
+
+      rows = workbook.rows.map(({ rowNumber, values }) => {
+        const row = validatePeopleImportRow(values, rowNumber, currentPeople);
+        const hasMatchingWorkbookName = (nameCounts.get(normalisePersonName(row.name)) ?? 0) > 1;
+
+        return row.state === 'ready' && hasMatchingWorkbookName
+          ? {
+              ...row,
+              state: 'review' as const,
+              reason: 'Another row in this workbook has the same name.'
+            }
+          : row;
+      });
+      warnings = workbook.warnings;
+      selectedFileName = file.name;
+    } catch (error) {
+      uploadError = error instanceof Error ? error.message : 'This workbook could not be read.';
+      input.value = '';
+    } finally {
+      isReading = false;
+    }
+  }
+
+  function setDecision(rowNumber: number, decision: DuplicateDecision): void {
+    decisions = { ...decisions, [rowNumber]: decision };
+  }
+
+  function openConfirmation(): void {
+    if (unresolvedReviews.length || !importRows.length) return;
 
     confirmDialog.showModal();
   }
 
-  function createRecords(): void {
-    readyRows.forEach((row) => {
-      const name = row.state === 'review' ? `${row.name} (import)` : row.name;
+  function createPeople(): void {
+    const created = addPeople(
+      importRows.map((row) => ({
+        name: row.name,
+        kind: row.kind ?? 'person',
+        phone: row.phone,
+        neighbourhood: row.neighbourhood
+      }))
+    );
 
-      addPerson(createPerson(name, row.phone, row.neighbourhood));
-    });
-
+    outcome = { created: created.length, excluded: totalExcluded };
+    rows = [];
+    decisions = {};
     confirmDialog.close();
-    showToast(`${readyRows.length} fictional people imported. Invalid rows were excluded.`);
-    void goto('/people');
   }
 </script>
 
-<svelte:head><title>Review sample import — Eglise</title></svelte:head>
+<svelte:head><title>Import people — Eglise</title></svelte:head>
 
-<section class="page">
+<section class="page import-page">
   <Breadcrumbs
-    items={[{ label: 'People & Membership', href: '/people' }, { label: 'Review sample import' }]}
+    items={[{ label: 'People & Membership', href: '/people' }, { label: 'Import people' }]}
   />
 
   <header class="page-head">
     <div>
-      <h1 tabindex="-1">Review sample import</h1>
+      <h1 tabindex="-1">Import people</h1>
       <p class="page-intro">
-        A deterministic fictional sample proves the review flow. It does not parse or upload a
-        spreadsheet.
+        Upload a {PEOPLE_IMPORT_TEMPLATE_VERSION} workbook, check each result, then create the people
+        you approve. New people start unrecognised; this import never creates membership records.
       </p>
     </div>
   </header>
 
-  <div class="notice">
-    <strong>Review before confirming.</strong>
-    <p>
-      Invalid rows are excluded. Possible duplicates require a human choice; a shared phone alone
-      never merges people. Age results do not reveal a date of birth.
-    </p>
-  </div>
+  <ol class="import-steps" aria-label="Import progress">
+    <li class:active={!rows.length && !outcome}><span>1</span>Upload</li>
+    <li class:active={rows.length > 0 && !outcome}><span>2</span>Review</li>
+    <li class:active={outcome !== null}><span>3</span>Complete</li>
+  </ol>
 
-  <div class="panel">
-    <div class="table-wrap">
-      <table class="directory import-table">
-        <thead
-          ><tr
-            ><th>Person</th><th>Phone</th><th>Neighbourhood</th><th>Eligibility</th><th
-              >Review state</th
-            ><th>Choice</th></tr
-          ></thead
-        >
-        <tbody>
-          {#each importRows as row}
-            <tr
-              class:import-invalid={row.state === 'invalid'}
-              class:import-review={row.state === 'review'}
-            >
-              <td data-label="Person">{row.name}</td><td data-label="Phone">{row.phone}</td><td
-                data-label="Neighbourhood">{row.neighbourhood}</td
-              >
-              <td data-label="Eligibility"
-                >{row.eligibility === 'eligible'
-                  ? 'Eligibility checked; private DOB withheld'
-                  : row.eligibility === 'below-age'
-                    ? `Under 16; private DOB withheld`
-                    : 'Eligibility not assessed'}</td
-              >
-              <td data-label="Review state"
-                ><span
-                  class:review={row.state !== 'ready'}
-                  class:member={row.state === 'ready'}
-                  class="status">{row.note}</span
-                ></td
-              >
-              <td data-label="Choice">
-                {#if row.state === 'review'}
-                  <fieldset class="choice-group">
-                    <legend class="muted">A matching name exists</legend><label
-                      ><input type="radio" bind:group={duplicateChoice} value="create" /> Create separately</label
-                    ><label
-                      ><input type="radio" bind:group={duplicateChoice} value="exclude" /> Exclude row</label
-                    >
-                  </fieldset>
-                {:else if row.state === 'invalid'}
-                  <span class="row-note">Excluded until corrected</span>
-                {:else}
-                  <span class="row-note">Create record</span>
-                {/if}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+  {#if outcome}
+    <section class="notice import-outcome" aria-labelledby="import-outcome-title">
+      <strong id="import-outcome-title">Import complete</strong>
+      <p>
+        Created {outcome.created}
+        {outcome.created === 1 ? 'person' : 'people'}. Excluded
+        {outcome.excluded}
+        {outcome.excluded === 1 ? 'row was' : 'rows were'} not added.
+      </p>
+      <a class="button primary" href="/people">View people directory</a>
+    </section>
+  {/if}
+
+  <section class="panel import-upload" aria-labelledby="upload-title">
+    <div>
+      <h2 id="upload-title">1. Use the {PEOPLE_IMPORT_TEMPLATE_VERSION} template</h2>
+      <p>
+        Use the columns Full name, Person type, Phone number, Neighbourhood, and Date of birth.
+        Accepted person types: {acceptedPersonKinds
+          .map((kind) => personKindLabels[kind])
+          .join(', ')}.
+      </p>
     </div>
-    <div class="form-actions">
-      <a class="button secondary" href="/people">
-        <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
-        Cancel
-      </a><button
-        class="button primary"
+    <div class="import-upload-actions">
+      <button
+        class="button secondary"
         type="button"
-        disabled={!duplicateChoice}
-        aria-describedby="duplicate-decision-help"
-        on:click={confirmImport}
+        onclick={downloadTemplate}
+        disabled={isDownloading}
       >
-        <IconFileCheck aria-hidden="true" size={18} stroke={1.8} />
-        Confirm reviewed import
+        <IconDownload aria-hidden="true" size={18} stroke={1.8} />
+        {isDownloading
+          ? 'Preparing template…'
+          : `Download ${PEOPLE_IMPORT_TEMPLATE_VERSION} template`}
       </button>
+      <div class="field import-file-field">
+        <label for="people-workbook">2. Upload completed workbook</label>
+        <input
+          id="people-workbook"
+          type="file"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          onchange={readFile}
+          disabled={isReading}
+          aria-describedby="people-workbook-help people-workbook-error"
+        />
+        <p id="people-workbook-help" class="help">
+          .xlsx only, up to {maximumFileSizeMegabytes} MB and {PEOPLE_IMPORT_MAX_ROWS} people.
+        </p>
+      </div>
     </div>
-    <p id="duplicate-decision-help" class="help">
-      Choose whether to create or exclude the possible duplicate before confirming this sample.
-    </p>
-  </div>
+    {#if isReading}
+      <p class="status import-reading">
+        <IconUpload aria-hidden="true" size={16} />Reading workbook…
+      </p>
+    {/if}
+    {#if uploadError}
+      <p id="people-workbook-error" class="field-error" role="alert">{uploadError}</p>
+    {/if}
+    {#if warnings.length}
+      <div class="notice import-warning" role="status">
+        <strong>Workbook warning</strong>
+        {#each warnings as warning}<p>{warning}</p>{/each}
+      </div>
+    {/if}
+  </section>
+
+  {#if rows.length && !outcome}
+    <section class="panel import-review" aria-labelledby="review-title">
+      <div class="import-review-heading">
+        <div>
+          <h2 id="review-title">Review workbook rows</h2>
+          <p>
+            {selectedFileName} · {readyRows.length} ready · {reviewRows.length} need review ·
+            {excludedRows.length} excluded
+          </p>
+        </div>
+        <span class="row-note">
+          Dates of birth are checked only for eligibility and are not shown or saved.
+        </span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="directory import-table">
+          <thead>
+            <tr>
+              <th scope="col">Row</th><th scope="col">Person</th><th scope="col">Type</th><th
+                scope="col">Phone</th
+              ><th scope="col">Neighbourhood</th><th scope="col">Result</th><th scope="col"
+                >Decision</th
+              >
+            </tr>
+          </thead>
+          <tbody>
+            {#each rows as row (row.rowNumber)}
+              <tr
+                class:import-excluded={row.state === 'excluded'}
+                class:import-review-row={row.state === 'review'}
+              >
+                <td data-label="Row">{row.rowNumber}</td>
+                <td data-label="Person">{row.name || 'No name provided'}</td>
+                <td data-label="Type">
+                  {row.kind ? personKindLabels[row.kind] : 'Needs correction'}
+                </td>
+                <td data-label="Phone">{row.phone || 'Not provided'}</td>
+                <td data-label="Neighbourhood">{row.neighbourhood || 'Not provided'}</td>
+                <td data-label="Result">
+                  <span
+                    class:member={row.state === 'ready'}
+                    class:review={row.state !== 'ready'}
+                    class="status">{row.reason}</span
+                  >
+                </td>
+                <td data-label="Decision">
+                  {#if row.state === 'review'}
+                    <fieldset class="choice-group">
+                      <legend>Matching name</legend>
+                      <label>
+                        <input
+                          type="radio"
+                          name={`row-${row.rowNumber}`}
+                          checked={decisions[row.rowNumber] === 'create'}
+                          onchange={() => setDecision(row.rowNumber, 'create')}
+                        />
+                        Create separately
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          name={`row-${row.rowNumber}`}
+                          checked={decisions[row.rowNumber] === 'exclude'}
+                          onchange={() => setDecision(row.rowNumber, 'exclude')}
+                        />
+                        Exclude row
+                      </label>
+                    </fieldset>
+                  {:else if row.state === 'excluded'}
+                    <span class="row-note">Excluded</span>
+                  {:else}
+                    <span class="row-note">Will create</span>
+                  {/if}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="form-actions">
+        <a class="button secondary" href="/people">
+          <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />Cancel
+        </a>
+        <button
+          class="button primary"
+          type="button"
+          disabled={unresolvedReviews.length > 0 || importRows.length === 0}
+          aria-describedby="confirm-import-help"
+          onclick={openConfirmation}
+        >
+          <IconFileCheck aria-hidden="true" size={18} stroke={1.8} />Confirm import
+        </button>
+      </div>
+      <p id="confirm-import-help" class="help">
+        {#if unresolvedReviews.length}
+          Decide how to handle {unresolvedReviews.length} matching
+          {unresolvedReviews.length === 1 ? 'name' : 'names'} before confirming.
+        {:else if !importRows.length}
+          No valid rows are available to create.
+        {:else}
+          {importRows.length}
+          {importRows.length === 1 ? 'person is' : 'people are'} ready to create.
+        {/if}
+      </p>
+    </section>
+  {/if}
 </section>
 
-<dialog bind:this={confirmDialog} aria-labelledby="import-title">
+<dialog bind:this={confirmDialog} aria-labelledby="confirm-import-title">
   <form method="dialog">
-    <p class="dialog-context">People &amp; Membership · Review sample import</p>
-    <h2 id="import-title">Confirm reviewed import</h2>
+    <p class="dialog-context">People &amp; Membership · Import people</p>
+    <h2 id="confirm-import-title">Confirm import</h2>
     <p>
-      {readyRows.length} fictional people will be created. Invalid rows remain excluded, and no membership
-      or attendance is created.
+      Create exactly {importRows.length}
+      {importRows.length === 1 ? 'person' : 'people'} and exclude {totalExcluded}
+      {totalExcluded === 1 ? 'row' : 'rows'}? No membership or attendance records will be created.
     </p>
     <div class="dialog-actions">
       <button class="button secondary" value="cancel">
-        <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
-        Cancel
-      </button><button class="button primary" type="button" on:click={createRecords}>
-        <IconUsersPlus aria-hidden="true" size={18} stroke={1.8} />
-        Create fictional people
+        <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />Cancel
+      </button>
+      <button class="button primary" type="button" onclick={createPeople}>
+        <IconUsersPlus aria-hidden="true" size={18} stroke={1.8} />Create people
       </button>
     </div>
   </form>

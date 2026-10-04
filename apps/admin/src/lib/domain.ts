@@ -2,29 +2,34 @@ export const MINIMUM_AGE = 16;
 
 export type Membership = {
   recognised: boolean;
+  assimilationCompletedOn: string;
   evidence: string;
   recognisedOn: string;
   correctionNote: string;
 };
 
+export type PersonKind = 'person' | 'visitor' | 'first-timer';
+
+export const personKindLabels: Record<PersonKind, string> = {
+  person: 'Person',
+  visitor: 'Visitor',
+  'first-timer': 'First-time visitor'
+};
+
 export type Person = {
   id: string;
   name: string;
+  kind: PersonKind;
   phone: string;
   neighbourhood: string;
   membership: Membership;
 };
 
-export type ImportRow = {
-  name: string;
-  phone: string;
-  neighbourhood: string;
-  eligibility: 'eligible' | 'below-age' | 'not-assessed';
-  state: 'ready' | 'invalid' | 'review';
-  note: string;
-};
+export type PersonDetails = Pick<Person, 'name' | 'kind' | 'phone' | 'neighbourhood'>;
 
-export const initialPeople: Person[] = [
+export type PersonDetailsErrors = Partial<Record<keyof PersonDetails, string>>;
+
+const initialPeopleRecords: Array<Omit<Person, 'kind'>> = [
   {
     id: 'ama-owusu',
     name: 'Ama Owusu',
@@ -32,6 +37,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'Adabraka',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2025-08-01',
       evidence: 'Recognition register, 2025',
       recognisedOn: '2025-08-14',
       correctionNote: ''
@@ -42,7 +48,13 @@ export const initialPeople: Person[] = [
     name: 'Kojo Boateng',
     phone: '+233 24 555 0142',
     neighbourhood: 'Adabraka',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'elena-mensah',
@@ -51,6 +63,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'East Legon',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2024-05-06',
       evidence: 'Membership form, 2024',
       recognisedOn: '2024-05-20',
       correctionNote: ''
@@ -61,7 +74,13 @@ export const initialPeople: Person[] = [
     name: 'Yaw Asante',
     phone: '+233 20 778 0021',
     neighbourhood: 'Dansoman',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'adwoa-nyarko',
@@ -70,6 +89,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'Osu',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2025-10-28',
       evidence: 'Recognition register, 2025',
       recognisedOn: '2025-11-09',
       correctionNote: ''
@@ -80,14 +100,26 @@ export const initialPeople: Person[] = [
     name: 'Kwame Osei',
     phone: '+233 25 408 7126',
     neighbourhood: 'Madina',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'efua-danquah',
     name: 'Efua Danquah',
     phone: '+233 24 732 1905',
     neighbourhood: 'Labone',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'kofi-appiah',
@@ -96,6 +128,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'Kaneshie',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2024-09-18',
       evidence: 'Membership form, 2024',
       recognisedOn: '2024-10-02',
       correctionNote: ''
@@ -106,14 +139,26 @@ export const initialPeople: Person[] = [
     name: 'Akua Sarpong',
     phone: '+233 24 880 3614',
     neighbourhood: 'Nungua',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'nana-yeboah',
     name: 'Nana Yeboah',
     phone: '+233 25 661 9072',
     neighbourhood: 'Achimota',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'abena-osei',
@@ -122,6 +167,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'Tema Community 12',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2026-01-04',
       evidence: 'Recognition register, 2026',
       recognisedOn: '2026-01-18',
       correctionNote: ''
@@ -132,14 +178,26 @@ export const initialPeople: Person[] = [
     name: 'Samuel Cole',
     phone: '+44 7700 900 518',
     neighbourhood: 'East Legon',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'esi-tetteh',
     name: 'Esi Tetteh',
     phone: '+233 20 446 8709',
     neighbourhood: 'Teshie',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'daniel-ansah',
@@ -148,6 +206,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'Dzorwulu',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2025-06-07',
       evidence: 'Membership form, 2025',
       recognisedOn: '2025-06-22',
       correctionNote: ''
@@ -158,14 +217,26 @@ export const initialPeople: Person[] = [
     name: 'Comfort Adu',
     phone: '+233 25 277 4938',
     neighbourhood: 'Dansoman',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'michael-addai',
     name: 'Michael Addai',
     phone: '+1 202 555 0149',
     neighbourhood: 'Cantonments',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'gladys-baah',
@@ -174,6 +245,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'Adenta',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2024-07-19',
       evidence: 'Recognition register, 2024',
       recognisedOn: '2024-08-07',
       correctionNote: ''
@@ -184,14 +256,26 @@ export const initialPeople: Person[] = [
     name: 'Isaac Bediako',
     phone: '+233 20 833 7451',
     neighbourhood: 'Spintex',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'mercy-quaye',
     name: 'Mercy Quaye',
     phone: '+233 24 512 6087',
     neighbourhood: 'La',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'josephine-arthur',
@@ -200,6 +284,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'Ashaley Botwe',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2026-01-31',
       evidence: 'Membership form, 2026',
       recognisedOn: '2026-02-14',
       correctionNote: ''
@@ -210,14 +295,26 @@ export const initialPeople: Person[] = [
     name: 'Emmanuel Fosu',
     phone: '+233 24 769 1502',
     neighbourhood: 'Kotobabi',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'ruth-mensah',
     name: 'Ruth Mensah',
     phone: '+233 20 395 8264',
     neighbourhood: 'Airport Residential',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'paul-kumi',
@@ -226,6 +323,7 @@ export const initialPeople: Person[] = [
     neighbourhood: 'Sakumono',
     membership: {
       recognised: true,
+      assimilationCompletedOn: '2025-03-15',
       evidence: 'Recognition register, 2025',
       recognisedOn: '2025-03-29',
       correctionNote: ''
@@ -236,67 +334,38 @@ export const initialPeople: Person[] = [
     name: 'Lydia Akwasi',
     phone: '+233 25 420 6819',
     neighbourhood: 'Haatso',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   },
   {
     id: 'peter-boateng',
     name: 'Peter Boateng',
     phone: '+233 24 236 9758',
     neighbourhood: 'Adabraka',
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   }
 ];
 
-export const importRows: ImportRow[] = [
-  {
-    name: 'Nana Badu',
-    phone: '+233 27 461 1800',
-    neighbourhood: 'Osu',
-    eligibility: 'eligible',
-    state: 'ready',
-    note: 'Ready to create'
-  },
-  {
-    name: 'Akosua Dapaah',
-    phone: '+233 24 555 0142',
-    neighbourhood: 'Adabraka',
-    eligibility: 'eligible',
-    state: 'ready',
-    note: 'Valid shared phone; create separately'
-  },
-  {
-    name: 'Abena Kusi',
-    phone: '024 700',
-    neighbourhood: 'Madina',
-    eligibility: 'not-assessed',
-    state: 'invalid',
-    note: 'Phone number needs correction'
-  },
-  {
-    name: 'Ama Owusu',
-    phone: '+233 24 555 0142',
-    neighbourhood: 'Adabraka',
-    eligibility: 'eligible',
-    state: 'review',
-    note: 'Possible duplicate; review before creating'
-  },
-  {
-    name: 'Kweku Lamptey',
-    phone: '+233 55 181 2004',
-    neighbourhood: 'Dansoman',
-    eligibility: 'below-age',
-    state: 'invalid',
-    note: 'Below the minimum age; excluded'
-  },
-  {
-    name: 'Mira Daniels',
-    phone: '+1 202 555 0148',
-    neighbourhood: 'Cantonments',
-    eligibility: 'eligible',
-    state: 'ready',
-    note: 'At the minimum age; ready to create'
-  }
-];
+export const initialPeople: Person[] = initialPeopleRecords.map((person) => ({
+  ...person,
+  kind:
+    person.id === 'akua-sarpong'
+      ? 'visitor'
+      : person.id === 'nana-yeboah'
+        ? 'first-timer'
+        : 'person'
+}));
 
 export function normalisePhone(phone: string): string {
   return phone.trim().replace(/[\s()-]/g, '');
@@ -310,6 +379,34 @@ export function isValidPhone(phone: string): boolean {
     /^\+233[25]\d{8}$/.test(normalised) ||
     /^\+[1-9]\d{7,14}$/.test(normalised)
   );
+}
+
+export function validatePersonDetails(details: PersonDetails): PersonDetailsErrors {
+  const errors: PersonDetailsErrors = {};
+
+  if (!details.name.trim()) errors.name = "Enter the person's name.";
+  if (details.kind === 'person' && !details.phone.trim()) {
+    errors.phone = 'Enter a Ghanaian mobile number or an international E.164 number.';
+  } else if (details.phone.trim() && !isValidPhone(details.phone)) {
+    errors.phone = 'Enter a Ghanaian mobile number or an international E.164 number.';
+  }
+
+  return errors;
+}
+
+export function isOnOrBefore(firstDate: string, secondDate: string): boolean {
+  return Boolean(firstDate && secondDate) && firstDate <= secondDate;
+}
+
+export function formatRecordDate(date: string): string {
+  if (!date) return '';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC'
+  }).format(new Date(`${date}T00:00:00Z`));
 }
 
 export function ageOn(dateOfBirth: Date, today: Date): number {
@@ -341,12 +438,24 @@ export function createId(name: string): string {
   return `${stem}-${Date.now()}`;
 }
 
-export function createPerson(name: string, phone: string, neighbourhood: string): Person {
+export function createPerson(
+  name: string,
+  phone: string,
+  neighbourhood: string,
+  kind: PersonKind = 'person'
+): Person {
   return {
     id: createId(name),
     name: name.trim(),
+    kind,
     phone: phone.trim(),
     neighbourhood: neighbourhood.trim(),
-    membership: { recognised: false, evidence: '', recognisedOn: '', correctionNote: '' }
+    membership: {
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    }
   };
 }

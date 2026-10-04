@@ -5,15 +5,17 @@
   import IconFileImport from '@tabler/icons-svelte-runes/icons/file-import';
   import IconUserPlus from '@tabler/icons-svelte-runes/icons/user-plus';
 
-  import type { Person } from '$lib/domain';
+  import { personKindLabels, type Person } from '$lib/domain';
   import { clampPage, DIRECTORY_PAGE_SIZE, pageItems } from '$lib/directory';
   import DirectoryPagination from '$lib/components/DirectoryPagination.svelte';
   import EgliseSelect, { type EgliseSelectOption } from '$lib/components/EgliseSelect.svelte';
+  import PeopleAtGlance, { type DirectoryKindFilter } from '$lib/components/PeopleAtGlance.svelte';
   import PersonAvatar from '$lib/components/PersonAvatar.svelte';
   import { people } from '$lib/people';
 
   let query = '';
   let membership = 'all';
+  let kindFilter: DirectoryKindFilter = 'all';
   let currentPage = 1;
   let pageSize = DIRECTORY_PAGE_SIZE;
   let directoryPage: HTMLElement;
@@ -26,21 +28,49 @@
     { value: 'false', label: 'Not members' }
   ];
 
-  function matches(person: Person, searchQuery: string, membershipValue: string): boolean {
+  function matches(
+    person: Person,
+    searchQuery: string,
+    membershipValue: string,
+    personKind: DirectoryKindFilter
+  ): boolean {
     const searchable = `${person.name} ${person.phone} ${person.neighbourhood}`.toLowerCase();
     const membershipMatches =
       membershipValue === 'all' || String(person.membership.recognised) === membershipValue;
 
-    return membershipMatches && searchable.includes(searchQuery.toLowerCase());
+    const kindMatches = personKind === 'all' || person.kind === personKind;
+
+    return (
+      membershipMatches && kindMatches && searchable.includes(searchQuery.trim().toLowerCase())
+    );
   }
 
-  $: filteredPeople = $people.filter((person) => matches(person, query, membership));
+  $: filteredPeople = $people.filter((person) => matches(person, query, membership, kindFilter));
   $: currentPage = clampPage(currentPage, filteredPeople.length, pageSize);
   $: pagedPeople = pageItems(filteredPeople, currentPage, pageSize);
 
   function resetPage(): void {
     currentPage = 1;
   }
+
+  function setKindFilter(nextKind: DirectoryKindFilter): void {
+    kindFilter = nextKind;
+
+    if (nextKind !== 'all') {
+      membership = 'all';
+    }
+
+    resetPage();
+  }
+
+  function clearFilters(): void {
+    query = '';
+    membership = 'all';
+    kindFilter = 'all';
+    resetPage();
+  }
+
+  $: filtersApplied = Boolean(query.trim()) || membership !== 'all' || kindFilter !== 'all';
 
   function openPerson(id: string): void {
     void goto(`/people/${id}`);
@@ -142,9 +172,7 @@
     <div>
       <p class="eyebrow">People &amp; Membership</p>
       <h1 tabindex="-1">People directory</h1>
-      <p class="page-intro">
-        A fictional directory for testing the People &amp; Membership workflow.
-      </p>
+      <p class="page-intro">Manage people and membership records.</p>
     </div>
     <a class="button primary" href="/people/add">
       <IconUserPlus aria-hidden="true" size={18} stroke={1.8} />
@@ -152,8 +180,18 @@
     </a>
   </header>
 
+  <PeopleAtGlance records={$people} activeFilter={kindFilter} onfilterchange={setKindFilter} />
+
   <div class="panel">
-    <div class="controls">
+    {#if filtersApplied}
+      <div class="directory-filter-state">
+        <p>Filters are applied to this directory.</p>
+        <button class="button secondary compact-button" onclick={clearFilters} type="button">
+          Clear filters
+        </button>
+      </div>
+    {/if}
+    <div class:single-control={kindFilter !== 'all'} class="controls">
       <div class="field">
         <label for="directory-search">Search people</label>
         <input
@@ -164,15 +202,17 @@
           placeholder="Name, phone, or neighbourhood"
         />
       </div>
-      <div class="field membership-field">
-        <label for="membership-filter">Membership</label>
-        <EgliseSelect
-          id="membership-filter"
-          bind:value={membership}
-          onchange={resetPage}
-          options={membershipOptions}
-        />
-      </div>
+      {#if kindFilter === 'all'}
+        <div class="field membership-field">
+          <label for="membership-filter">Membership</label>
+          <EgliseSelect
+            id="membership-filter"
+            bind:value={membership}
+            onchange={resetPage}
+            options={membershipOptions}
+          />
+        </div>
+      {/if}
     </div>
 
     {#if filteredPeople.length}
@@ -204,11 +244,19 @@
                 <td data-label="Person">
                   <div class="person-identity">
                     <PersonAvatar />
-                    <span class="person-name">{person.name}</span>
+                    <span class="person-copy">
+                      <span class="person-name">{person.name}</span>
+                      {#if person.kind !== 'person'}
+                        <span class="person-kind">{personKindLabels[person.kind]}</span>
+                      {/if}
+                    </span>
                   </div>
                 </td>
-                <td class="directory-metadata" data-label="Phone">{person.phone}</td>
-                <td class="directory-metadata" data-label="Neighbourhood">{person.neighbourhood}</td
+                <td class="directory-metadata" data-label="Phone"
+                  >{person.phone || 'Not provided'}</td
+                >
+                <td class="directory-metadata" data-label="Neighbourhood"
+                  >{person.neighbourhood || 'Not provided'}</td
                 >
                 <td data-label="Membership">
                   <span class="membership-label">
@@ -223,16 +271,14 @@
       <DirectoryPagination bind:page={currentPage} {pageSize} total={filteredPeople.length} />
     {:else}
       <p class="empty">
-        No people match this search. Try another term or <a href="/people/add"
-          >add a fictional person</a
-        >.
+        No people match this search. Try another term or <a href="/people/add">add a person</a>.
       </p>
     {/if}
   </div>
 
   <div bind:this={importPrompt} class="panel import-prompt">
     <div>
-      <h2>Bring in a fictional sample</h2>
+      <h2>Review a sample import</h2>
       <p class="muted">
         Review a fixed example first. This prototype does not read files or create attendance
         records.

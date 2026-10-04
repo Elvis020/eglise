@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ageOn,
-  importRows,
+  createPerson,
   initialPeople,
   isEligible,
+  isOnOrBefore,
   isValidPhone,
-  normalisePhone
+  normalisePhone,
+  validatePersonDetails
 } from '../src/lib/domain';
+import { validatePeopleImportRow } from '../src/lib/imports/people-import-definition';
 import {
   DIRECTORY_PAGE_SIZE,
   clampPage,
@@ -28,6 +31,27 @@ describe('person pilot rules', () => {
     expect(isValidPhone('024 700')).toBe(false);
   });
 
+  it('validates the editable person details without treating a shared phone as a duplicate', () => {
+    expect(
+      validatePersonDetails({
+        name: 'Ama Owusu',
+        kind: 'person',
+        phone: '+233 24 555 0142',
+        neighbourhood: 'Adabraka'
+      })
+    ).toEqual({});
+    expect(
+      validatePersonDetails({ name: '', kind: 'person', phone: '024 700', neighbourhood: '' })
+    ).toEqual({
+      name: "Enter the person's name.",
+      phone: 'Enter a Ghanaian mobile number or an international E.164 number.'
+    });
+
+    expect(
+      validatePersonDetails({ name: 'Mira Daniels', kind: 'visitor', phone: '', neighbourhood: '' })
+    ).toEqual({});
+  });
+
   it('accepts people at the age boundary and excludes people below it', () => {
     const today = new Date('2026-09-30T12:00:00');
 
@@ -36,15 +60,67 @@ describe('person pilot rules', () => {
     expect(isEligible('2010-10-01', today)).toBe(false);
   });
 
-  it('keeps deterministic import states for invalid, duplicate-candidate, and age cases', () => {
-    expect(importRows.find((row) => row.name === 'Abena Kusi')?.state).toBe('invalid');
-    expect(importRows.find((row) => row.name === 'Ama Owusu')?.state).toBe('review');
-    expect(importRows.find((row) => row.name === 'Kweku Lamptey')?.eligibility).toBe('below-age');
+  it('validates import rows without retaining dates of birth', () => {
+    const ready = validatePeopleImportRow(
+      {
+        name: 'Mira Daniels',
+        kind: 'Person',
+        phone: '+233 24 555 0142',
+        neighbourhood: 'Cantonments',
+        dateOfBirth: 40356
+      },
+      2,
+      initialPeople,
+      new Date('2026-09-30T12:00:00')
+    );
+    const duplicate = validatePeopleImportRow(
+      {
+        name: '  Ama   Owusu ',
+        kind: 'Visitor',
+        phone: '',
+        neighbourhood: '',
+        dateOfBirth: '01/01/1990'
+      },
+      3,
+      initialPeople,
+      new Date('2026-09-30T12:00:00')
+    );
+    const underAge = validatePeopleImportRow(
+      {
+        name: 'Kweku Lamptey',
+        kind: 'Person',
+        phone: '024 555 0142',
+        neighbourhood: '',
+        dateOfBirth: '2010-10-01'
+      },
+      4,
+      initialPeople,
+      new Date('2026-09-30T12:00:00')
+    );
+
+    expect(ready.state).toBe('ready');
+    expect(duplicate.state).toBe('review');
+    expect(underAge).toMatchObject({ state: 'excluded', reason: 'Age requirements were not met.' });
+    expect(ready).not.toHaveProperty('dateOfBirth');
+  });
+
+  it('starts people without a membership milestone and keeps the membership dates in order', () => {
+    expect(createPerson('New person', '+233 24 555 0142', 'Adabraka').membership).toEqual({
+      recognised: false,
+      assimilationCompletedOn: '',
+      evidence: '',
+      recognisedOn: '',
+      correctionNote: ''
+    });
+    expect(createPerson('New visitor', '', '', 'visitor').kind).toBe('visitor');
+    expect(isOnOrBefore('2026-09-01', '2026-09-01')).toBe(true);
+    expect(isOnOrBefore('2026-09-01', '2026-09-30')).toBe(true);
+    expect(isOnOrBefore('2026-09-30', '2026-09-01')).toBe(false);
   });
 });
 
 describe('directory pagination', () => {
-  it('keeps a truthful first page for the 25-person fictional fixture', () => {
+  it('keeps a truthful first page for the 25-person sample fixture', () => {
     expect(DIRECTORY_PAGE_SIZE).toBe(10);
     expect(initialPeople).toHaveLength(25);
     expect(pageCount(initialPeople.length, DIRECTORY_PAGE_SIZE)).toBe(3);

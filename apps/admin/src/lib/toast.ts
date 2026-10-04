@@ -1,13 +1,5 @@
-import { writable } from 'svelte/store';
-
-export const toast = writable('');
-
-let timer: ReturnType<typeof setTimeout> | undefined;
+import { toast } from 'svelte-sonner';
 
 export function showToast(message: string): void {
-  toast.set(message);
-
-  if (timer) clearTimeout(timer);
-
-  timer = setTimeout(() => toast.set(''), 5000);
+  toast.success(message, { id: 'app-feedback' });
 }

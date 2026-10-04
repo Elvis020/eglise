@@ -6,8 +6,16 @@
   import IconEdit from '@tabler/icons-svelte-runes/icons/edit';
   import IconTrash from '@tabler/icons-svelte-runes/icons/trash';
 
-  import { MINIMUM_AGE, createPerson, isEligible, isValidPhone } from '$lib/domain';
+  import {
+    MINIMUM_AGE,
+    createPerson,
+    isEligible,
+    type PersonKind,
+    type PersonDetailsErrors,
+    validatePersonDetails
+  } from '$lib/domain';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import PersonDetailsFields from '$lib/components/PersonDetailsFields.svelte';
   import { addPerson } from '$lib/people';
   import { showToast } from '$lib/toast';
   import EgliseDatePicker from '$lib/components/EgliseDatePicker.svelte';
@@ -17,18 +25,16 @@
   let dirty = false;
   let pendingNavigation: (() => void) | undefined;
   let name = '';
+  let kind: PersonKind = 'person';
   let phone = '';
   let neighbourhood = '';
   let dateOfBirth = '';
-  let errors: Record<string, string> = {};
+  let errors: PersonDetailsErrors & { dateOfBirth?: string } = {};
 
   function validate(): boolean {
     errors = {};
 
-    if (!name.trim()) errors.name = "Enter the person's name.";
-    if (!isValidPhone(phone))
-      errors.phone = 'Enter a Ghanaian mobile number or an international E.164 number.';
-    if (!neighbourhood.trim()) errors.neighbourhood = 'Enter a neighbourhood.';
+    errors = validatePersonDetails({ name, kind, phone, neighbourhood });
     if (!isEligible(dateOfBirth))
       errors.dateOfBirth = `This pilot records people aged ${MINIMUM_AGE} or over.`;
 
@@ -45,7 +51,7 @@
     }
 
     // DOB is intentionally not passed into the person record after this eligibility check.
-    addPerson(createPerson(name, phone, neighbourhood));
+    addPerson(createPerson(name, phone, neighbourhood, kind));
     dirty = false;
     showToast('Person saved. Their date of birth was discarded after the eligibility check.');
     void goto('/people');
@@ -102,7 +108,7 @@
     <div>
       <h1 tabindex="-1">Add a person</h1>
       <p class="page-intro">
-        Create a fictional record. Date of birth is used only for the age check, then discarded.
+        Create a person record. Date of birth is used only for the age check, then discarded.
       </p>
     </div>
   </header>
@@ -118,42 +124,14 @@
       <p class="error" role="alert">Please correct the highlighted fields.</p>
     {/if}
     <div class="person-entry-fields">
-      <div class="field">
-        <label for="name">Full name</label>
-        <input
-          id="name"
-          bind:value={name}
-          autocomplete="name"
-          aria-invalid={Boolean(errors.name)}
-          aria-describedby="name-error"
-        />
-        <p class="error" id="name-error">{errors.name ?? ''}</p>
-      </div>
-      <div class="field">
-        <label for="phone">Phone number</label>
-        <input
-          id="phone"
-          bind:value={phone}
-          inputmode="tel"
-          autocomplete="tel"
-          aria-invalid={Boolean(errors.phone)}
-          aria-describedby="phone-help phone-error"
-        />
-        <p class="help" id="phone-help">
-          Use a Ghanaian mobile number or international E.164 number. A shared number is valid.
-        </p>
-        <p class="error" id="phone-error">{errors.phone ?? ''}</p>
-      </div>
-      <div class="field">
-        <label for="neighbourhood">Neighbourhood</label>
-        <input
-          id="neighbourhood"
-          bind:value={neighbourhood}
-          aria-invalid={Boolean(errors.neighbourhood)}
-          aria-describedby="neighbourhood-error"
-        />
-        <p class="error" id="neighbourhood-error">{errors.neighbourhood ?? ''}</p>
-      </div>
+      <PersonDetailsFields
+        bind:name
+        bind:kind
+        bind:phone
+        bind:neighbourhood
+        {errors}
+        onchange={() => (dirty = true)}
+      />
       <div class="field">
         <label for="dateOfBirth">Date of birth</label>
         <EgliseDatePicker
@@ -186,7 +164,7 @@
   <form method="dialog">
     <p class="dialog-context">People &amp; Membership · Add a person</p>
     <h2 id="leave-title">Leave unsaved entry?</h2>
-    <p>Your fictional entry will be lost. It is not stored anywhere.</p>
+    <p>Your entry will be lost when the page refreshes. It is not stored anywhere.</p>
     <div class="dialog-actions">
       <button class="button secondary" type="button" on:click={stay}>
         <IconEdit aria-hidden="true" size={18} stroke={1.8} />

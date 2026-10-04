@@ -158,7 +158,7 @@
   }
 
   function selectDate(date: Date): void {
-    if (date > today()) return;
+    if (date > today() || date.getMonth() !== viewDate.getMonth()) return;
 
     value = toIsoDate(date);
     inputValue = toDisplayDate(date);
@@ -476,8 +476,8 @@
               class:outside-month={!day.inCurrentMonth}
               class:selected={parseIsoDate(value) ? sameDay(day.date, parseIsoDate(value)!) : false}
               class:today={sameDay(day.date, today())}
-              disabled={day.date > today()}
-              tabindex={sameDay(day.date, focusedDate) ? 0 : -1}
+              disabled={!day.inCurrentMonth || day.date > today()}
+              tabindex={day.inCurrentMonth && sameDay(day.date, focusedDate) ? 0 : -1}
               type="button"
               onkeydown={handleGridKeydown}
               onclick={() => selectDate(day.date)}>{day.date.getDate()}</button
@@ -556,7 +556,7 @@
   }
   .eglise-date-picker-popup {
     position: absolute;
-    z-index: 4;
+    z-index: 20;
     top: calc(100% + 4px);
     left: 0;
     width: min(320px, calc(100vw - 48px));
@@ -636,7 +636,7 @@
   }
   .eglise-date-picker-grid button.outside-month,
   .eglise-date-picker-period-grid button.outside-period {
-    color: var(--text-secondary);
+    color: #a7aa9e;
   }
   .eglise-date-picker-grid button.today,
   .eglise-date-picker-period-grid button[aria-current='true'] {
@@ -651,6 +651,7 @@
   .eglise-date-picker-period-grid button:disabled {
     color: #a7aa9e;
     background: transparent;
+    cursor: not-allowed;
   }
   .eglise-date-picker-period-grid {
     display: grid;

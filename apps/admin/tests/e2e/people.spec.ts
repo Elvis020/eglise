@@ -1,8 +1,52 @@
 import { expect, test } from '@playwright/test';
+import writeXlsxFile from 'write-excel-file/node';
 
-test('shows the fictional people directory and quiet shared prototype context', async ({
-  page
-}) => {
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'eglise-prototype-session-v1',
+      JSON.stringify({
+        administrator: { email: 'admin@eglise.test', name: 'Ama Owusu' },
+        churchName: 'Eglise',
+        signedIn: true,
+        version: 1
+      })
+    );
+  });
+});
+
+test('imports approved workbook rows while excluding invalid rows', async ({ page }) => {
+  const workbook = writeXlsxFile(
+    [
+      ['Full name', 'Person type', 'Phone number', 'Neighbourhood', 'Date of birth'],
+      ['Nana Badu', 'Person', '024 555 0142', 'Osu', new Date('1990-01-01')],
+      ['Ama Owusu', 'Visitor', '', 'Adabraka', new Date('1990-01-01')],
+      ['Kweku Lamptey', 'Person', '024 555 0142', 'Madina', new Date('2015-01-01')]
+    ],
+    { dateFormat: 'dd/mm/yyyy' }
+  );
+  const buffer = await workbook.toBuffer();
+
+  await page.goto('/people/import');
+  await page.getByLabel('2. Upload completed workbook').setInputFiles({
+    name: 'people-v1.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer
+  });
+
+  await expect(page.getByRole('heading', { name: 'Review workbook rows' })).toBeVisible();
+  await expect(page.getByText('Age requirements were not met.')).toBeVisible();
+  await expect(page.locator('.import-review')).not.toContainText('2015-01-01');
+  await page.getByLabel('Create separately').check();
+  await page.getByRole('button', { name: 'Confirm import' }).click();
+  await expect(page.getByRole('heading', { name: 'Confirm import' })).toBeVisible();
+  await page.getByRole('button', { name: 'Create people' }).click();
+
+  await expect(page.getByText('Import complete')).toBeVisible();
+  await expect(page.getByText('Created 2 people. Excluded 1 row was not added.')).toBeVisible();
+});
+
+test('shows the people directory and quiet shared prototype context', async ({ page }) => {
   await page.goto('/people');
 
   await expect(page.getByRole('heading', { name: 'People directory' })).toBeVisible();
@@ -14,11 +58,74 @@ test('shows the fictional people directory and quiet shared prototype context', 
     'Changes in this prototype cannot be attributed to a named individual.'
   );
   await expect(pilotContext).toContainText(/Refresh resets every\s+sample record/);
-  await expect(pilotContext).toContainText('nothing is stored on this device.');
+  await expect(pilotContext).toContainText(
+    'This device keeps the signed-in administrator and church name.'
+  );
   await expect(pilotContext).not.toHaveAttribute('role', 'status');
-  await expect(page.getByText('Ama Owusu')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open Ama Owusu' })).toBeVisible();
   await expect(page.locator('.people-directory th')).toHaveCount(4);
   await expect(page.locator('.people-directory th[scope="col"]')).toHaveCount(4);
+});
+
+test('uses directory totals as working type filters', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/people');
+
+  const summary = page.getByRole('region', { name: 'Directory filters' });
+  const controls = page.locator('.directory-page .controls');
+
+  await expect(summary).toBeVisible();
+  await expect(summary.locator('[data-summary="directory"]')).toContainText('Total people');
+  await expect(
+    summary.locator('[data-summary="directory"]').getByText('25', { exact: true })
+  ).toBeVisible();
+  await expect(summary.locator('[data-summary="visitors"]')).toContainText('Visitors');
+  await expect(summary.locator('[data-summary="first-timers"]')).toContainText('First-timers');
+  const heatmap = summary.locator('[data-summary="neighbourhood-heatmap"]');
+
+  await expect(heatmap).toBeDisabled();
+  await expect(heatmap).toContainText('Neighbourhood heatmap');
+  await expect(heatmap).toContainText('Coming soon');
+
+  await summary.locator('[data-summary="first-timers"]').click();
+  await expect(summary.locator('[data-summary="first-timers"]')).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(page.locator('.people-directory tbody tr')).toHaveCount(1);
+  await expect(page.getByText('First-time visitor', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Membership' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Clear filters' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(summary.locator('[data-summary="directory"]')).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(page.getByRole('combobox', { name: 'Membership' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Clear filters' })).toHaveCount(0);
+
+  const [summaryBox, controlsBox] = await Promise.all([
+    summary.boundingBox(),
+    controls.boundingBox()
+  ]);
+
+  expect(summaryBox).not.toBeNull();
+  expect(controlsBox).not.toBeNull();
+
+  if (summaryBox && controlsBox) {
+    expect(summaryBox.y).toBeLessThan(controlsBox.y);
+  }
+
+  const pageLayout = await page.evaluate(() => ({
+    documentHeight: document.documentElement.scrollHeight,
+    pageHeight: document.documentElement.clientHeight,
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth
+  }));
+
+  expect(pageLayout.documentHeight).toBeLessThanOrEqual(pageLayout.pageHeight);
+  expect(pageLayout.documentWidth).toBe(pageLayout.viewportWidth);
 });
 
 test('uses a decorative profile placeholder beside each visible person name', async ({ page }) => {
@@ -181,10 +288,76 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
   await expect(page.getByRole('button', { name: 'Expand application navigation' })).toBeHidden();
 });
 
+test('keeps sidebar groups compact and reserves its footer for the administrator', async ({
+  page
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/people');
+
+  const sidebar = page.locator('#application-sidebar');
+  const groups = sidebar.locator('.navigation-group');
+  const account = sidebar.locator('.administrator-account');
+
+  expect(await groups.count()).toBe(4);
+  await expect(account.locator('.administrator-avatar')).toHaveCSS('width', '40px');
+  await expect(account.getByRole('button', { name: 'Open administrator menu' })).toHaveCSS(
+    'min-height',
+    '56px'
+  );
+  await account.getByRole('button', { name: 'Open administrator menu' }).click();
+  await expect(account.getByRole('menuitem', { name: 'Log out' })).toBeVisible();
+
+  const groupGaps = await page.evaluate(() => {
+    const groups = Array.from(document.querySelectorAll<HTMLElement>('.navigation-group'));
+
+    return groups.slice(1).map((group, index) => {
+      const previous = groups[index].getBoundingClientRect();
+      const current = group.getBoundingClientRect();
+
+      return current.top - previous.bottom;
+    });
+  });
+
+  expect(Math.max(...groupGaps)).toBeLessThanOrEqual(24);
+  const accountBox = await account.boundingBox();
+
+  expect((accountBox?.y ?? 0) + (accountBox?.height ?? 0)).toBeLessThanOrEqual(900);
+});
+
 test('redirects a direct unavailable module URL to the active workspace', async ({ page }) => {
   await page.goto('/planned/attendance');
 
   await expect(page).toHaveURL(/\/people$/);
+});
+
+test('animates active sidebar navigation while respecting reduced motion', async ({ page }) => {
+  await page.goto('/people');
+
+  const activeLink = page.locator('#application-sidebar .nav-link.active');
+  const activeCopy = activeLink.locator('.nav-copy');
+
+  await expect(activeCopy).toHaveCSS('animation-name', 'sidebar-active-content');
+
+  const indicatorAnimation = await activeLink.evaluate(
+    (element) => getComputedStyle(element, '::before').animationName
+  );
+
+  expect(indicatorAnimation).toBe('sidebar-active-indicator');
+
+  await page.getByRole('link', { name: 'Church settings' }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page.locator('#application-sidebar .nav-link.active .nav-copy')).toHaveCSS(
+    'animation-name',
+    'sidebar-active-content'
+  );
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/people');
+
+  await expect(page.locator('#application-sidebar .nav-link.active .nav-copy')).toHaveCSS(
+    'animation-name',
+    'none'
+  );
 });
 
 test('settles desktop navigation immediately when reduced motion is requested', async ({
@@ -289,7 +462,7 @@ test('ships a standalone offline document without app bundles', async ({ request
   expect(document).not.toContain('/_app/');
 });
 
-test('adds an eligible fictional person without showing their date of birth', async ({ page }) => {
+test('adds an eligible person without showing their date of birth', async ({ page }) => {
   await page.goto('/people/add');
 
   await page.getByLabel('Full name').fill('Esi Addo');
@@ -299,10 +472,76 @@ test('adds an eligible fictional person without showing their date of birth', as
   await page.getByLabel('Date of birth').blur();
   await page.getByRole('button', { name: 'Save person' }).click();
 
-  await expect(page.getByText('Person saved. Their date of birth was discarded')).toBeVisible();
+  const notification = page.locator('[data-sonner-toast]').filter({
+    hasText: 'Person saved. Their date of birth was discarded'
+  });
+
+  await expect(notification).toBeVisible();
+  await expect(notification).toHaveAttribute('aria-live', 'polite');
+
+  const closeButton = notification.getByRole('button', {
+    name: 'Dismiss notification'
+  });
+  const [toastBox, closeButtonBox] = await Promise.all([
+    notification.boundingBox(),
+    closeButton.boundingBox()
+  ]);
+
+  expect(toastBox).not.toBeNull();
+  expect(closeButtonBox).not.toBeNull();
+
+  if (toastBox && closeButtonBox) {
+    expect(closeButtonBox.x).toBeGreaterThanOrEqual(toastBox.x);
+    expect(closeButtonBox.y).toBeGreaterThanOrEqual(toastBox.y);
+    expect(closeButtonBox.x + closeButtonBox.width).toBeLessThanOrEqual(
+      toastBox.x + toastBox.width
+    );
+    expect(closeButtonBox.y + closeButtonBox.height).toBeLessThanOrEqual(
+      toastBox.y + toastBox.height
+    );
+  }
+
+  await closeButton.click();
+  await expect(notification).not.toBeVisible();
   await page.getByLabel('Search people').fill('Esi Addo');
   await expect(page.getByRole('link', { name: 'Esi Addo' })).toBeVisible();
   await expect(page.getByText('2000-01-01')).not.toBeVisible();
+});
+
+test('adds a visitor without inferring their neighbourhood or membership', async ({ page }) => {
+  await page.goto('/people/add');
+
+  await page.getByRole('combobox', { name: 'Person type' }).click();
+  await page.getByRole('option', { name: 'Visitor', exact: true }).click();
+  await page.getByLabel('Full name').fill('Mira Daniels');
+  await page.getByLabel('Date of birth').fill('03/10/1990');
+  await page.getByRole('button', { name: 'Save person' }).click();
+
+  await expect(page).toHaveURL(/\/people$/);
+  await page.getByLabel('Search people').fill('Mira Daniels');
+  await expect(page.getByText('Visitor', { exact: true })).toBeVisible();
+  await expect(page.getByText('Not provided', { exact: true })).toHaveCount(2);
+  await expect(page.getByText('Not a member', { exact: true })).toBeVisible();
+});
+
+test('automatically dismisses shared success notifications after a short delay', async ({
+  page
+}) => {
+  await page.goto('/people/add');
+
+  await page.getByLabel('Full name').fill('Akosua Mensah');
+  await page.getByLabel('Phone number').fill('+233 24 555 0168');
+  await page.getByLabel('Neighbourhood').fill('Labone');
+  await page.getByLabel('Date of birth').fill('01/01/2000');
+  await page.getByLabel('Date of birth').blur();
+  await page.getByRole('button', { name: 'Save person' }).click();
+
+  const notification = page.locator('[data-sonner-toast]').filter({
+    hasText: 'Person saved. Their date of birth was discarded'
+  });
+
+  await expect(notification).toBeVisible();
+  await expect(notification).not.toBeVisible({ timeout: 5500 });
 });
 
 test('uses the app-native date picker with local date validation and keyboard selection', async ({
@@ -503,11 +742,13 @@ test('adapts desktop pagination to the available table capacity and falls back t
   const fullCapacity = await tableRows.count();
 
   await page.getByRole('button', { name: 'Next' }).click();
-  const firstVisibleBeforeResize = await tableRows.first().getByRole('link').textContent();
+  const firstVisibleBeforeResize = await tableRows.first().locator('.person-name').textContent();
 
   await page.setViewportSize({ width: 1280, height: 620 });
   await expect.poll(async () => (await tableRows.count()) < fullCapacity).toBe(true);
-  await expect(tableRows.first().getByRole('link')).toHaveText(firstVisibleBeforeResize ?? '');
+  await expect(tableRows.first().locator('.person-name')).toHaveText(
+    firstVisibleBeforeResize ?? ''
+  );
 
   const compactCapacity = await tableRows.count();
 
@@ -540,23 +781,23 @@ test('uses a single thin forest focus cue for directory inputs and comboboxes', 
 
   await search.focus();
   await expect(search).toHaveCSS('outline-style', 'none');
-  await expect(search).toHaveCSS('box-shadow', 'none');
+  await expect(search).toHaveCSS('box-shadow', 'rgba(49, 84, 59, 0.12) 0px 0px 0px 2px');
   await expect(search).toHaveCSS('border-top-width', '2px');
-  await expect(search).toHaveCSS('border-top-color', 'rgb(49, 84, 59)');
+  await expect(search).toHaveCSS('border-top-color', 'rgb(111, 139, 117)');
   await expect(search).toHaveJSProperty('offsetHeight', Math.round(searchHeightBeforeFocus));
 
   await membership.focus();
   await expect(membership).toHaveCSS('outline-style', 'none');
-  await expect(membership).toHaveCSS('box-shadow', 'none');
+  await expect(membership).toHaveCSS('box-shadow', 'rgba(49, 84, 59, 0.12) 0px 0px 0px 2px');
   await expect(membership).toHaveCSS('border-top-width', '2px');
-  await expect(membership).toHaveCSS('border-top-color', 'rgb(49, 84, 59)');
+  await expect(membership).toHaveCSS('border-top-color', 'rgb(111, 139, 117)');
   await expect(membership).toHaveJSProperty(
     'offsetHeight',
     Math.round(membershipHeightBeforeFocus)
   );
 });
 
-test('keeps the desktop rail sticky while the directory uses document scrolling', async ({
+test('keeps the desktop rail sized to the viewport while the directory manages its own height', async ({
   page
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -569,15 +810,15 @@ test('keeps the desktop rail sticky while the directory uses document scrolling'
 
   await expect(appShell).toHaveCSS('overflow-x', 'clip');
   await expect(sidebar).toHaveCSS('position', 'sticky');
+  await expect(sidebar).toHaveCSS('overflow-y', 'auto');
   await expect(tableWrap).toHaveCSS('overflow', 'visible');
   await expect(header).toHaveCSS('position', 'sticky');
+  await sidebar.getByRole('link', { name: 'Church settings' }).scrollIntoViewIfNeeded();
+  await expect(sidebar.getByRole('link', { name: 'Church settings' })).toBeVisible();
+  await sidebar.getByRole('button', { name: 'Open administrator menu' }).scrollIntoViewIfNeeded();
+  await expect(sidebar.getByRole('button', { name: 'Open administrator menu' })).toBeVisible();
 
-  await page.evaluate(async () => {
-    window.scrollTo(0, 240);
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-  });
-
-  expect((await sidebar.boundingBox())?.y).toBeCloseTo(0, 1);
+  expect((await sidebar.boundingBox())?.height).toBeCloseTo(720, 0);
 });
 
 test('scrolls a constrained desktop sidebar to its lower unavailable areas', async ({ page }) => {
@@ -756,48 +997,238 @@ test('does not render stray delimiters after People action groups', async ({ pag
 });
 
 test('requires an explicit possible-duplicate import decision', async ({ page }) => {
-  await page.goto('/people/import');
+  const workbook = writeXlsxFile(
+    [
+      ['Full name', 'Person type', 'Phone number', 'Neighbourhood', 'Date of birth'],
+      [' '],
+      ['Ama Owusu', 'Visitor', '', 'Adabraka', new Date('1990-01-01')],
+      ['Ama Owusu', 'Visitor', '', 'Adabraka', new Date('1990-01-01')]
+    ],
+    { dateFormat: 'dd/mm/yyyy' }
+  );
+  const buffer = await workbook.toBuffer();
 
-  const confirm = page.getByRole('button', { name: 'Confirm reviewed import' });
+  await page.goto('/people/import');
+  await page.getByLabel('2. Upload completed workbook').setInputFiles({
+    name: 'duplicate-people.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer
+  });
+
+  const confirm = page.getByRole('button', { name: 'Confirm import' });
 
   await expect(confirm).toBeDisabled();
+  await expect(page.locator('.import-table td[data-label="Row"]')).toHaveText(['3', '4']);
 
-  await page.getByLabel('Exclude row').check();
+  await page.getByLabel('Exclude row').first().check();
+  await page.getByLabel('Create separately').last().check();
   await expect(confirm).toBeEnabled();
   await confirm.click();
-  await expect(page.getByRole('heading', { name: 'Confirm reviewed import' })).toBeVisible();
-  await page.getByRole('button', { name: 'Create fictional people' }).click();
+  await expect(page.getByRole('heading', { name: 'Confirm import' })).toBeVisible();
+  await page.getByRole('button', { name: 'Create people' }).click();
 
-  await expect(
-    page.getByText('3 fictional people imported. Invalid rows were excluded.')
-  ).toBeVisible();
-  await expect(page.getByText('Nana Badu')).toBeVisible();
+  await expect(page.getByText('Created 1 person. Excluded 1 row was not added.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Confirm import' })).toHaveCount(0);
 });
 
 test('records then corrects a membership record with a removal note', async ({ page }) => {
   await page.goto('/people/kojo-boateng');
 
-  await page.getByRole('button', { name: 'Record membership' }).click();
-  await page.getByRole('combobox', { name: 'Membership record' }).click();
-  await page.getByRole('option', { name: 'Recognised member' }).click();
-  await page.getByLabel('Recognition evidence or reference').fill('Recognition register, 2026');
-  await page.getByLabel('Recognition date').fill('30/09/2026');
+  await page.getByRole('link', { name: 'Record membership' }).click();
+  await expect(page).toHaveURL('/people/kojo-boateng/membership');
+  await expect(page.getByRole('link', { name: 'Kojo Boateng', exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Membership recording progress' })).toBeVisible();
+  await expect(page.getByText('1 Assimilation')).toHaveAttribute('aria-current', 'step');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByLabel('Assimilation completion date')).toBeFocused();
+  await page.getByLabel('Assimilation completion date').fill('01/09/2026');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByText('2 Recognition')).toHaveAttribute('aria-current', 'step');
+  await page.getByLabel('Membership recognition date').fill('30/09/2026');
+  await page.getByLabel('Certificate or register reference').fill('Recognition register, 2026');
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.getByLabel('Assimilation completion date')).toHaveValue('01/09/2026');
+  await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Save membership record' }).click();
   await expect(page.getByText('Membership record saved.')).toBeVisible();
+  await expect(page.getByText('1 Sept 2026')).toBeVisible();
+  await expect(page.getByText('30 Sept 2026')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Correct membership' }).click();
-  await page.getByRole('combobox', { name: 'Membership record' }).click();
-  await page.getByRole('option', { name: 'Not recorded' }).click();
-  await page.getByLabel('Correction note').fill('Recorded against the wrong fictional person.');
-  await page.getByRole('button', { name: 'Save membership record' }).click();
+  await page.getByRole('link', { name: 'Correct membership' }).click();
+  await expect(page).toHaveURL('/people/kojo-boateng/membership');
+  await page.getByRole('button', { name: 'Mark as not recorded' }).click();
+  await page.getByLabel('Correction note').fill('Recorded against the wrong person.');
+  await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByRole('heading', { name: 'Confirm membership correction' })).toBeVisible();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.getByLabel('Correction note')).toBeFocused();
+  await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Mark as not recorded' }).click();
 
   await expect(page.getByText('Membership correction saved.')).toBeVisible();
-  await expect(page.getByText('Recorded against the wrong fictional person.')).toBeVisible();
+  await expect(page.getByText('Recorded against the wrong person.')).toBeVisible();
 });
 
-test('asks before leaving a dirty fictional entry', async ({ page }) => {
+test('edits a person without changing their membership record', async ({ page }) => {
+  await page.goto('/people/ama-owusu');
+
+  await page.getByRole('link', { name: 'Edit person' }).click();
+  await page.getByLabel('Full name').fill('Ama Serwaa');
+  await page.getByLabel('Neighbourhood').fill('Korle Bu');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  await expect(page.getByText('Person details saved.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ama Serwaa' })).toBeVisible();
+  await expect(page.getByText('Korle Bu')).toBeVisible();
+  await expect(page.getByText('Member', { exact: true })).toBeVisible();
+  await expect(page.getByText('Recognition register, 2025')).toBeVisible();
+});
+
+test('keeps invalid person edits available for correction', async ({ page }) => {
+  await page.goto('/people/kojo-boateng/edit');
+
+  await page.getByLabel('Full name').fill('Kojo Boateng');
+  await page.getByLabel('Phone number').fill('024 700');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  await expect(page.getByText('Please correct the highlighted fields.')).toBeVisible();
+  await expect(page.getByLabel('Phone number')).toHaveValue('024 700');
+  await expect(page.getByLabel('Phone number')).toBeFocused();
+});
+
+test('keeps profile actions inline on desktop and stacked on narrow screens', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/people/kojo-boateng');
+
+  const desktopActions = await page.locator('.person-actions').evaluate((element) => {
+    const [edit, record] = Array.from(element.children).map((child) =>
+      child.getBoundingClientRect()
+    );
+
+    return { editTop: edit.top, recordTop: record.top };
+  });
+
+  expect(desktopActions.editTop).toBeCloseTo(desktopActions.recordTop, 0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  const mobileActions = await page.locator('.person-actions').evaluate((element) => {
+    const [edit, record] = Array.from(element.children).map((child) =>
+      child.getBoundingClientRect()
+    );
+
+    return { editBottom: edit.bottom, recordTop: record.top };
+  });
+
+  expect(mobileActions.recordTop).toBeGreaterThan(mobileActions.editBottom);
+});
+
+test('floats the membership calendar without changing the form layout', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/people/kojo-boateng');
+  await page.getByRole('link', { name: 'Record membership' }).click();
+  await page.getByLabel('Assimilation completion date').fill('01/09/2026');
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  const before = await page.locator('.membership-workflow-form').evaluate((form) => {
+    const reference = document.getElementById('evidence')?.getBoundingClientRect();
+
+    return { height: form.getBoundingClientRect().height, referenceTop: reference?.top };
+  });
+
+  await page.getByRole('button', { name: 'Open calendar' }).click();
+
+  await expect(page.locator('dialog[open]')).toHaveCount(0);
+
+  const calendar = page.getByRole('dialog', { name: 'Calendar' });
+
+  await expect(calendar).toBeVisible();
+
+  const after = await page.locator('.membership-workflow-form').evaluate((form) => {
+    const reference = document.getElementById('evidence')?.getBoundingClientRect();
+    const popup = form.querySelector<HTMLElement>('.eglise-date-picker-popup');
+
+    return {
+      height: form.getBoundingClientRect().height,
+      popupZIndex: popup ? Number.parseInt(getComputedStyle(popup).zIndex, 10) : 0,
+      referenceTop: reference?.top
+    };
+  });
+
+  expect(after.height).toBeCloseTo(before.height, 0);
+  expect(after.referenceTop).toBeCloseTo(before.referenceTop ?? 0, 0);
+  expect(after.popupZIndex).toBeGreaterThan(4);
+});
+
+test('shows adjacent-month calendar dates as disabled context', async ({ page }) => {
+  await page.goto('/people/add');
+  await page.getByRole('button', { name: 'Open calendar' }).click();
+
+  const calendar = page.getByRole('dialog', { name: 'Calendar' });
+  const adjacentMonthDate = calendar
+    .locator('.eglise-date-picker-grid button.outside-month')
+    .first();
+
+  await expect(adjacentMonthDate).toBeDisabled();
+  await expect(adjacentMonthDate).toHaveAttribute('tabindex', '-1');
+  await expect(adjacentMonthDate).toHaveCSS('cursor', 'not-allowed');
+
+  await adjacentMonthDate.evaluate((button) => (button as HTMLButtonElement).click());
+
+  await expect(calendar).toBeVisible();
+  await expect(page.getByLabel('Date of birth')).toHaveValue('');
+});
+
+test('moves between months without making adjacent dates selectable', async ({ page }) => {
+  await page.goto('/people/add');
+  await page.getByRole('button', { name: 'Open calendar' }).click();
+
+  const calendar = page.getByRole('dialog', { name: 'Calendar' });
+  const previousMonth = new Date();
+
+  previousMonth.setMonth(previousMonth.getMonth() - 1);
+
+  await calendar.getByRole('button', { name: 'Previous period' }).click();
+  await expect(calendar.locator('.eglise-date-picker-grid')).toHaveAttribute(
+    'aria-label',
+    previousMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+  );
+  await expect(
+    calendar.locator('.eglise-date-picker-grid button.outside-month').first()
+  ).toBeDisabled();
+});
+
+test('guards calendar selections before leaving membership recording', async ({ page }) => {
+  await page.goto('/people/kojo-boateng/membership');
+  await page.getByRole('button', { name: 'Open calendar' }).click();
+  await page.locator('.eglise-date-picker-grid button[aria-current="date"]').click();
+  await page.getByRole('link', { name: 'Cancel' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Leave membership recording?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Keep recording' }).click();
+  await expect(page.getByLabel('Assimilation completion date')).not.toHaveValue('');
+});
+
+test('requires Assimilation before recording membership', async ({ page }) => {
+  await page.goto('/people/kojo-boateng');
+
+  await page.getByRole('link', { name: 'Record membership' }).click();
+  await page.getByLabel('Assimilation completion date').fill('30/09/2026');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByLabel('Membership recognition date').fill('01/09/2026');
+  await page.getByLabel('Certificate or register reference').fill('Recognition register, 2026');
+  await page.getByRole('button', { name: 'Save membership record' }).click();
+
+  await expect(
+    page.getByText('Membership recognition cannot be before Assimilation is completed.')
+  ).toBeVisible();
+  await expect(page.getByLabel('Membership recognition date')).toHaveAttribute(
+    'aria-invalid',
+    'true'
+  );
+});
+
+test('asks before leaving a dirty entry', async ({ page }) => {
   await page.goto('/people/add');
 
   await page.getByLabel('Full name').fill('Unsaved Person');
@@ -806,6 +1237,29 @@ test('asks before leaving a dirty fictional entry', async ({ page }) => {
   await page.getByRole('button', { name: 'Keep editing' }).click();
 
   await expect(page.getByLabel('Full name')).toHaveValue('Unsaved Person');
+});
+
+test('keeps the session when a dirty-entry logout is cancelled, then signs out after confirmation', async ({
+  page
+}) => {
+  await page.goto('/people/add');
+  await page.getByLabel('Full name').fill('Unsaved Person');
+
+  await page.getByRole('button', { name: 'Open administrator menu' }).click();
+  await page.getByRole('menuitem', { name: 'Log out' }).click();
+  await expect(page.getByRole('heading', { name: 'Leave unsaved entry?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Keep editing' }).click();
+
+  await expect(page).toHaveURL(/\/people\/add$/);
+  await expect(page.locator('#application-sidebar')).toContainText('Ama Owusu');
+  await expect(page.getByLabel('Full name')).toHaveValue('Unsaved Person');
+
+  await page.getByRole('button', { name: 'Open administrator menu' }).click();
+  await page.getByRole('menuitem', { name: 'Log out' }).click();
+  await page.getByRole('button', { name: 'Discard entry' }).click();
+
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('heading', { name: 'Sign in to Eglise' })).toBeVisible();
 });
 
 test('registers a PWA worker and redirects an offline navigation to the standalone explanation', async ({

@@ -35,6 +35,9 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
-    "@tabler/icons-svelte-runes": "^3.48.0"
+    "@tabler/icons-svelte-runes": "^3.48.0",
+    "read-excel-file": "^9.3.10",
+    "svelte-sonner": "^1.2.1",
+    "write-excel-file": "^4.1.1"
   }
 }
