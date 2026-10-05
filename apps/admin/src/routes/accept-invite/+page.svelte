@@ -103,8 +103,8 @@
           <input
             autocapitalize="none"
             aria-describedby={invitationTouched && invitationInputError
-              ? 'invitation-error invitation-help'
-              : 'invitation-help'}
+              ? 'invitation-error'
+              : undefined}
             aria-invalid={invitationTouched && invitationInputError ? 'true' : undefined}
             autocomplete="off"
             bind:value={invitationInput}
@@ -116,9 +116,6 @@
             spellcheck={false}
             type="text"
           />
-          <p class="help" id="invitation-help">
-            Your workspace owner can copy this from the invitation they created.
-          </p>
           {#if invitationTouched && invitationInputError}
             <p class="field-error" id="invitation-error" role="alert">
               {invitationInputError}

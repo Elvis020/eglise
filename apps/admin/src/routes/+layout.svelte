@@ -428,13 +428,29 @@
 
             {#each group.modules as module}
               {@const ModuleIcon = moduleIcon(module as keyof typeof moduleIcons)}
-              <div class="nav-future nav-link">
-                <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
-                <span class="nav-copy">{module}</span>
-                <span aria-hidden="true" class="nav-tooltip">{module} — Not part of this pilot</span
+              {#if module === 'Attendance'}
+                <a
+                  aria-current={page.url.pathname.startsWith('/attendance') ? 'page' : undefined}
+                  aria-label="Attendance"
+                  class="nav-link"
+                  class:active={page.url.pathname.startsWith('/attendance')}
+                  href="/attendance"
+                  onclick={closeMobileNavigation}
                 >
-                <span class="sr-only">Not part of this pilot</span>
-              </div>
+                  <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                  <span class="nav-copy">Attendance</span>
+                  <span aria-hidden="true" class="nav-tooltip">Attendance</span>
+                </a>
+              {:else}
+                <div class="nav-future nav-link">
+                  <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                  <span class="nav-copy">{module}</span>
+                  <span aria-hidden="true" class="nav-tooltip"
+                    >{module} — Not part of this pilot</span
+                  >
+                  <span class="sr-only">Not part of this pilot</span>
+                </div>
+              {/if}
             {/each}
           </section>
         {/each}
