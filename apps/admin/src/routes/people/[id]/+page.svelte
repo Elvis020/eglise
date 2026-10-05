@@ -23,6 +23,7 @@
   let person: Person | undefined;
 
   $: person = $people.find((record) => record.id === page.params.id);
+  $: peopleAccess = page.data.peopleAccess;
 
   function journeyEntryFor(stage: PersonKind): JourneyEntry | undefined {
     return person?.journey.find((entry) => entry.stage === stage);
@@ -97,7 +98,7 @@
         </dl>
       </div>
       <div class="person-actions">
-        {#if person.recordState === 'active'}
+        {#if person.recordState === 'active' && peopleAccess?.canEdit}
           <a class="button secondary" href={`/people/${person.id}/edit`}>
             <IconEdit aria-hidden="true" size={18} stroke={1.8} />
             Edit person
@@ -107,14 +108,16 @@
               <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
               Review journey
             </a>
-            <a class="button primary" href={`/people/${person.id}/membership`}>
-              {#if person.membership.recognised}
-                <IconEdit aria-hidden="true" size={18} stroke={1.8} />
-              {:else}
-                <IconUserCheck aria-hidden="true" size={18} stroke={1.8} />
-              {/if}
-              {person.membership.recognised ? 'Correct membership' : 'Record membership'}
-            </a>
+            {#if peopleAccess?.canManageMembership}
+              <a class="button primary" href={`/people/${person.id}/membership`}>
+                {#if person.membership.recognised}
+                  <IconEdit aria-hidden="true" size={18} stroke={1.8} />
+                {:else}
+                  <IconUserCheck aria-hidden="true" size={18} stroke={1.8} />
+                {/if}
+                {person.membership.recognised ? 'Correct membership' : 'Record membership'}
+              </a>
+            {/if}
           {:else}
             <a class="button primary" href={`/people/${person.id}/journey`}>
               <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
@@ -126,10 +129,12 @@
             This record is {personRecordStateLabels[person.recordState].toLocaleLowerCase()} and is not
             available for ordinary editing.
           </p>
-          <a class="button secondary" href={`/people/${person.id}/record`}>
-            <IconEdit aria-hidden="true" size={18} stroke={1.8} />
-            Manage record
-          </a>
+          {#if peopleAccess?.canManageRecords}
+            <a class="button secondary" href={`/people/${person.id}/record`}>
+              <IconEdit aria-hidden="true" size={18} stroke={1.8} />
+              Manage record
+            </a>
+          {/if}
         {/if}
       </div>
     </div>

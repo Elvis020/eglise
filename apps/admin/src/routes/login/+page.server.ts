@@ -1,17 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { isSupabaseAuthConfigured } from '$lib/server/supabase';
+import { safeNextPath } from '$lib/server/navigation';
+import { isPrototypeAuthMode } from '$lib/server/supabase';
 import type { Actions, PageServerLoad } from './$types';
 
-function safeNextPath(value: string | null): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) {
-    return '/people';
-  }
-
-  return value;
-}
-
 export const load: PageServerLoad = ({ url }) => ({
-  authMode: isSupabaseAuthConfigured() ? ('supabase' as const) : ('prototype' as const),
+  authMode: isPrototypeAuthMode() ? ('prototype' as const) : ('supabase' as const),
   next: safeNextPath(url.searchParams.get('next'))
 });
 

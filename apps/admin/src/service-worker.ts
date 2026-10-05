@@ -5,10 +5,23 @@ import { files, version } from '$service-worker';
 const CACHE_PREFIX = 'eglise-shell-';
 const CACHE = `${CACHE_PREFIX}${version}`;
 const offlineDocument = '/offline.html';
-const staticAssets = files.filter(
-  (file) =>
-    file === 'manifest.webmanifest' || file.startsWith('icons/') || file.startsWith('artwork/')
-);
+
+function staticAssetPath(file: string): string | null {
+  const assetUrl = new URL(file, self.location.origin);
+
+  if (assetUrl.origin !== self.location.origin) return null;
+
+  const path = assetUrl.pathname;
+
+  return path.endsWith('/manifest.webmanifest') ||
+    path.includes('/icons/') ||
+    path.includes('/artwork/')
+    ? path
+    : null;
+}
+
+const staticAssets = files.map(staticAssetPath).filter((path): path is string => path !== null);
+
 const cachedPaths = new Set(
   staticAssets.map((asset) => new URL(asset, self.location.origin).pathname)
 );

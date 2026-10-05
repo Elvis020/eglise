@@ -73,6 +73,19 @@
     form.focus();
   }
 
+  function handleLogoutRequest(event: Event): void {
+    if (!dirty) return;
+
+    event.preventDefault();
+    const { continueLogout } = (event as CustomEvent<{ continueLogout: () => Promise<void> }>)
+      .detail;
+
+    pendingNavigation = () => {
+      void continueLogout();
+    };
+    leaveDialog.showModal();
+  }
+
   onMount(() => {
     const unload = (event: BeforeUnloadEvent) => {
       if (!dirty) return;
@@ -82,8 +95,12 @@
     };
 
     window.addEventListener('beforeunload', unload);
+    document.addEventListener('eglise:before-logout', handleLogoutRequest);
 
-    return () => window.removeEventListener('beforeunload', unload);
+    return () => {
+      window.removeEventListener('beforeunload', unload);
+      document.removeEventListener('eglise:before-logout', handleLogoutRequest);
+    };
   });
 
   beforeNavigate((navigation) => {

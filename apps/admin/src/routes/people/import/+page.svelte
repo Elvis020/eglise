@@ -14,9 +14,12 @@
     PEOPLE_IMPORT_TEMPLATE_VERSION,
     acceptedPersonKinds,
     normalisePersonName,
+    peopleByNormalisedName,
     type PeopleImportRow,
     validatePeopleImportRow
   } from '$lib/imports/people-import-definition';
+  import { DIRECTORY_PAGE_SIZE, clampPage, pageItems } from '$lib/directory';
+  import DirectoryPagination from '$lib/components/DirectoryPagination.svelte';
   import { downloadPeopleImportTemplate, parsePeopleWorkbook } from '$lib/imports/people-xlsx';
   import { addPeople, people } from '$lib/people';
   import { personKindLabels } from '$lib/domain';
@@ -33,6 +36,7 @@
   let decisions: Record<number, DuplicateDecision> = {};
   let outcome: { created: number; excluded: number; deferred: number } | null = null;
   let confirmDialog: HTMLDialogElement;
+  let reviewPage = 1;
 
   const maximumFileSizeMegabytes = PEOPLE_IMPORT_MAX_FILE_SIZE_BYTES / (1024 * 1024);
 
@@ -48,10 +52,12 @@
   $: canConfirmReview =
     unresolvedReviews.length === 0 && (importRows.length > 0 || deferredReviewRows.length > 0);
 
+  $: peopleById = new Map($people.map((person) => [person.id, person]));
+  $: reviewPage = clampPage(reviewPage, rows.length, DIRECTORY_PAGE_SIZE);
+  $: pagedRows = pageItems(rows, reviewPage, DIRECTORY_PAGE_SIZE);
+
   function matchingPersonFor(row: PeopleImportRow) {
-    return row.possibleMatchId
-      ? $people.find((person) => person.id === row.possibleMatchId)
-      : undefined;
+    return row.possibleMatchId ? peopleById.get(row.possibleMatchId) : undefined;
   }
 
   async function downloadTemplate(): Promise<void> {
@@ -75,6 +81,7 @@
     warnings = [];
     decisions = {};
     outcome = null;
+    reviewPage = 1;
     uploadError = '';
     selectedFileName = '';
 
@@ -99,6 +106,7 @@
     try {
       const workbook = await parsePeopleWorkbook(file);
       const currentPeople = get(people);
+      const existingPeopleByName = peopleByNormalisedName(currentPeople);
       const nameCounts = new Map<string, number>();
 
       workbook.rows.forEach(({ values }) => {
@@ -111,7 +119,13 @@
       });
 
       rows = workbook.rows.map(({ rowNumber, values }) => {
-        const row = validatePeopleImportRow(values, rowNumber, currentPeople);
+        const row = validatePeopleImportRow(
+          values,
+          rowNumber,
+          currentPeople,
+          new Date(),
+          existingPeopleByName
+        );
         const hasMatchingWorkbookName = (nameCounts.get(normalisePersonName(row.name)) ?? 0) > 1;
 
         return row.state === 'ready' && hasMatchingWorkbookName
@@ -286,7 +300,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each rows as row (row.rowNumber)}
+            {#each pagedRows as row (row.rowNumber)}
               <tr
                 class:import-excluded={row.state === 'excluded'}
                 class:import-review-row={row.state === 'review'}
@@ -371,6 +385,12 @@
           </tbody>
         </table>
       </div>
+
+      <DirectoryPagination
+        bind:page={reviewPage}
+        pageSize={DIRECTORY_PAGE_SIZE}
+        total={rows.length}
+      />
 
       <div class="form-actions">
         <a class="button secondary" href="/people">

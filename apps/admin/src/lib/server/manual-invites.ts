@@ -24,19 +24,11 @@ export async function requireOwnerWorkspace(locals: App.Locals) {
     throw error(401, 'Sign in to manage workspace access.');
   }
 
-  const { data: membership, error: membershipError } = await locals.supabase
-    .from('workspace_memberships')
-    .select('workspace_id, role')
-    .eq('user_id', locals.user.id)
-    .eq('role', 'owner')
-    .is('revoked_at', null)
-    .maybeSingle();
-
-  if (membershipError || !membership) {
+  if (locals.workspace?.role !== 'owner') {
     throw error(403, 'Only the workspace owner can manage access.');
   }
 
-  return membership.workspace_id as string;
+  return locals.workspace.id;
 }
 
 export async function acceptManualInvite(input: {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { page } from '$app/state';
   import { onMount, tick } from 'svelte';
 
   import IconFileImport from '@tabler/icons-svelte-runes/icons/file-import';
@@ -21,6 +22,8 @@
   let directoryPage: HTMLElement;
   let directoryTable: HTMLTableElement;
   let importPrompt: HTMLElement;
+
+  let peopleAccess: typeof page.data.peopleAccess;
 
   const membershipOptions: EgliseSelectOption[] = [
     { value: 'all', label: 'All people' },
@@ -46,6 +49,7 @@
   }
 
   $: activePeople = $people.filter((person) => person.recordState === 'active');
+  $: peopleAccess = page.data.peopleAccess;
   $: filteredPeople = activePeople.filter((person) =>
     matches(person, query, membership, kindFilter)
   );
@@ -177,11 +181,20 @@
       <h1 tabindex="-1">People directory</h1>
       <p class="page-intro">Manage people and membership records.</p>
     </div>
-    <a class="button primary" href="/people/add">
-      <IconUserPlus aria-hidden="true" size={18} stroke={1.8} />
-      Add person
-    </a>
+    {#if peopleAccess?.canEdit}
+      <a class="button primary" href="/people/add">
+        <IconUserPlus aria-hidden="true" size={18} stroke={1.8} />
+        Add person
+      </a>
+    {/if}
   </header>
+
+  {#if peopleAccess?.storage === 'synthetic-preview'}
+    <p class="notice" role="status">
+      People records are a synthetic preview in this signed-in pilot. Changes are not saved or
+      shared.
+    </p>
+  {/if}
 
   <PeopleAtGlance records={activePeople} activeFilter={kindFilter} onfilterchange={setKindFilter} />
 
@@ -279,17 +292,19 @@
     {/if}
   </div>
 
-  <div bind:this={importPrompt} class="panel import-prompt">
-    <div>
-      <h2>Review a sample import</h2>
-      <p class="muted">
-        Review a fixed example first. This prototype does not read files or create attendance
-        records.
-      </p>
+  {#if peopleAccess?.canImport}
+    <div bind:this={importPrompt} class="panel import-prompt">
+      <div>
+        <h2>Review a sample import</h2>
+        <p class="muted">
+          Review a fixed example first. This prototype does not read files or create attendance
+          records.
+        </p>
+      </div>
+      <a class="button secondary" href="/people/import">
+        <IconFileImport aria-hidden="true" size={18} stroke={1.8} />
+        Review sample import
+      </a>
     </div>
-    <a class="button secondary" href="/people/import">
-      <IconFileImport aria-hidden="true" size={18} stroke={1.8} />
-      Review sample import
-    </a>
-  </div>
+  {/if}
 </section>

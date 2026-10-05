@@ -22,6 +22,7 @@
   import AppToaster from '$lib/components/AppToaster.svelte';
   import AdministratorAccount from '$lib/components/AdministratorAccount.svelte';
   import EgliseChurchMark from '$lib/components/EgliseChurchMark.svelte';
+  import { showErrorToast } from '$lib/toast';
   import {
     initialisePrototypeSession,
     prototypeSession,
@@ -54,6 +55,11 @@
   );
   const usesSupabaseAuth = $derived(data.authMode === 'supabase');
   const signedIn = $derived(usesSupabaseAuth ? data.user !== null : $prototypeSession.signedIn);
+  const canAccessSettings = $derived(
+    !usesSupabaseAuth ||
+      data.workspace?.role === 'owner' ||
+      data.workspace?.role === 'people_administrator'
+  );
   const churchName = $derived(
     usesSupabaseAuth ? (data.workspace?.name ?? 'Eglise') : $prototypeSession.churchName
   );
@@ -196,15 +202,24 @@
     focusableDrawerElements().at(-1)?.focus();
   }
 
-  async function logOut() {
+  async function completeLogOut() {
     if (isLoggingOut) return;
 
     isLoggingOut = true;
 
     if (usesSupabaseAuth) {
       try {
-        await fetch('/auth/logout', { method: 'POST' });
+        const response = await fetch('/auth/logout', { method: 'POST' });
+
+        if (!response.ok) {
+          showErrorToast('We could not sign you out. Please try again.');
+
+          return;
+        }
+
         await goto('/login?logout=1', { invalidateAll: true });
+      } catch {
+        showErrorToast('We could not sign you out. Please check your connection and try again.');
       } finally {
         isLoggingOut = false;
       }
@@ -217,6 +232,19 @@
       await goto('/login', { replaceState: true });
     } finally {
       isLoggingOut = false;
+    }
+  }
+
+  function logOut() {
+    const logoutRequest = new CustomEvent('eglise:before-logout', {
+      cancelable: true,
+      detail: { continueLogout: completeLogOut }
+    });
+
+    document.dispatchEvent(logoutRequest);
+
+    if (!logoutRequest.defaultPrevented) {
+      void completeLogOut();
     }
   }
 
@@ -411,24 +439,26 @@
           </section>
         {/each}
 
-        <section
-          class="navigation-group settings-navigation-group"
-          aria-labelledby="settings-group"
-        >
-          <p class="navigation-group-label" id="settings-group">Workspace</p>
-          <a
-            aria-current={page.url.pathname === '/settings' ? 'page' : undefined}
-            aria-label="Church settings"
-            class="nav-link"
-            class:active={page.url.pathname === '/settings'}
-            href="/settings"
-            onclick={closeMobileNavigation}
+        {#if canAccessSettings}
+          <section
+            class="navigation-group settings-navigation-group"
+            aria-labelledby="settings-group"
           >
-            <IconSettings aria-hidden="true" size={21} stroke={1.8} />
-            <span class="nav-copy">Settings</span>
-            <span aria-hidden="true" class="nav-tooltip">Church settings</span>
-          </a>
-        </section>
+            <p class="navigation-group-label" id="settings-group">Workspace</p>
+            <a
+              aria-current={page.url.pathname === '/settings' ? 'page' : undefined}
+              aria-label="Church settings"
+              class="nav-link"
+              class:active={page.url.pathname === '/settings'}
+              href="/settings"
+              onclick={closeMobileNavigation}
+            >
+              <IconSettings aria-hidden="true" size={21} stroke={1.8} />
+              <span class="nav-copy">Settings</span>
+              <span aria-hidden="true" class="nav-tooltip">Church settings</span>
+            </a>
+          </section>
+        {/if}
       </nav>
 
       <AdministratorAccount

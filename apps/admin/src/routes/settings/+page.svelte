@@ -40,6 +40,7 @@
     { id: string; kind: 'member' | 'invitation'; name: string } | undefined
   >(undefined);
   let copyResetTimer: ReturnType<typeof setTimeout> | undefined;
+  let accessSearchTimer: ReturnType<typeof setTimeout> | undefined;
 
   const inviteRoleOptions: EgliseSelectOption[] = [
     {
@@ -70,6 +71,10 @@
         : 'Enter a valid email address.'
   );
   const canCreateInvitation = $derived(!inviteEmailError);
+  const revocationActionId = $derived(revokeTarget ? `revoke-${revokeTarget.id}` : '');
+  const isRevoking = $derived(
+    Boolean(revocationActionId) && accessActionPending === revocationActionId
+  );
 
   const roleLabel = (role: string): string => {
     switch (role) {
@@ -105,53 +110,16 @@
         status: 'pending';
       };
 
-  const accessRows = $derived.by((): AccessRow[] => [
-    ...data.members.map((member) => ({
-      email: member.email,
-      fullName: member.fullName,
-      role: member.role,
-      status: 'active' as const,
-      userId: member.userId
-    })),
-    ...data.pendingInvites.map((invitation) => ({
-      email: invitation.email,
-      expiresAt: invitation.expiresAt,
-      id: invitation.id,
-      role: invitation.role,
-      status: 'pending' as const
-    }))
-  ]);
-
-  const filteredAccessRows = $derived.by(() => {
-    const query = accessQuery.trim().toLowerCase();
-
-    return accessRows.filter((row) => {
-      const matchesQuery =
-        !query ||
-        row.email.toLowerCase().includes(query) ||
-        (row.status === 'active' && row.fullName.toLowerCase().includes(query));
-      const matchesStatus = accessStatus === 'all' || row.status === accessStatus;
-      const matchesRole = accessRole === 'all' || row.role === accessRole;
-
-      return matchesQuery && matchesStatus && matchesRole;
-    });
-  });
-
-  const accessPageSize = 10;
-  const accessFilterKey = $derived(`${accessQuery}\u0000${accessStatus}\u0000${accessRole}`);
+  const accessRows = $derived(data.accessRows as AccessRow[]);
   const accessPageCount = $derived(
-    Math.max(1, Math.ceil(filteredAccessRows.length / accessPageSize))
+    Math.max(1, Math.ceil(data.accessTotalCount / data.accessPageSize))
   );
-  const paginatedAccessRows = $derived.by(() => {
-    const start = (accessPage - 1) * accessPageSize;
-
-    return filteredAccessRows.slice(start, start + accessPageSize);
-  });
   const accessRangeStart = $derived(
-    filteredAccessRows.length ? (accessPage - 1) * accessPageSize + 1 : 0
+    data.accessTotalCount ? (accessPage - 1) * data.accessPageSize + 1 : 0
   );
-  const accessRangeEnd = $derived(Math.min(accessPage * accessPageSize, filteredAccessRows.length));
-  let previousAccessFilterKey = $state('');
+  const accessRangeEnd = $derived(
+    Math.min(accessPage * data.accessPageSize, data.accessTotalCount)
+  );
 
   $effect(() => {
     if (!hasEditedChurchName) {
@@ -172,23 +140,55 @@
   });
 
   $effect(() => {
-    for (const member of data.members) {
-      memberRoles[member.userId] = member.role;
+    for (const row of accessRows) {
+      if (row.status === 'active') {
+        memberRoles[row.userId] = row.role;
+      }
     }
   });
 
   $effect(() => {
-    if (accessFilterKey !== previousAccessFilterKey) {
-      accessPage = 1;
-      previousAccessFilterKey = accessFilterKey;
-    }
+    accessQuery = data.accessFilters.query;
+    accessStatus = data.accessFilters.status;
+    accessRole = data.accessFilters.role;
+    accessPage = data.accessFilters.page;
   });
 
-  $effect(() => {
-    if (accessPage > accessPageCount) {
-      accessPage = accessPageCount;
+  function updateAccessFilters(
+    update: Partial<{ page: number; query: string; role: string; status: string }>
+  ) {
+    if (accessSearchTimer) {
+      clearTimeout(accessSearchTimer);
+      accessSearchTimer = undefined;
     }
-  });
+
+    const nextQuery = update.query ?? accessQuery;
+    const nextStatus = update.status ?? accessStatus;
+    const nextRole = update.role ?? accessRole;
+    const nextPage = update.page ?? accessPage;
+    const searchParams = new URLSearchParams();
+
+    if (nextQuery.trim()) searchParams.set('accessQuery', nextQuery.trim());
+    if (nextStatus !== 'all') searchParams.set('accessStatus', nextStatus);
+    if (nextRole !== 'all') searchParams.set('accessRole', nextRole);
+    if (nextPage > 1) searchParams.set('accessPage', String(nextPage));
+
+    accessQuery = nextQuery;
+    accessStatus = nextStatus;
+    accessRole = nextRole;
+    accessPage = nextPage;
+
+    void goto(`/settings${searchParams.size ? `?${searchParams}` : ''}`, {
+      keepFocus: true,
+      noScroll: true
+    });
+  }
+
+  function scheduleAccessSearch() {
+    if (accessSearchTimer) clearTimeout(accessSearchTimer);
+
+    accessSearchTimer = setTimeout(() => updateAccessFilters({ page: 1 }), 250);
+  }
 
   const trackInvitationCreation: SubmitFunction = () => {
     isCreatingInvitation = true;
@@ -208,8 +208,10 @@
   };
 
   const trackAccessAction =
-    (action: string, closeDialog = false): SubmitFunction =>
+    (getAction: () => string, closeDialog = false): SubmitFunction =>
     () => {
+      const action = getAction();
+
       accessActionPending = action;
 
       return async ({ result, update }) => {
@@ -298,6 +300,10 @@
   onDestroy(() => {
     if (copyResetTimer) {
       clearTimeout(copyResetTimer);
+    }
+
+    if (accessSearchTimer) {
+      clearTimeout(accessSearchTimer);
     }
   });
 
@@ -407,7 +413,6 @@
                   id="invite-email"
                   name="email"
                   onblur={() => (inviteEmailTouched = true)}
-                  oninput={() => (inviteEmailTouched = true)}
                   required
                   type="email"
                 />
@@ -481,6 +486,7 @@
                 <input
                   bind:value={accessQuery}
                   id="access-search"
+                  oninput={scheduleAccessSearch}
                   placeholder="Name or email"
                   type="search"
                 />
@@ -490,6 +496,7 @@
                 <EgliseSelect
                   id="access-status"
                   bind:value={accessStatus}
+                  onchange={(value) => updateAccessFilters({ page: 1, status: value })}
                   options={accessStatusOptions}
                 />
               </div>
@@ -498,6 +505,7 @@
                 <EgliseSelect
                   id="access-role"
                   bind:value={accessRole}
+                  onchange={(value) => updateAccessFilters({ page: 1, role: value })}
                   options={accessRoleOptions}
                 />
               </div>
@@ -522,7 +530,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {#each paginatedAccessRows as row (row.status === 'active' ? row.userId : row.id)}
+                  {#each accessRows as row (row.status === 'active' ? row.userId : row.id)}
                     <tr>
                       <th scope="row">
                         {#if row.status === 'active'}
@@ -555,7 +563,7 @@
                             class="role-change-form"
                             method="POST"
                             action="?/changeRole"
-                            use:enhance={trackAccessAction(`role-${row.userId}`)}
+                            use:enhance={trackAccessAction(() => `role-${row.userId}`)}
                           >
                             <input name="userId" type="hidden" value={row.userId} />
                             <input
@@ -667,14 +675,14 @@
 
             <div class="access-pagination" aria-label="Access table pagination">
               <p>
-                Showing {accessRangeStart}–{accessRangeEnd} of {filteredAccessRows.length}{' '}
-                {filteredAccessRows.length === 1 ? 'record' : 'records'}
+                Showing {accessRangeStart}–{accessRangeEnd} of {data.accessTotalCount}{' '}
+                {data.accessTotalCount === 1 ? 'record' : 'records'}
               </p>
               <div>
                 <button
                   class="button secondary compact-action"
                   disabled={accessPage === 1}
-                  onclick={() => (accessPage -= 1)}
+                  onclick={() => updateAccessFilters({ page: accessPage - 1 })}
                   type="button"
                 >
                   Previous
@@ -683,7 +691,7 @@
                 <button
                   class="button secondary compact-action"
                   disabled={accessPage === accessPageCount}
-                  onclick={() => (accessPage += 1)}
+                  onclick={() => updateAccessFilters({ page: accessPage + 1 })}
                   type="button"
                 >
                   Next
@@ -702,12 +710,15 @@
 </section>
 
 {#if data.authMode === 'supabase' && data.accessManagement === 'owner'}
-  <dialog bind:this={revokeDialog} aria-labelledby="revoke-access-title">
+  <dialog
+    bind:this={revokeDialog}
+    aria-busy={isRevoking || undefined}
+    aria-labelledby="revoke-access-title"
+  >
     <form
       method="POST"
       action={revokeTarget?.kind === 'member' ? '?/revokeMembership' : '?/revokeInvitation'}
-      onsubmit={() => (accessActionPending = `revoke-${revokeTarget?.id ?? ''}`)}
-      use:enhance={trackAccessAction(`revoke-${revokeTarget?.id ?? ''}`, true)}
+      use:enhance={trackAccessAction(() => revocationActionId, true)}
     >
       <p class="dialog-context">Workspace access</p>
       <h2 id="revoke-access-title">
@@ -725,6 +736,11 @@
       {#if revocationError}
         <p class="field-error" role="alert">{revocationError}</p>
       {/if}
+      {#if isRevoking}
+        <p class="dialog-pending" role="status">
+          {revokeTarget?.kind === 'member' ? 'Removing access…' : 'Revoking invitation…'}
+        </p>
+      {/if}
       {#if revokeTarget?.kind === 'member'}
         <input name="userId" type="hidden" value={revokeTarget.id} />
       {:else}
@@ -733,7 +749,7 @@
       <div class="dialog-actions">
         <button
           class="button secondary"
-          disabled={accessActionPending === `revoke-${revokeTarget?.id ?? ''}`}
+          disabled={isRevoking}
           onclick={() => revokeDialog?.close()}
           type="button"
         >
@@ -741,7 +757,7 @@
         </button>
         <PendingButton
           class="button"
-          pending={accessActionPending === `revoke-${revokeTarget?.id ?? ''}`}
+          pending={isRevoking}
           pendingLabel={revokeTarget?.kind === 'member'
             ? 'Removing access…'
             : 'Revoking invitation…'}
@@ -986,6 +1002,15 @@
   }
   .copy-invitation-form {
     display: contents;
+  }
+  .dialog-pending {
+    margin: 16px 0 0;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--primary);
+    background: var(--surface);
+    font-weight: 600;
   }
   .danger-outline {
     border-color: var(--danger);

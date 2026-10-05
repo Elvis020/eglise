@@ -18,9 +18,8 @@ function isBlankRow(cells: unknown[]): boolean {
 }
 
 export async function parsePeopleWorkbook(file: File): Promise<ParsedPeopleWorkbook> {
-  const { default: readXlsxFile } = await import('read-excel-file/browser');
-  const sheets = await readXlsxFile(file);
-  const sheet = sheets[0]?.data;
+  const { readSheet } = await import('read-excel-file/browser');
+  const sheet = await readSheet(file, 1);
 
   if (!sheet?.length) throw new Error('This workbook does not contain a worksheet.');
 

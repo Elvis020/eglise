@@ -9,14 +9,22 @@ function requiredEnvironmentValue(name: keyof typeof env): string | null {
   return value || null;
 }
 
+export function isPrototypeAuthMode(): boolean {
+  return requiredEnvironmentValue('EGLISE_AUTH_MODE') === 'prototype';
+}
+
 export function isSupabaseAuthConfigured(): boolean {
-  if (requiredEnvironmentValue('EGLISE_AUTH_MODE') === 'prototype') {
+  if (isPrototypeAuthMode()) {
     return false;
   }
 
   return Boolean(
     requiredEnvironmentValue('SUPABASE_URL') && requiredEnvironmentValue('SUPABASE_PUBLISHABLE_KEY')
   );
+}
+
+export function isAuthenticationConfigurationValid(): boolean {
+  return isPrototypeAuthMode() || isSupabaseAuthConfigured();
 }
 
 export function createSupabaseServerClient(event: RequestEvent): SupabaseClient | null {

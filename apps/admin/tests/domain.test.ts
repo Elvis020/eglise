@@ -10,7 +10,10 @@ import {
   normalisePhone,
   validatePersonDetails
 } from '../src/lib/domain';
-import { validatePeopleImportRow } from '../src/lib/imports/people-import-definition';
+import {
+  peopleByNormalisedName,
+  validatePeopleImportRow
+} from '../src/lib/imports/people-import-definition';
 import {
   DIRECTORY_PAGE_SIZE,
   clampPage,
@@ -64,7 +67,7 @@ describe('person pilot rules', () => {
     const ready = validatePeopleImportRow(
       {
         name: 'Mira Daniels',
-        kind: 'Person',
+        kind: 'Visitor',
         phone: '+233 24 555 0142',
         neighbourhood: 'Cantonments',
         dateOfBirth: 40356
@@ -103,6 +106,26 @@ describe('person pilot rules', () => {
     expect(duplicate.possibleMatchId).toBe('ama-owusu');
     expect(underAge).toMatchObject({ state: 'excluded', reason: 'Age requirements were not met.' });
     expect(ready).not.toHaveProperty('dateOfBirth');
+  });
+
+  it('reuses a normalized person index when checking a batch for duplicates', () => {
+    const index = peopleByNormalisedName(initialPeople);
+    const duplicate = validatePeopleImportRow(
+      {
+        name: '  Ama   Owusu ',
+        kind: 'Visitor',
+        phone: '',
+        neighbourhood: '',
+        dateOfBirth: '01/01/1990'
+      },
+      3,
+      initialPeople,
+      new Date('2026-09-30T12:00:00'),
+      index
+    );
+
+    expect(index.get('ama owusu')?.id).toBe('ama-owusu');
+    expect(duplicate.possibleMatchId).toBe('ama-owusu');
   });
 
   it('starts people without a membership milestone and keeps the membership dates in order', () => {

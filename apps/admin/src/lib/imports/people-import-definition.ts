@@ -69,6 +69,20 @@ export function normalisePersonName(value: string): string {
   return value.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
 }
 
+export function peopleByNormalisedName(records: Person[]): Map<string, Person> {
+  const peopleByName = new Map<string, Person>();
+
+  for (const person of records) {
+    const name = normalisePersonName(person.name);
+
+    if (name && !peopleByName.has(name)) {
+      peopleByName.set(name, person);
+    }
+  }
+
+  return peopleByName;
+}
+
 function text(value: unknown): string {
   return typeof value === 'string' || typeof value === 'number' ? String(value).trim() : '';
 }
@@ -136,7 +150,8 @@ export function validatePeopleImportRow(
   raw: RawPeopleImportRow,
   rowNumber: number,
   existingPeople: Person[],
-  today = new Date()
+  today = new Date(),
+  existingPeopleByName = peopleByNormalisedName(existingPeople)
 ): PeopleImportRow {
   const name = text(raw.name);
   const kind = personKind(raw.kind);
@@ -196,12 +211,8 @@ export function validatePeopleImportRow(
     };
   }
 
-  const matchesExistingName = existingPeople.some(
-    (person) => normalisePersonName(person.name) === normalisePersonName(name)
-  );
-  const possibleMatch = existingPeople.find(
-    (person) => normalisePersonName(person.name) === normalisePersonName(name)
-  );
+  const possibleMatch = existingPeopleByName.get(normalisePersonName(name));
+  const matchesExistingName = Boolean(possibleMatch);
 
   return {
     rowNumber,

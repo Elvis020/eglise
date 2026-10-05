@@ -1,6 +1,15 @@
-import { redirect, type RequestHandler } from '@sveltejs/kit';
+import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ locals }) => {
-  await locals.supabase?.auth.signOut();
-  throw redirect(303, '/login?logout=1');
+  if (!locals.supabase) {
+    return json({ error: 'Sign-out is not configured.' }, { status: 503 });
+  }
+
+  const { error } = await locals.supabase.auth.signOut();
+
+  if (error) {
+    return json({ error: 'We could not sign you out. Please try again.' }, { status: 500 });
+  }
+
+  return json({ ok: true });
 };
