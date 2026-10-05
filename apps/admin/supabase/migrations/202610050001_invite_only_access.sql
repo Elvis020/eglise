@@ -153,6 +153,7 @@ set search_path = ''
 as $$
 declare
   invitation public.workspace_invites%rowtype;
+  normalised_invited_full_name text;
 begin
   select * into invitation
   from public.workspace_invites
@@ -167,12 +168,31 @@ begin
     raise exception 'Invitation is invalid, expired, or already used.';
   end if;
 
+  normalised_invited_full_name := regexp_replace(trim(invited_full_name), '\s+', ' ', 'g');
+
+  perform pg_advisory_xact_lock(
+    hashtextextended(invitation.workspace_id::text || ':' || lower(normalised_invited_full_name), 0)
+  );
+
+  if exists (
+    select 1
+    from public.workspace_memberships membership
+    join public.profiles profile on profile.id = membership.user_id
+    where membership.workspace_id = invitation.workspace_id
+      and membership.revoked_at is null
+      and lower(regexp_replace(trim(profile.full_name), '\s+', ' ', 'g')) = lower(normalised_invited_full_name)
+  ) then
+    raise exception using
+      errcode = 'P0001',
+      message = 'This name is already used by someone in this workspace.';
+  end if;
+
   update public.workspace_invites
   set accepted_at = now(), accepted_by = invited_user_id
   where id = invitation.id;
 
   insert into public.profiles (id, full_name)
-  values (invited_user_id, trim(invited_full_name));
+  values (invited_user_id, normalised_invited_full_name);
 
   insert into public.workspace_memberships (workspace_id, user_id, role, created_by)
   values (invitation.workspace_id, invited_user_id, invitation.role, invitation.created_by);

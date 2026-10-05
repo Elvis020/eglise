@@ -1,5 +1,10 @@
 import { error } from '@sveltejs/kit';
-import { createInviteToken, hashInviteToken, normaliseEmail } from '$lib/server/invite-crypto';
+import {
+  createInviteToken,
+  hashInviteToken,
+  normaliseEmail,
+  normaliseFullName
+} from '$lib/server/invite-crypto';
 import { createSupabaseAdminClient } from '$lib/server/supabase';
 
 export const inviteRoles = ['people_administrator', 'people_editor', 'people_viewer'] as const;
@@ -10,7 +15,9 @@ export function isValidInviteRole(value: string): value is InviteRole {
   return inviteRoles.includes(value as InviteRole);
 }
 
-export { createInviteToken, hashInviteToken, normaliseEmail };
+export { createInviteToken, hashInviteToken, normaliseEmail, normaliseFullName };
+
+const duplicateNameMessage = 'This name is already used by someone in this workspace.';
 
 export async function requireOwnerWorkspace(locals: App.Locals) {
   if (!locals.supabase || !locals.user) {
@@ -75,6 +82,10 @@ export async function acceptManualInvite(input: {
 
   if (claimError) {
     await admin.auth.admin.deleteUser(createdUser.user.id);
+
+    if (claimError.code === 'P0001' && claimError.message === duplicateNameMessage) {
+      return { nameError: duplicateNameMessage };
+    }
 
     return { error: 'This invitation is no longer available. Ask the owner for a new invitation.' };
   }

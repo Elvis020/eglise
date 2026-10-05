@@ -8,6 +8,7 @@
   const token = $derived(form?.token ?? data.token);
   const fullName = $derived(form?.fullName ?? '');
   const email = $derived(form?.email ?? '');
+  const nameError = $derived(form?.nameError ?? '');
 </script>
 
 <svelte:head><title>Accept invitation | Eglise</title></svelte:head>
@@ -41,12 +42,17 @@
           <label for="invite-name">Full name</label>
           <input
             autocomplete="name"
+            aria-describedby={nameError ? 'invite-name-error' : undefined}
+            aria-invalid={nameError ? 'true' : undefined}
             id="invite-name"
             maxlength="120"
             name="fullName"
             required
             value={fullName}
           />
+          {#if nameError}
+            <p class="field-error" id="invite-name-error" role="alert">{nameError}</p>
+          {/if}
         </div>
 
         <div class="field">
@@ -171,6 +177,12 @@
   }
   .invite-form .invite-error {
     margin: 0;
+  }
+  .field-error {
+    margin: 0;
+    color: var(--danger);
+    font-size: 12px;
+    line-height: 1.3;
   }
   .invite-note {
     display: grid;

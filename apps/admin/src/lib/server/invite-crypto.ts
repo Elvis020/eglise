@@ -18,3 +18,7 @@ export async function hashInviteToken(token: string): Promise<string> {
 export function normaliseEmail(value: string): string {
   return value.trim().toLocaleLowerCase();
 }
+
+export function normaliseFullName(value: string): string {
+  return value.trim().replace(/\s+/g, ' ');
+}

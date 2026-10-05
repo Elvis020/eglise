@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createInviteToken, hashInviteToken, normaliseEmail } from '$lib/server/invite-crypto';
+import {
+  createInviteToken,
+  hashInviteToken,
+  normaliseEmail,
+  normaliseFullName
+} from '$lib/server/invite-crypto';
 
 describe('manual invitations', () => {
   it('creates opaque URL-safe tokens with stable hashes', async () => {
@@ -12,5 +17,9 @@ describe('manual invitations', () => {
 
   it('normalises an invited email before looking it up', () => {
     expect(normaliseEmail('  Owner@Church.org ')).toBe('owner@church.org');
+  });
+
+  it('normalises name whitespace before duplicate checks', () => {
+    expect(normaliseFullName('  Ama   Owusu  ')).toBe('Ama Owusu');
   });
 });

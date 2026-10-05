@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { acceptManualInvite, normaliseEmail } from '$lib/server/manual-invites';
+import { acceptManualInvite, normaliseEmail, normaliseFullName } from '$lib/server/manual-invites';
 import { isSupabaseAuthConfigured } from '$lib/server/supabase';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -16,9 +16,7 @@ export const actions: Actions = {
   default: async ({ locals, request, url }) => {
     const formData = await request.formData();
     const token = String(formData.get('token') ?? '');
-    const fullName = String(formData.get('fullName') ?? '')
-      .trim()
-      .replace(/\s+/g, ' ');
+    const fullName = normaliseFullName(String(formData.get('fullName') ?? ''));
     const email = normaliseEmail(String(formData.get('email') ?? ''));
     const password = String(formData.get('password') ?? '');
 
@@ -53,6 +51,10 @@ export const actions: Actions = {
     }
 
     const outcome = await acceptManualInvite({ email, fullName, password, token });
+
+    if ('nameError' in outcome) {
+      return fail(400, { nameError: outcome.nameError, fullName, email, token });
+    }
 
     if ('error' in outcome) {
       return fail(400, { error: outcome.error, fullName, email, token });
