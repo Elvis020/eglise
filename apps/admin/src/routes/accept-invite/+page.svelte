@@ -1,6 +1,8 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { goto } from '$app/navigation';
   import type { SubmitFunction } from '@sveltejs/kit';
+  import IconArrowRight from '@tabler/icons-svelte-runes/icons/arrow-right';
   import IconInfoCircle from '@tabler/icons-svelte-runes/icons/info-circle';
 
   import EgliseChurchMark from '$lib/components/EgliseChurchMark.svelte';
@@ -8,11 +10,49 @@
 
   let { data, form } = $props();
   let isSubmitting = $state(false);
+  let isContinuing = $state(false);
+  let invitationInput = $state('');
+  let invitationError = $state('');
 
   const token = $derived(form?.token ?? data.token);
   const fullName = $derived(form?.fullName ?? '');
   const email = $derived(form?.email ?? '');
   const nameError = $derived(form?.nameError ?? '');
+
+  function invitationToken(value: string): string {
+    const trimmedValue = value.trim();
+
+    try {
+      return new URL(trimmedValue).searchParams.get('token')?.trim() ?? '';
+    } catch {
+      return trimmedValue;
+    }
+  }
+
+  function isInvitationToken(value: string): boolean {
+    return /^[A-Za-z0-9_-]{40,}$/.test(value);
+  }
+
+  async function continueWithInvitation(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+
+    const token = invitationToken(invitationInput);
+
+    if (!isInvitationToken(token)) {
+      invitationError = 'Paste the invitation link or its invitation code.';
+
+      return;
+    }
+
+    invitationError = '';
+    isContinuing = true;
+
+    try {
+      await goto(`/accept-invite?token=${encodeURIComponent(token)}`);
+    } finally {
+      isContinuing = false;
+    }
+  }
 
   const trackSubmission: SubmitFunction = () => {
     isSubmitting = true;
@@ -40,16 +80,51 @@
       <p class="invite-eyebrow">Workspace invitation</p>
       <h1 id="invite-title">Set up your access</h1>
       <p>
-        Use the email address the workspace owner invited. Your password is never visible to them.
+        {token
+          ? 'Use the email address the workspace owner invited.'
+          : 'Paste your invitation to continue.'}
       </p>
     </header>
 
     {#if !data.authConfigured}
       <p class="invite-error" role="alert">Account setup is not configured yet.</p>
     {:else if !token}
-      <p class="invite-error" role="alert">
-        This invitation link is incomplete. Ask the owner for a new one.
-      </p>
+      <form class="invite-entry" novalidate onsubmit={continueWithInvitation}>
+        <div class="field">
+          <label for="invitation">Invitation link or code</label>
+          <input
+            autocapitalize="none"
+            aria-describedby={invitationError
+              ? 'invitation-error invitation-help'
+              : 'invitation-help'}
+            aria-invalid={invitationError ? 'true' : undefined}
+            autocomplete="off"
+            bind:value={invitationInput}
+            id="invitation"
+            maxlength="2000"
+            oninput={() => (invitationError = '')}
+            placeholder="Paste invitation link or code"
+            spellcheck={false}
+            type="text"
+          />
+          <p class="help" id="invitation-help">
+            Your workspace owner can copy this from the invitation they created.
+          </p>
+          {#if invitationError}
+            <p class="field-error" id="invitation-error" role="alert">{invitationError}</p>
+          {/if}
+        </div>
+
+        <PendingButton
+          class="button primary"
+          pending={isContinuing}
+          pendingLabel="Opening invitation…"
+          type="submit"
+        >
+          Continue with invitation
+          <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
+        </PendingButton>
+      </form>
     {:else}
       <form method="POST" class="invite-form" use:enhance={trackSubmission}>
         <input name="token" type="hidden" value={token} />
@@ -113,8 +188,8 @@
       <aside class="invite-note">
         <IconInfoCircle aria-hidden="true" size={17} stroke={1.8} />
         <p>
-          This proof-of-concept link is sent manually by the workspace owner. It expires after seven
-          days and can be used once.
+          Invitations expire after seven days and can be used once. Your password is never visible
+          to the workspace owner.
         </p>
       </aside>
     {/if}
@@ -164,6 +239,11 @@
     color: var(--text-secondary);
   }
   .invite-form {
+    display: grid;
+    gap: 18px;
+    margin-top: 24px;
+  }
+  .invite-entry {
     display: grid;
     gap: 18px;
     margin-top: 24px;
