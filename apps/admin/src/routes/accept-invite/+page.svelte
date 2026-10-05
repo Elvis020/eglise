@@ -13,7 +13,7 @@
   let isSubmitting = $state(false);
   let isContinuing = $state(false);
   let invitationInput = $state('');
-  let invitationError = $state('');
+  let invitationTouched = $state(false);
 
   const token = $derived(form?.token ?? data.token);
   const fullName = $derived(form?.fullName ?? '');
@@ -34,22 +34,29 @@
     return /^[A-Za-z0-9_-]{40,}$/.test(value);
   }
 
+  const invitationCandidate = $derived(invitationToken(invitationInput));
+  const invitationInputError = $derived(
+    !invitationCandidate
+      ? 'Paste a complete invitation link or code.'
+      : !isInvitationToken(invitationCandidate)
+        ? 'Paste a complete invitation link or code.'
+        : ''
+  );
+  const canContinueWithInvitation = $derived(!invitationInputError);
+
   async function continueWithInvitation(event: SubmitEvent): Promise<void> {
     event.preventDefault();
 
-    const token = invitationToken(invitationInput);
+    invitationTouched = true;
 
-    if (!isInvitationToken(token)) {
-      invitationError = 'Paste the invitation link or its invitation code.';
-
+    if (!canContinueWithInvitation) {
       return;
     }
 
-    invitationError = '';
     isContinuing = true;
 
     try {
-      await goto(`/accept-invite?token=${encodeURIComponent(token)}`);
+      await goto(`/accept-invite?token=${encodeURIComponent(invitationCandidate)}`);
     } finally {
       isContinuing = false;
     }
@@ -95,15 +102,16 @@
           <label for="invitation">Invitation link or code</label>
           <input
             autocapitalize="none"
-            aria-describedby={invitationError
+            aria-describedby={invitationTouched && invitationInputError
               ? 'invitation-error invitation-help'
               : 'invitation-help'}
-            aria-invalid={invitationError ? 'true' : undefined}
+            aria-invalid={invitationTouched && invitationInputError ? 'true' : undefined}
             autocomplete="off"
             bind:value={invitationInput}
             id="invitation"
             maxlength="2000"
-            oninput={() => (invitationError = '')}
+            onblur={() => (invitationTouched = true)}
+            oninput={() => (invitationTouched = true)}
             placeholder="Paste invitation link or code"
             spellcheck={false}
             type="text"
@@ -111,13 +119,16 @@
           <p class="help" id="invitation-help">
             Your workspace owner can copy this from the invitation they created.
           </p>
-          {#if invitationError}
-            <p class="field-error" id="invitation-error" role="alert">{invitationError}</p>
+          {#if invitationTouched && invitationInputError}
+            <p class="field-error" id="invitation-error" role="alert">
+              {invitationInputError}
+            </p>
           {/if}
         </div>
 
         <PendingButton
           class="button"
+          disabled={!canContinueWithInvitation}
           pending={isContinuing}
           pendingLabel="Opening invitation…"
           type="submit"
@@ -284,6 +295,11 @@
     outline: 0;
     border-color: #6f8b75;
     box-shadow: 0 0 0 2px rgb(49 84 59 / 12%);
+  }
+  .field input[aria-invalid='true'],
+  .field input[aria-invalid='true']:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 2px rgb(168 69 53 / 16%);
   }
   .help {
     margin: 0;
