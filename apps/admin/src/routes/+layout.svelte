@@ -39,6 +39,7 @@
   let drawerCloseButton = $state<HTMLButtonElement | undefined>(undefined);
   let menuButton = $state<HTMLButtonElement | undefined>(undefined);
   let sessionReady = $state(false);
+  let isLoggingOut = $state(false);
 
   const isAuthenticationRoute = $derived(
     page.url.pathname === '/login' ||
@@ -194,14 +195,27 @@
   }
 
   async function logOut() {
+    if (isLoggingOut) return;
+
+    isLoggingOut = true;
+
     if (usesSupabaseAuth) {
-      await fetch('/auth/logout', { method: 'POST' });
-      await goto('/login?logout=1');
+      try {
+        await fetch('/auth/logout', { method: 'POST' });
+        await goto('/login?logout=1', { invalidateAll: true });
+      } finally {
+        isLoggingOut = false;
+      }
 
       return;
     }
 
-    void goto('/login?logout=1');
+    try {
+      signOutPrototypeAdministrator();
+      await goto('/login', { replaceState: true });
+    } finally {
+      isLoggingOut = false;
+    }
   }
 
   onMount(() => {
@@ -418,6 +432,7 @@
       <AdministratorAccount
         collapsed={sidebarCollapsed}
         email={administratorEmail}
+        {isLoggingOut}
         name={administratorName}
         onlogout={logOut}
       />

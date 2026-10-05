@@ -1,9 +1,13 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
+  import type { SubmitFunction } from '@sveltejs/kit';
   import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconDeviceFloppy from '@tabler/icons-svelte-runes/icons/device-floppy';
 
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import EgliseSelect, { type EgliseSelectOption } from '$lib/components/EgliseSelect.svelte';
+  import PendingButton from '$lib/components/PendingButton.svelte';
   import { prototypeSession, updatePrototypeChurchName } from '$lib/prototype-session';
   import { showToast } from '$lib/toast';
 
@@ -12,12 +16,53 @@
   let churchName = $state('');
   let error = $state('');
   let hasEditedChurchName = $state(false);
+  let inviteRole = $state('people_editor');
+  let isCreatingInvitation = $state(false);
+  let isCopyingInvitation = $state(false);
+
+  const inviteRoleOptions: EgliseSelectOption[] = [
+    {
+      value: 'people_administrator',
+      label: 'People administrator — imports and membership recognition'
+    },
+    { value: 'people_editor', label: 'People editor — ordinary record changes' },
+    { value: 'people_viewer', label: 'People viewer — read only' }
+  ];
 
   $effect(() => {
     if (!hasEditedChurchName) {
       churchName = $prototypeSession.churchName;
     }
   });
+
+  $effect(() => {
+    if (form?.role) {
+      inviteRole = form.role;
+    }
+  });
+
+  const trackInvitationCreation: SubmitFunction = () => {
+    isCreatingInvitation = true;
+
+    return async ({ update }) => {
+      try {
+        await update();
+      } finally {
+        isCreatingInvitation = false;
+      }
+    };
+  };
+
+  async function copyInvitationLink(link: string): Promise<void> {
+    isCopyingInvitation = true;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      showToast('Invitation link copied.');
+    } finally {
+      isCopyingInvitation = false;
+    }
+  }
 
   function saveChurchName(event: SubmitEvent) {
     event.preventDefault();
@@ -108,7 +153,12 @@
       </div>
 
       {#if data.accessManagement === 'owner'}
-        <form class="access-form" method="POST" action="?/invite">
+        <form
+          class="access-form"
+          method="POST"
+          action="?/invite"
+          use:enhance={trackInvitationCreation}
+        >
           <div class="field">
             <label for="invite-email">Email address</label>
             <input
@@ -123,20 +173,22 @@
 
           <div class="field">
             <label for="invite-role">People &amp; Membership access</label>
-            <select id="invite-role" name="role" value={form?.role ?? 'people_editor'}>
-              <option value="people_administrator"
-                >People administrator — imports and membership recognition</option
-              >
-              <option value="people_editor">People editor — ordinary record changes</option>
-              <option value="people_viewer">People viewer — read only</option>
-            </select>
+            <input name="role" type="hidden" value={inviteRole} />
+            <EgliseSelect id="invite-role" bind:value={inviteRole} options={inviteRoleOptions} />
           </div>
 
           {#if form?.inviteError}
             <p class="field-error" id="invite-error" role="alert">{form.inviteError}</p>
           {/if}
 
-          <button class="button primary" type="submit">Create invitation link</button>
+          <PendingButton
+            class="button primary"
+            pending={isCreatingInvitation}
+            pendingLabel="Creating invitation…"
+            type="submit"
+          >
+            Create invitation link
+          </PendingButton>
         </form>
 
         {#if form?.inviteLink}
@@ -147,13 +199,15 @@
               this page.
             </p>
             <input aria-label="Invitation link" readonly value={form.inviteLink} />
-            <button
+            <PendingButton
               class="button secondary"
-              onclick={() => navigator.clipboard.writeText(form.inviteLink)}
+              onclick={() => void copyInvitationLink(form.inviteLink)}
+              pending={isCopyingInvitation}
+              pendingLabel="Copying link…"
               type="button"
             >
               Copy invitation link
-            </button>
+            </PendingButton>
           </div>
         {/if}
       {:else}
@@ -213,14 +267,14 @@
     background: var(--surface-raised);
     font: 14px var(--font-ui);
   }
-  .invite-created .button {
+  .invite-created :global(.button) {
     width: fit-content;
   }
   @media (max-width: 760px) {
     .access-form {
       grid-template-columns: 1fr;
     }
-    .access-form .button {
+    .access-form :global(.button) {
       width: 100%;
     }
   }

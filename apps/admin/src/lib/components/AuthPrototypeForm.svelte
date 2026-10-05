@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
+  import type { SubmitFunction } from '@sveltejs/kit';
   import { tick } from 'svelte';
   import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconArrowRight from '@tabler/icons-svelte-runes/icons/arrow-right';
@@ -7,6 +9,7 @@
   import IconInfoCircle from '@tabler/icons-svelte-runes/icons/info-circle';
 
   import EgliseChurchMark from '$lib/components/EgliseChurchMark.svelte';
+  import PendingButton from '$lib/components/PendingButton.svelte';
   import {
     prototypeSession,
     signInPrototypeAdministrator,
@@ -64,6 +67,24 @@
   const alternateHref = $derived(
     isLogin ? (authMode === 'supabase' ? '/accept-invite' : '/signup') : '/login'
   );
+
+  const trackSupabaseSubmission: SubmitFunction = ({ cancel }) => {
+    if (authMode !== 'supabase') {
+      cancel();
+
+      return;
+    }
+
+    isSubmitting = true;
+
+    return async ({ update }) => {
+      try {
+        await update();
+      } finally {
+        isSubmitting = false;
+      }
+    };
+  };
 
   function clearFieldError(field: 'name' | 'email' | 'password') {
     if (field === 'name') nameError = '';
@@ -202,9 +223,10 @@
 
     <form
       class="auth-form"
-      method={authMode === 'supabase' ? 'POST' : undefined}
+      method="POST"
       novalidate
       onsubmit={handleSubmit}
+      use:enhance={trackSupabaseSubmission}
     >
       {#if authMode === 'supabase' && isLogin}
         <input name="next" type="hidden" value={next} />
@@ -294,10 +316,15 @@
                   <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />
                   Back
                 </button>
-                <button class="auth-submit" disabled={isSubmitting} type="submit">
+                <PendingButton
+                  class="auth-submit"
+                  pending={isSubmitting}
+                  pendingLabel="Opening workspace…"
+                  type="submit"
+                >
                   <span>{isSubmitting ? 'Opening workspace…' : submitLabel}</span>
                   <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
-                </button>
+                </PendingButton>
               </div>
             {/if}
           </div>
@@ -342,10 +369,15 @@
           </p>
         </div>
 
-        <button class="auth-submit" disabled={isSubmitting} type="submit">
-          <span>{isSubmitting ? 'Opening workspace…' : submitLabel}</span>
+        <PendingButton
+          class="auth-submit"
+          pending={isSubmitting}
+          pendingLabel="Opening workspace…"
+          type="submit"
+        >
+          <span>{submitLabel}</span>
           <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
-        </button>
+        </PendingButton>
       {/if}
 
       {#if formError || form?.error}

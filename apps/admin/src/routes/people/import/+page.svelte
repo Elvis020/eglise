@@ -7,6 +7,7 @@
   import { get } from 'svelte/store';
 
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import PendingButton from '$lib/components/PendingButton.svelte';
   import {
     PEOPLE_IMPORT_MAX_FILE_SIZE_BYTES,
     PEOPLE_IMPORT_MAX_ROWS,
@@ -28,6 +29,7 @@
   let selectedFileName = '';
   let isReading = false;
   let isDownloading = false;
+  let isCreatingPeople = false;
   let decisions: Record<number, DuplicateDecision> = {};
   let outcome: { created: number; excluded: number; deferred: number } | null = null;
   let confirmDialog: HTMLDialogElement;
@@ -140,24 +142,32 @@
     confirmDialog.showModal();
   }
 
-  function createPeople(): void {
-    const created = addPeople(
-      importRows.map((row) => ({
-        name: row.name,
-        kind: row.kind ?? 'person',
-        phone: row.phone,
-        neighbourhood: row.neighbourhood
-      }))
-    );
+  async function createPeople(): Promise<void> {
+    isCreatingPeople = true;
 
-    outcome = {
-      created: created.length,
-      excluded: totalExcluded,
-      deferred: deferredReviewRows.length
-    };
-    rows = [];
-    decisions = {};
-    confirmDialog.close();
+    try {
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+
+      const created = addPeople(
+        importRows.map((row) => ({
+          name: row.name,
+          kind: row.kind ?? 'person',
+          phone: row.phone,
+          neighbourhood: row.neighbourhood
+        }))
+      );
+
+      outcome = {
+        created: created.length,
+        excluded: totalExcluded,
+        deferred: deferredReviewRows.length
+      };
+      rows = [];
+      decisions = {};
+      confirmDialog.close();
+    } finally {
+      isCreatingPeople = false;
+    }
   }
 </script>
 
@@ -209,17 +219,16 @@
       </p>
     </div>
     <div class="import-upload-actions">
-      <button
+      <PendingButton
         class="button secondary"
         type="button"
         onclick={downloadTemplate}
-        disabled={isDownloading}
+        pending={isDownloading}
+        pendingLabel="Preparing template…"
       >
         <IconDownload aria-hidden="true" size={18} stroke={1.8} />
-        {isDownloading
-          ? 'Preparing template…'
-          : `Download ${PEOPLE_IMPORT_TEMPLATE_VERSION} template`}
-      </button>
+        Download {PEOPLE_IMPORT_TEMPLATE_VERSION} template
+      </PendingButton>
       <div class="field import-file-field">
         <label for="people-workbook">2. Upload completed workbook</label>
         <input
@@ -409,9 +418,15 @@
       <button class="button secondary" value="cancel">
         <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />Cancel
       </button>
-      <button class="button primary" type="button" onclick={createPeople}>
+      <PendingButton
+        class="button primary"
+        pending={isCreatingPeople}
+        pendingLabel="Creating people…"
+        type="button"
+        onclick={() => void createPeople()}
+      >
         <IconUsersPlus aria-hidden="true" size={18} stroke={1.8} />Create people
-      </button>
+      </PendingButton>
     </div>
   </form>
 </dialog>

@@ -1,14 +1,30 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
+  import type { SubmitFunction } from '@sveltejs/kit';
   import IconInfoCircle from '@tabler/icons-svelte-runes/icons/info-circle';
 
   import EgliseChurchMark from '$lib/components/EgliseChurchMark.svelte';
+  import PendingButton from '$lib/components/PendingButton.svelte';
 
   let { data, form } = $props();
+  let isSubmitting = $state(false);
 
   const token = $derived(form?.token ?? data.token);
   const fullName = $derived(form?.fullName ?? '');
   const email = $derived(form?.email ?? '');
   const nameError = $derived(form?.nameError ?? '');
+
+  const trackSubmission: SubmitFunction = () => {
+    isSubmitting = true;
+
+    return async ({ update }) => {
+      try {
+        await update();
+      } finally {
+        isSubmitting = false;
+      }
+    };
+  };
 </script>
 
 <svelte:head><title>Accept invitation | Eglise</title></svelte:head>
@@ -35,7 +51,7 @@
         This invitation link is incomplete. Ask the owner for a new one.
       </p>
     {:else}
-      <form method="POST" class="invite-form">
+      <form method="POST" class="invite-form" use:enhance={trackSubmission}>
         <input name="token" type="hidden" value={token} />
 
         <div class="field">
@@ -84,7 +100,14 @@
           <p class="invite-error" role="alert">{form.error}</p>
         {/if}
 
-        <button class="button primary" type="submit">Create account and enter workspace</button>
+        <PendingButton
+          class="button primary"
+          pending={isSubmitting}
+          pendingLabel="Creating account…"
+          type="submit"
+        >
+          Create account and enter workspace
+        </PendingButton>
       </form>
 
       <aside class="invite-note">

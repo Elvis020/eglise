@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import IconDots from '@tabler/icons-svelte-runes/icons/dots';
+  import IconLoader2 from '@tabler/icons-svelte-runes/icons/loader-2';
   import IconLogout from '@tabler/icons-svelte-runes/icons/logout';
   import { prototypeSession } from '$lib/prototype-session';
 
@@ -9,11 +10,13 @@
   let {
     collapsed = false,
     email,
+    isLoggingOut = false,
     name,
     onlogout
   }: {
     collapsed?: boolean;
     email?: string;
+    isLoggingOut?: boolean;
     name?: string;
     onlogout: () => void;
   } = $props();
@@ -73,20 +76,60 @@
     <button
       aria-label="Log out"
       class="administrator-compact-logout"
+      disabled={isLoggingOut}
       onclick={onlogout}
       title="Log out"
       type="button"
     >
-      <IconLogout aria-hidden="true" size={20} stroke={1.8} />
+      {#if isLoggingOut}
+        <IconLoader2 aria-hidden="true" class="administrator-logout-spinner" size={20} stroke={2} />
+      {:else}
+        <IconLogout aria-hidden="true" size={20} stroke={1.8} />
+      {/if}
     </button>
   {/if}
 
   {#if menuOpen}
     <div class="administrator-menu" id="administrator-menu" role="menu">
-      <button class="administrator-menu-item" onclick={onlogout} role="menuitem" type="button">
-        <IconLogout aria-hidden="true" size={18} stroke={1.8} />
-        Log out
+      <button
+        aria-busy={isLoggingOut || undefined}
+        class="administrator-menu-item"
+        disabled={isLoggingOut}
+        onclick={onlogout}
+        role="menuitem"
+        type="button"
+      >
+        {#if isLoggingOut}
+          <IconLoader2
+            aria-hidden="true"
+            class="administrator-logout-spinner"
+            size={18}
+            stroke={2}
+          />
+          Logging out…
+        {:else}
+          <IconLogout aria-hidden="true" size={18} stroke={1.8} />
+          Log out
+        {/if}
       </button>
     </div>
   {/if}
 </div>
+
+<style>
+  :global(.administrator-logout-spinner) {
+    animation: administrator-logout-spin 700ms linear infinite;
+  }
+
+  @keyframes administrator-logout-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.administrator-logout-spinner) {
+      animation-duration: 1.8s;
+    }
+  }
+</style>
