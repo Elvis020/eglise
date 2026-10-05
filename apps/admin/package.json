@@ -13,12 +13,12 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "npm run build && playwright test"
+    "test:e2e": "npm run build && playwright test",
+    "auth:bootstrap-owner": "node scripts/bootstrap-owner.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@playwright/test": "^1.49.1",
-    "@sveltejs/adapter-static": "^3.0.6",
     "@sveltejs/kit": "^2.15.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
     "@types/node": "^22.10.2",
@@ -35,6 +35,9 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.2",
+    "@sveltejs/adapter-cloudflare": "^5.1.0",
     "@tabler/icons-svelte-runes": "^3.48.0",
     "read-excel-file": "^9.3.10",
     "svelte-sonner": "^1.2.1",

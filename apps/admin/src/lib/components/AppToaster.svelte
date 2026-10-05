@@ -12,7 +12,6 @@
   gap={8}
   mobileOffset={16}
   offset={24}
-  pauseWhenPageIsHidden
   position="bottom-right"
   theme="light"
   visibleToasts={1}

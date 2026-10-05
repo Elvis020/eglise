@@ -28,7 +28,7 @@
     signOutPrototypeAdministrator
   } from '$lib/prototype-session';
 
-  let { children } = $props();
+  let { children, data } = $props();
   let sidebarCollapsed = $state(false);
   let isMobile = $state(false);
   let mobileNavigationOpen = $state(false);
@@ -41,13 +41,23 @@
   let sessionReady = $state(false);
 
   const isAuthenticationRoute = $derived(
-    page.url.pathname === '/login' || page.url.pathname === '/signup'
+    page.url.pathname === '/login' ||
+      page.url.pathname === '/signup' ||
+      page.url.pathname === '/accept-invite'
   );
   const isErrorRoute = $derived(page.status >= 400);
   const requiresAuthentication = $derived(
     !isAuthenticationRoute && !isErrorRoute && page.url.pathname !== '/offline'
   );
-  const churchName = $derived($prototypeSession.churchName);
+  const usesSupabaseAuth = $derived(data.authMode === 'supabase');
+  const signedIn = $derived(usesSupabaseAuth ? data.user !== null : $prototypeSession.signedIn);
+  const churchName = $derived(
+    usesSupabaseAuth ? (data.workspace?.name ?? 'Eglise') : $prototypeSession.churchName
+  );
+  const administratorName = $derived(
+    usesSupabaseAuth ? data.user?.name || 'Church administrator' : undefined
+  );
+  const administratorEmail = $derived(usesSupabaseAuth ? (data.user?.email ?? '') : undefined);
 
   const navigationGroups = [
     { label: 'Essentials', modules: ['Attendance', 'Reports'] },
@@ -183,12 +193,21 @@
     focusableDrawerElements().at(-1)?.focus();
   }
 
-  function logOut() {
+  async function logOut() {
+    if (usesSupabaseAuth) {
+      await fetch('/auth/logout', { method: 'POST' });
+      await goto('/login?logout=1');
+
+      return;
+    }
+
     void goto('/login?logout=1');
   }
 
   onMount(() => {
-    initialisePrototypeSession();
+    if (!usesSupabaseAuth) {
+      initialisePrototypeSession();
+    }
     sessionReady = true;
 
     if ('serviceWorker' in navigator) {
@@ -224,7 +243,7 @@
   $effect(() => {
     if (!sessionReady) return;
 
-    if (isAuthenticationRoute && page.url.searchParams.get('logout') === '1') {
+    if (!usesSupabaseAuth && isAuthenticationRoute && page.url.searchParams.get('logout') === '1') {
       signOutPrototypeAdministrator();
       closeMobileNavigation();
       void goto('/login', { replaceState: true });
@@ -232,13 +251,13 @@
       return;
     }
 
-    if (requiresAuthentication && !$prototypeSession.signedIn) {
+    if (requiresAuthentication && !signedIn) {
       void goto('/login', { replaceState: true });
 
       return;
     }
 
-    if (isAuthenticationRoute && $prototypeSession.signedIn) {
+    if (isAuthenticationRoute && signedIn) {
       void goto('/people', { replaceState: true });
     }
   });
@@ -396,7 +415,12 @@
         </section>
       </nav>
 
-      <AdministratorAccount collapsed={sidebarCollapsed} onlogout={logOut} />
+      <AdministratorAccount
+        collapsed={sidebarCollapsed}
+        email={administratorEmail}
+        name={administratorName}
+        onlogout={logOut}
+      />
     </aside>
 
     <main id="main-content" class="content" inert={isMobile && mobileNavigationOpen} tabindex="-1">

@@ -51,6 +51,7 @@ export type PeopleImportRow = {
   kind: PersonKind | null;
   phone: string;
   neighbourhood: string;
+  possibleMatchId: string | null;
   state: ImportState;
   reason: string;
 };
@@ -150,6 +151,7 @@ export function validatePeopleImportRow(
       kind,
       phone,
       neighbourhood,
+      possibleMatchId: null,
       state: 'excluded',
       reason: 'Full name is required.'
     };
@@ -162,6 +164,7 @@ export function validatePeopleImportRow(
       kind,
       phone,
       neighbourhood,
+      possibleMatchId: null,
       state: 'excluded',
       reason: 'Choose Regular attendee, Visitor, or First-time visitor.'
     };
@@ -174,6 +177,7 @@ export function validatePeopleImportRow(
       kind,
       phone,
       neighbourhood,
+      possibleMatchId: null,
       state: 'excluded',
       reason: 'Phone number needs correction.'
     };
@@ -186,12 +190,16 @@ export function validatePeopleImportRow(
       kind,
       phone,
       neighbourhood,
+      possibleMatchId: null,
       state: 'excluded',
       reason: 'Age requirements were not met.'
     };
   }
 
   const matchesExistingName = existingPeople.some(
+    (person) => normalisePersonName(person.name) === normalisePersonName(name)
+  );
+  const possibleMatch = existingPeople.find(
     (person) => normalisePersonName(person.name) === normalisePersonName(name)
   );
 
@@ -201,6 +209,7 @@ export function validatePeopleImportRow(
     kind,
     phone,
     neighbourhood,
+    possibleMatchId: possibleMatch?.id ?? null,
     state: matchesExistingName ? 'review' : 'ready',
     reason: matchesExistingName ? 'A person with this name already exists.' : 'Ready to create.'
   };

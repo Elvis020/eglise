@@ -43,25 +43,49 @@ test('imports approved workbook rows while excluding invalid rows', async ({ pag
   await page.getByRole('button', { name: 'Create people' }).click();
 
   await expect(page.getByText('Import complete')).toBeVisible();
-  await expect(page.getByText('Created 2 people. Excluded 1 row was not added.')).toBeVisible();
+  await expect(
+    page.getByText(
+      'Created 2 people. Excluded 1 row was not added. Deferred 0 rows need later review.'
+    )
+  ).toBeVisible();
 });
 
-test('shows the people directory and quiet shared prototype context', async ({ page }) => {
+test('lets a possible duplicate be deferred without creating or merging it', async ({ page }) => {
+  const workbook = writeXlsxFile(
+    [
+      ['Full name', 'Person type', 'Phone number', 'Neighbourhood', 'Date of birth'],
+      ['Ama Owusu', 'Visitor', '', 'Adabraka', new Date('1990-01-01')]
+    ],
+    { dateFormat: 'dd/mm/yyyy' }
+  );
+  const buffer = await workbook.toBuffer();
+
+  await page.goto('/people/import');
+  await page.getByLabel('2. Upload completed workbook').setInputFiles({
+    name: 'possible-duplicate.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer
+  });
+
+  await expect(page.getByText('Compare with Ama Owusu')).toBeVisible();
+  await page.getByLabel('Defer for later review').check();
+  await page.getByRole('button', { name: 'Confirm import' }).click();
+  await page.getByRole('button', { name: 'Create people' }).click();
+
+  await expect(
+    page.getByText(
+      'Created 0 people. Excluded 0 rows were not added. Deferred 1 row needs later review.'
+    )
+  ).toBeVisible();
+});
+
+test('shows the people directory without the removed shared-prototype banner', async ({ page }) => {
   await page.goto('/people');
 
   await expect(page.getByRole('heading', { name: 'People directory' })).toBeVisible();
   const pilotContext = page.getByLabel('Shared prototype limitations');
 
-  await expect(pilotContext).toBeVisible();
-  await expect(pilotContext).toContainText('Shared prototype');
-  await expect(pilotContext).toContainText(
-    'Changes in this prototype cannot be attributed to a named individual.'
-  );
-  await expect(pilotContext).toContainText(/Refresh resets every\s+sample record/);
-  await expect(pilotContext).toContainText(
-    'This device keeps the signed-in administrator and church name.'
-  );
-  await expect(pilotContext).not.toHaveAttribute('role', 'status');
+  await expect(pilotContext).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Open Ama Owusu' })).toBeVisible();
   await expect(page.locator('.people-directory th')).toHaveCount(4);
   await expect(page.locator('.people-directory th[scope="col"]')).toHaveCount(4);
@@ -264,21 +288,7 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
   await expect(attendance).toHaveCSS('opacity', '0.66');
 
   await expect(sidebar.getByText('Refresh resets every sample record.')).toHaveCount(0);
-  const pilotContext = page.locator('.pilot-context');
-
-  await expect(pilotContext).toContainText(/Refresh resets every\s+sample record/);
-
-  const desktopAlignment = await page.evaluate(() => {
-    const context = document.querySelector<HTMLElement>('.pilot-context');
-    const page = document.querySelector<HTMLElement>('.page');
-
-    return {
-      contextLeft: context?.getBoundingClientRect().left ?? 0,
-      pageLeft: page?.getBoundingClientRect().left ?? 0
-    };
-  });
-
-  expect(desktopAlignment.contextLeft).toBeCloseTo(desktopAlignment.pageLeft, 1);
+  await expect(page.locator('.pilot-context')).toHaveCount(0);
 
   await page.setViewportSize({ width: 960, height: 844 });
   await expect(page.locator('.app-shell')).not.toHaveClass(/sidebar-collapsed/);
@@ -419,37 +429,22 @@ test('opens and closes the mobile application drawer with a focus return', async
   await expect(menu).toBeFocused();
 });
 
-test('wraps shared prototype context naturally on mobile without horizontal overflow', async ({
+test('keeps the people directory within the mobile viewport without the removed prototype banner', async ({
   page
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/people');
 
-  const pilotContext = page.getByLabel('Shared prototype limitations');
-  const pilotLabel = pilotContext.locator('strong');
-  const pilotCopy = pilotContext.locator('p');
-
-  await expect(pilotContext).toBeVisible();
+  await expect(page.getByLabel('Shared prototype limitations')).toHaveCount(0);
 
   const mobileLayout = await page.evaluate(() => {
-    const context = document.querySelector<HTMLElement>('.pilot-context');
-    const label = context?.querySelector<HTMLElement>('strong');
-    const copy = context?.querySelector<HTMLElement>('p');
-
     return {
-      contextRight: context?.getBoundingClientRect().right ?? 0,
-      copyTop: copy?.getBoundingClientRect().top ?? 0,
       documentWidth: document.documentElement.scrollWidth,
-      labelBottom: label?.getBoundingClientRect().bottom ?? 0,
       viewportWidth: document.documentElement.clientWidth
     };
   });
 
-  expect(mobileLayout.copyTop).toBeGreaterThan(mobileLayout.labelBottom);
-  expect(mobileLayout.contextRight).toBeLessThanOrEqual(mobileLayout.viewportWidth);
   expect(mobileLayout.documentWidth).toBe(mobileLayout.viewportWidth);
-  await expect(pilotLabel).toBeVisible();
-  await expect(pilotCopy).toBeVisible();
 });
 
 test('ships a standalone offline document without app bundles', async ({ request }) => {
@@ -541,6 +536,7 @@ test('automatically dismisses shared success notifications after a short delay',
   });
 
   await expect(notification).toBeVisible();
+  await page.mouse.move(0, 0);
   await expect(notification).not.toBeVisible({ timeout: 5500 });
 });
 
@@ -1052,7 +1048,7 @@ test('records then corrects a membership record with a removal note', async ({ p
   await page.getByRole('button', { name: 'Save membership record' }).click();
   await expect(page.getByText('Membership record saved.')).toBeVisible();
   await expect(page.getByText('1 Sept 2026')).toBeVisible();
-  await expect(page.getByText('30 Sept 2026')).toBeVisible();
+  await expect(page.getByText('30 Sept 2026', { exact: true })).toBeVisible();
 
   await page.getByRole('link', { name: 'Correct membership' }).click();
   await expect(page).toHaveURL('/people/kojo-boateng/membership');
@@ -1066,7 +1062,9 @@ test('records then corrects a membership record with a removal note', async ({ p
   await page.getByRole('button', { name: 'Mark as not recorded' }).click();
 
   await expect(page.getByText('Membership correction saved.')).toBeVisible();
-  await expect(page.getByText('Recorded against the wrong person.')).toBeVisible();
+  await expect(
+    page.getByText('Recorded against the wrong person.', { exact: true }).first()
+  ).toBeVisible();
 });
 
 test('edits a person without changing their membership record', async ({ page }) => {
@@ -1080,8 +1078,10 @@ test('edits a person without changing their membership record', async ({ page })
   await expect(page.getByText('Person details saved.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Ama Serwaa' })).toBeVisible();
   await expect(page.getByText('Korle Bu')).toBeVisible();
-  await expect(page.getByText('Member', { exact: true })).toBeVisible();
-  await expect(page.getByText('Recognition register, 2025')).toBeVisible();
+  await expect(
+    page.getByRole('listitem').filter({ hasText: 'Member Current 14 Aug 2025' })
+  ).toBeVisible();
+  await expect(page.getByText('Recognition register, 2025', { exact: true }).last()).toBeVisible();
 });
 
 test('keeps invalid person edits available for correction', async ({ page }) => {
@@ -1259,7 +1259,7 @@ test('keeps the session when a dirty-entry logout is cancelled, then signs out a
   await page.getByRole('button', { name: 'Discard entry' }).click();
 
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole('heading', { name: 'Sign in to Eglise' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 });
 
 test('registers a PWA worker and redirects an offline navigation to the standalone explanation', async ({

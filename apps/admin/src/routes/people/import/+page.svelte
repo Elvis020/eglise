@@ -20,7 +20,7 @@
   import { addPeople, people } from '$lib/people';
   import { personKindLabels } from '$lib/domain';
 
-  type DuplicateDecision = 'create' | 'exclude';
+  type DuplicateDecision = 'create' | 'exclude' | 'defer';
 
   let rows: PeopleImportRow[] = [];
   let warnings: string[] = [];
@@ -29,7 +29,7 @@
   let isReading = false;
   let isDownloading = false;
   let decisions: Record<number, DuplicateDecision> = {};
-  let outcome: { created: number; excluded: number } | null = null;
+  let outcome: { created: number; excluded: number; deferred: number } | null = null;
   let confirmDialog: HTMLDialogElement;
 
   const maximumFileSizeMegabytes = PEOPLE_IMPORT_MAX_FILE_SIZE_BYTES / (1024 * 1024);
@@ -39,9 +39,18 @@
   $: excludedRows = rows.filter((row) => row.state === 'excluded');
   $: unresolvedReviews = reviewRows.filter((row) => !decisions[row.rowNumber]);
   $: chosenReviewRows = reviewRows.filter((row) => decisions[row.rowNumber] === 'create');
+  $: deferredReviewRows = reviewRows.filter((row) => decisions[row.rowNumber] === 'defer');
   $: importRows = [...readyRows, ...chosenReviewRows];
   $: totalExcluded =
     excludedRows.length + reviewRows.filter((row) => decisions[row.rowNumber] === 'exclude').length;
+  $: canConfirmReview =
+    unresolvedReviews.length === 0 && (importRows.length > 0 || deferredReviewRows.length > 0);
+
+  function matchingPersonFor(row: PeopleImportRow) {
+    return row.possibleMatchId
+      ? $people.find((person) => person.id === row.possibleMatchId)
+      : undefined;
+  }
 
   async function downloadTemplate(): Promise<void> {
     isDownloading = true;
@@ -126,7 +135,7 @@
   }
 
   function openConfirmation(): void {
-    if (unresolvedReviews.length || !importRows.length) return;
+    if (!canConfirmReview) return;
 
     confirmDialog.showModal();
   }
@@ -141,7 +150,11 @@
       }))
     );
 
-    outcome = { created: created.length, excluded: totalExcluded };
+    outcome = {
+      created: created.length,
+      excluded: totalExcluded,
+      deferred: deferredReviewRows.length
+    };
     rows = [];
     decisions = {};
     confirmDialog.close();
@@ -176,9 +189,10 @@
       <strong id="import-outcome-title">Import complete</strong>
       <p>
         Created {outcome.created}
-        {outcome.created === 1 ? 'person' : 'people'}. Excluded
-        {outcome.excluded}
-        {outcome.excluded === 1 ? 'row was' : 'rows were'} not added.
+        {outcome.created === 1 ? 'person' : 'people'}. Excluded {outcome.excluded}
+        {outcome.excluded === 1 ? 'row was' : 'rows were'} not added. Deferred
+        {outcome.deferred}
+        {outcome.deferred === 1 ? 'row needs' : 'rows need'} later review.
       </p>
       <a class="button primary" href="/people">View people directory</a>
     </section>
@@ -285,8 +299,31 @@
                 </td>
                 <td data-label="Decision">
                   {#if row.state === 'review'}
-                    <fieldset class="choice-group">
-                      <legend>Matching name</legend>
+                    <fieldset class="choice-group import-review-choice">
+                      <legend>Possible duplicate</legend>
+                      {#if matchingPersonFor(row)}
+                        <details class="import-compare">
+                          <summary>Compare with {matchingPersonFor(row)?.name}</summary>
+                          <dl>
+                            <div>
+                              <dt>Imported</dt>
+                              <dd>
+                                {row.name} · {row.phone || 'No phone'} · {row.neighbourhood ||
+                                  'No neighbourhood'}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Existing</dt>
+                              <dd>
+                                {matchingPersonFor(row)?.name} · {matchingPersonFor(row)?.phone ||
+                                  'No phone'} · {matchingPersonFor(row)?.neighbourhood ||
+                                  'No neighbourhood'}
+                              </dd>
+                            </div>
+                          </dl>
+                          <a href={`/people/${matchingPersonFor(row)?.id}`}>Open existing person</a>
+                        </details>
+                      {/if}
                       <label>
                         <input
                           type="radio"
@@ -304,6 +341,15 @@
                           onchange={() => setDecision(row.rowNumber, 'exclude')}
                         />
                         Exclude row
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          name={`row-${row.rowNumber}`}
+                          checked={decisions[row.rowNumber] === 'defer'}
+                          onchange={() => setDecision(row.rowNumber, 'defer')}
+                        />
+                        Defer for later review
                       </label>
                     </fieldset>
                   {:else if row.state === 'excluded'}
@@ -325,7 +371,7 @@
         <button
           class="button primary"
           type="button"
-          disabled={unresolvedReviews.length > 0 || importRows.length === 0}
+          disabled={!canConfirmReview}
           aria-describedby="confirm-import-help"
           onclick={openConfirmation}
         >
@@ -335,12 +381,13 @@
       <p id="confirm-import-help" class="help">
         {#if unresolvedReviews.length}
           Decide how to handle {unresolvedReviews.length} matching
-          {unresolvedReviews.length === 1 ? 'name' : 'names'} before confirming.
-        {:else if !importRows.length}
-          No valid rows are available to create.
+          {unresolvedReviews.length === 1 ? 'name' : 'names'}: create separately, exclude, or defer.
+        {:else if !canConfirmReview}
+          No valid rows are available to create or defer.
         {:else}
           {importRows.length}
-          {importRows.length === 1 ? 'person is' : 'people are'} ready to create.
+          {importRows.length === 1 ? 'person is' : 'people are'} ready to create; {deferredReviewRows.length}
+          {deferredReviewRows.length === 1 ? ' row is' : ' rows are'} deferred.
         {/if}
       </p>
     </section>
@@ -353,8 +400,10 @@
     <h2 id="confirm-import-title">Confirm import</h2>
     <p>
       Create exactly {importRows.length}
-      {importRows.length === 1 ? 'person' : 'people'} and exclude {totalExcluded}
-      {totalExcluded === 1 ? 'row' : 'rows'}? No membership or attendance records will be created.
+      {importRows.length === 1 ? 'person' : 'people'}, exclude {totalExcluded}
+      {totalExcluded === 1 ? 'row' : 'rows'}, and defer {deferredReviewRows.length}
+      {deferredReviewRows.length === 1 ? ' row' : ' rows'}? No membership or attendance records will
+      be created.
     </p>
     <div class="dialog-actions">
       <button class="button secondary" value="cancel">

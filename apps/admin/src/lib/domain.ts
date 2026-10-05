@@ -23,6 +23,22 @@ export type MembershipHistoryEntry = {
   note: string;
 };
 
+export type PersonRecordState = 'active' | 'archived' | 'transferred' | 'merged';
+
+export const personRecordStateLabels: Record<PersonRecordState, string> = {
+  active: 'Active',
+  archived: 'Archived',
+  transferred: 'Transferred',
+  merged: 'Merged into another record'
+};
+
+export type PersonRecordHistoryEntry = {
+  action: 'created' | 'details-corrected' | 'archived' | 'restored' | 'transferred' | 'merged';
+  recordedOn: string;
+  note: string;
+  relatedPersonId?: string;
+};
+
 export const personKindLabels: Record<PersonKind, string> = {
   person: 'Regular attendee',
   visitor: 'Visitor',
@@ -43,6 +59,8 @@ export type Person = {
   neighbourhood: string;
   journey: JourneyEntry[];
   membership: Membership;
+  recordState: PersonRecordState;
+  recordHistory: PersonRecordHistoryEntry[];
 };
 
 export type PersonDetails = Pick<Person, 'name' | 'kind' | 'phone' | 'neighbourhood'>;
@@ -50,7 +68,10 @@ export type PersonDetails = Pick<Person, 'name' | 'kind' | 'phone' | 'neighbourh
 export type PersonDetailsErrors = Partial<Record<keyof PersonDetails, string>>;
 
 type InitialMembership = Omit<Membership, 'history'>;
-type InitialPerson = Omit<Person, 'kind' | 'journey' | 'membership'> & {
+type InitialPerson = Omit<
+  Person,
+  'kind' | 'journey' | 'membership' | 'recordState' | 'recordHistory'
+> & {
   membership: InitialMembership;
 };
 
@@ -406,7 +427,15 @@ export const initialPeople: Person[] = initialPeopleRecords.map((person) => {
             }
           ]
         : []
-    }
+    },
+    recordState: 'active',
+    recordHistory: [
+      {
+        action: 'created',
+        recordedOn: startingDate,
+        note: 'Initial sample record.'
+      }
+    ]
   };
 });
 
@@ -507,6 +536,14 @@ export function createPerson(
       recognisedOn: '',
       correctionNote: '',
       history: []
-    }
+    },
+    recordState: 'active',
+    recordHistory: [
+      {
+        action: 'created',
+        recordedOn: new Date().toISOString().slice(0, 10),
+        note: 'Person record created.'
+      }
+    ]
   };
 }

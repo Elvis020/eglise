@@ -11,6 +11,7 @@
     formatRecordDate,
     journeyStages,
     personKindLabels,
+    personRecordStateLabels,
     type JourneyEntry,
     type Person,
     type PersonKind
@@ -98,27 +99,38 @@
         </dl>
       </div>
       <div class="person-actions">
-        <a class="button secondary" href={`/people/${person.id}/edit`}>
-          <IconEdit aria-hidden="true" size={18} stroke={1.8} />
-          Edit person
-        </a>
-        {#if person.kind === 'person'}
-          <a class="button secondary" href={`/people/${person.id}/journey`}>
-            <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
-            Review journey
+        {#if person.recordState === 'active'}
+          <a class="button secondary" href={`/people/${person.id}/edit`}>
+            <IconEdit aria-hidden="true" size={18} stroke={1.8} />
+            Edit person
           </a>
-          <a class="button primary" href={`/people/${person.id}/membership`}>
-            {#if person.membership.recognised}
-              <IconEdit aria-hidden="true" size={18} stroke={1.8} />
-            {:else}
-              <IconUserCheck aria-hidden="true" size={18} stroke={1.8} />
-            {/if}
-            {person.membership.recognised ? 'Correct membership' : 'Record membership'}
-          </a>
+          {#if person.kind === 'person'}
+            <a class="button secondary" href={`/people/${person.id}/journey`}>
+              <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
+              Review journey
+            </a>
+            <a class="button primary" href={`/people/${person.id}/membership`}>
+              {#if person.membership.recognised}
+                <IconEdit aria-hidden="true" size={18} stroke={1.8} />
+              {:else}
+                <IconUserCheck aria-hidden="true" size={18} stroke={1.8} />
+              {/if}
+              {person.membership.recognised ? 'Correct membership' : 'Record membership'}
+            </a>
+          {:else}
+            <a class="button primary" href={`/people/${person.id}/journey`}>
+              <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
+              Continue journey
+            </a>
+          {/if}
         {:else}
-          <a class="button primary" href={`/people/${person.id}/journey`}>
-            <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
-            Continue journey
+          <p class="record-state-notice">
+            This record is {personRecordStateLabels[person.recordState].toLocaleLowerCase()} and is not
+            available for ordinary editing.
+          </p>
+          <a class="button secondary" href={`/people/${person.id}/record`}>
+            <IconEdit aria-hidden="true" size={18} stroke={1.8} />
+            Manage record
           </a>
         {/if}
       </div>
@@ -204,6 +216,11 @@
         </details>
       {/if}
     </section>
+    <details class="record-options">
+      <summary>Record management</summary>
+      <p>Archive, transfer, or link a reviewed duplicate without removing this person’s history.</p>
+      <a href={`/people/${person.id}/record`}>Manage record lifecycle</a>
+    </details>
     <p class="membership-note">
       Membership is recorded only after church recognition. It is never inferred from imports or
       attendance.
@@ -361,6 +378,40 @@
   .roadmap-history li span,
   .roadmap-history li p {
     color: var(--text-secondary);
+  }
+
+  .record-state-notice {
+    max-width: 42ch;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .record-options {
+    margin-top: 24px;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .record-options summary {
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .record-options p {
+    max-width: 58ch;
+    margin: 12px 0 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .record-options a {
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 700;
   }
 
   .roadmap-history li p {

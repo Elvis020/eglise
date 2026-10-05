@@ -15,7 +15,17 @@
 
   type AuthMode = 'login' | 'signup';
 
-  let { mode }: { mode: AuthMode } = $props();
+  let {
+    authMode = 'prototype',
+    form,
+    mode,
+    next = '/people'
+  }: {
+    authMode?: 'prototype' | 'supabase';
+    form?: { error?: string } | null;
+    mode: AuthMode;
+    next?: string;
+  } = $props();
   let nameError = $state('');
   let emailError = $state('');
   let passwordError = $state('');
@@ -38,16 +48,22 @@
         : 'One final detail, then you can enter the workspace.'
   );
   const prototypeNotice = $derived(
-    isLogin
-      ? 'Prototype access is saved on this device. Your password is not checked or stored.'
-      : signupStep === 1
-        ? 'Your administrator profile is saved on this device.'
-        : 'Your password is not stored in this prototype.'
+    authMode === 'supabase'
+      ? 'Access is invitation-only. Ask a workspace owner to send a new invitation if you need an account.'
+      : isLogin
+        ? 'Prototype access is saved on this device. Your password is not checked or stored.'
+        : signupStep === 1
+          ? 'Your administrator profile is saved on this device.'
+          : 'Your password is not stored in this prototype.'
   );
   const submitLabel = $derived(isLogin ? 'Sign in to workspace' : 'Create account');
   const alternatePrompt = $derived(isLogin ? 'Need an account?' : 'Already have an account?');
-  const alternateLabel = $derived(isLogin ? 'Create one' : 'Sign in');
-  const alternateHref = $derived(isLogin ? '/signup' : '/login');
+  const alternateLabel = $derived(
+    isLogin ? (authMode === 'supabase' ? 'Use your invitation' : 'Create one') : 'Sign in'
+  );
+  const alternateHref = $derived(
+    isLogin ? (authMode === 'supabase' ? '/accept-invite' : '/signup') : '/login'
+  );
 
   function clearFieldError(field: 'name' | 'email' | 'password') {
     if (field === 'name') nameError = '';
@@ -88,6 +104,10 @@
   }
 
   async function handleSubmit(event: SubmitEvent) {
+    if (authMode === 'supabase') {
+      return;
+    }
+
     event.preventDefault();
 
     const form = event.currentTarget;
@@ -180,7 +200,15 @@
       </ol>
     {/if}
 
-    <form class="auth-form" novalidate onsubmit={handleSubmit}>
+    <form
+      class="auth-form"
+      method={authMode === 'supabase' ? 'POST' : undefined}
+      novalidate
+      onsubmit={handleSubmit}
+    >
+      {#if authMode === 'supabase' && isLogin}
+        <input name="next" type="hidden" value={next} />
+      {/if}
       {#if !isLogin}
         {#key signupStep}
           <div class="auth-step">
@@ -283,6 +311,7 @@
             aria-describedby={emailError ? 'auth-email-error' : undefined}
             aria-invalid={emailError ? 'true' : undefined}
             id="auth-email"
+            name="email"
             oninput={() => clearFieldError('email')}
             placeholder="name@church.org"
             type="email"
@@ -300,6 +329,7 @@
             aria-describedby={passwordError ? 'auth-password-error' : undefined}
             aria-invalid={passwordError ? 'true' : undefined}
             id="auth-password"
+            name="password"
             oninput={() => clearFieldError('password')}
             type="password"
           />
@@ -318,8 +348,8 @@
         </button>
       {/if}
 
-      {#if formError}
-        <p class="auth-form-error" role="alert">{formError}</p>
+      {#if formError || form?.error}
+        <p class="auth-form-error" role="alert">{formError || form?.error}</p>
       {/if}
     </form>
 

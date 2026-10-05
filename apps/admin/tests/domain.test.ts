@@ -100,18 +100,26 @@ describe('person pilot rules', () => {
 
     expect(ready.state).toBe('ready');
     expect(duplicate.state).toBe('review');
+    expect(duplicate.possibleMatchId).toBe('ama-owusu');
     expect(underAge).toMatchObject({ state: 'excluded', reason: 'Age requirements were not met.' });
     expect(ready).not.toHaveProperty('dateOfBirth');
   });
 
   it('starts people without a membership milestone and keeps the membership dates in order', () => {
-    expect(createPerson('New person', '+233 24 555 0142', 'Adabraka').membership).toEqual({
+    const person = createPerson('New person', '+233 24 555 0142', 'Adabraka');
+
+    expect(person.membership).toEqual({
       recognised: false,
       assimilationCompletedOn: '',
       evidence: '',
       recognisedOn: '',
-      correctionNote: ''
+      correctionNote: '',
+      history: []
     });
+    expect(person.recordState).toBe('active');
+    expect(person.recordHistory).toMatchObject([
+      { action: 'created', note: 'Person record created.' }
+    ]);
     expect(createPerson('New visitor', '', '', 'visitor').kind).toBe('visitor');
     expect(isOnOrBefore('2026-09-01', '2026-09-01')).toBe(true);
     expect(isOnOrBefore('2026-09-01', '2026-09-30')).toBe(true);

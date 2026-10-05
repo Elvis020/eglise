@@ -8,16 +8,20 @@
 
   let {
     collapsed = false,
+    email,
+    name,
     onlogout
   }: {
     collapsed?: boolean;
+    email?: string;
+    name?: string;
     onlogout: () => void;
   } = $props();
 
   const administratorName = $derived(
-    $prototypeSession.administrator?.name ?? 'Church administrator'
+    name ?? $prototypeSession.administrator?.name ?? 'Church administrator'
   );
-  const administratorEmail = $derived($prototypeSession.administrator?.email ?? '');
+  const administratorEmail = $derived(email ?? $prototypeSession.administrator?.email ?? '');
   let menuOpen = $state(false);
   let accountMenu: HTMLDivElement;
   let menuTrigger: HTMLButtonElement;

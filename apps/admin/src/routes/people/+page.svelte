@@ -45,7 +45,10 @@
     );
   }
 
-  $: filteredPeople = $people.filter((person) => matches(person, query, membership, kindFilter));
+  $: activePeople = $people.filter((person) => person.recordState === 'active');
+  $: filteredPeople = activePeople.filter((person) =>
+    matches(person, query, membership, kindFilter)
+  );
   $: currentPage = clampPage(currentPage, filteredPeople.length, pageSize);
   $: pagedPeople = pageItems(filteredPeople, currentPage, pageSize);
 
@@ -180,7 +183,7 @@
     </a>
   </header>
 
-  <PeopleAtGlance records={$people} activeFilter={kindFilter} onfilterchange={setKindFilter} />
+  <PeopleAtGlance records={activePeople} activeFilter={kindFilter} onfilterchange={setKindFilter} />
 
   <div class="panel">
     {#if filtersApplied}
