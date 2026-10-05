@@ -197,7 +197,13 @@ export const actions: Actions = {
       .gt('expires_at', new Date().toISOString())
       .maybeSingle();
 
-    if (invitationError || !invitation) {
+    if (invitationError) {
+      return fail(500, {
+        accessError: 'We could not retrieve this invitation. Please try again.'
+      });
+    }
+
+    if (!invitation) {
       return fail(404, { accessError: 'That invitation is no longer available.' });
     }
 

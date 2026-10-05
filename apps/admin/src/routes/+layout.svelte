@@ -46,7 +46,9 @@
       page.url.pathname === '/signup' ||
       page.url.pathname === '/accept-invite'
   );
-  const isErrorRoute = $derived(page.status >= 400);
+  // Action failures populate `page.form`; they are still part of the current
+  // workspace screen and must retain its navigation and contextual feedback.
+  const isErrorRoute = $derived(page.status >= 400 && !page.form);
   const requiresAuthentication = $derived(
     !isAuthenticationRoute && !isErrorRoute && page.url.pathname !== '/offline'
   );
