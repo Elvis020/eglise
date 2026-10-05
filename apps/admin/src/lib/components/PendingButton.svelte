@@ -2,7 +2,7 @@
   import IconLoader2 from '@tabler/icons-svelte-runes/icons/loader-2';
   import type { Snippet } from 'svelte';
 
-  type ButtonVariant = 'primary' | 'secondary';
+  type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
   let {
     pending = false,
@@ -77,6 +77,15 @@
 
   .pending-button--secondary:hover:not(:disabled) {
     background: #e7ede3;
+  }
+
+  .pending-button--danger {
+    color: white;
+    background: var(--danger);
+  }
+
+  .pending-button--danger:hover:not(:disabled) {
+    background: #843226;
   }
 
   .pending-button:active:not(:disabled) {

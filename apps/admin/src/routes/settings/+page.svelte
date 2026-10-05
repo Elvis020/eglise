@@ -2,8 +2,11 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import type { SubmitFunction } from '@sveltejs/kit';
+  import { tick } from 'svelte';
   import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconDeviceFloppy from '@tabler/icons-svelte-runes/icons/device-floppy';
+  import IconShieldCheck from '@tabler/icons-svelte-runes/icons/shield-check';
+  import IconTrash from '@tabler/icons-svelte-runes/icons/trash';
 
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import EgliseSelect, { type EgliseSelectOption } from '$lib/components/EgliseSelect.svelte';
@@ -21,6 +24,12 @@
   let inviteRole = $state('people_editor');
   let isCreatingInvitation = $state(false);
   let isCopyingInvitation = $state(false);
+  let accessActionPending = $state('');
+  let memberRoles = $state<Record<string, string>>({});
+  let revokeDialog = $state<HTMLDialogElement>();
+  let revokeTarget = $state<
+    { id: string; kind: 'member' | 'invitation'; name: string } | undefined
+  >(undefined);
 
   const inviteRoleOptions: EgliseSelectOption[] = [
     {
@@ -40,6 +49,24 @@
   );
   const canCreateInvitation = $derived(!inviteEmailError);
 
+  const roleLabel = (role: string): string => {
+    switch (role) {
+      case 'owner':
+        return 'Owner';
+      case 'people_administrator':
+        return 'Administrator';
+      case 'people_editor':
+        return 'Editor';
+      default:
+        return 'Viewer';
+    }
+  };
+
+  const invitationExpiry = (value: string): string =>
+    new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(
+      new Date(value)
+    );
+
   $effect(() => {
     if (!hasEditedChurchName) {
       churchName = $prototypeSession.churchName;
@@ -58,6 +85,12 @@
     }
   });
 
+  $effect(() => {
+    for (const member of data.members) {
+      memberRoles[member.userId] = member.role;
+    }
+  });
+
   const trackInvitationCreation: SubmitFunction = () => {
     isCreatingInvitation = true;
 
@@ -69,6 +102,34 @@
       }
     };
   };
+
+  const trackAccessAction =
+    (action: string, closeDialog = false): SubmitFunction =>
+    () => {
+      accessActionPending = action;
+
+      return async ({ result, update }) => {
+        try {
+          await update();
+
+          if (closeDialog && result.type === 'success') {
+            revokeDialog?.close();
+            revokeTarget = undefined;
+          }
+        } finally {
+          accessActionPending = '';
+        }
+      };
+    };
+
+  function openRevocationDialog(target: {
+    id: string;
+    kind: 'member' | 'invitation';
+    name: string;
+  }) {
+    revokeTarget = target;
+    void tick().then(() => revokeDialog?.showModal());
+  }
 
   async function copyInvitationLink(link: string): Promise<void> {
     isCopyingInvitation = true;
@@ -256,6 +317,159 @@
             </PendingButton>
           </div>
         {/if}
+
+        <section class="access-list" aria-labelledby="active-access-title">
+          <div class="access-list-heading">
+            <div>
+              <p class="eyebrow">Active access</p>
+              <h2 id="active-access-title">People with workspace access</h2>
+              <p>
+                Owners can change a person’s People &amp; Membership role or remove their access.
+                The Owner remains protected here so the workspace cannot be locked by accident.
+              </p>
+            </div>
+            <IconShieldCheck aria-hidden="true" size={24} stroke={1.8} />
+          </div>
+
+          {#if form?.accessError}
+            <p class="field-error access-feedback" role="alert">{form.accessError}</p>
+          {:else if form?.accessMessage}
+            <p class="access-success" role="status">{form.accessMessage}</p>
+          {/if}
+
+          <div class="access-table-wrap">
+            <table class="access-table">
+              <thead>
+                <tr>
+                  <th scope="col">Person</th>
+                  <th scope="col">Access</th>
+                  <th scope="col"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each data.members as member (member.userId)}
+                  <tr>
+                    <th scope="row">
+                      <span class="access-person-name">{member.fullName}</span>
+                      <span class="access-person-email">{member.email}</span>
+                    </th>
+                    <td data-label="Access">
+                      {#if member.role === 'owner'}
+                        <span class="access-owner-badge">Owner</span>
+                      {:else}
+                        <form
+                          class="role-change-form"
+                          method="POST"
+                          action="?/changeRole"
+                          use:enhance={trackAccessAction(`role-${member.userId}`)}
+                        >
+                          <input name="userId" type="hidden" value={member.userId} />
+                          <input
+                            name="role"
+                            type="hidden"
+                            value={memberRoles[member.userId] ?? member.role}
+                          />
+                          <label class="sr-only" for={`member-role-${member.userId}`}>
+                            Access for {member.fullName}
+                          </label>
+                          <EgliseSelect
+                            id={`member-role-${member.userId}`}
+                            value={memberRoles[member.userId] ?? member.role}
+                            options={inviteRoleOptions}
+                            onchange={(value) => (memberRoles[member.userId] = value)}
+                          />
+                          <PendingButton
+                            class="compact-action"
+                            disabled={(memberRoles[member.userId] ?? member.role) === member.role}
+                            pending={accessActionPending === `role-${member.userId}`}
+                            pendingLabel="Saving…"
+                            type="submit"
+                            variant="secondary"
+                          >
+                            Save role
+                          </PendingButton>
+                        </form>
+                      {/if}
+                    </td>
+                    <td class="access-actions" data-label="Actions">
+                      {#if member.role === 'owner'}
+                        <span class="owner-protected">Protected</span>
+                      {:else}
+                        <button
+                          class="button danger-outline compact-action"
+                          onclick={() =>
+                            openRevocationDialog({
+                              id: member.userId,
+                              kind: 'member',
+                              name: member.fullName
+                            })}
+                          type="button"
+                        >
+                          <IconTrash aria-hidden="true" size={16} stroke={1.8} />
+                          Remove access
+                        </button>
+                      {/if}
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section
+          class="access-list pending-invitations"
+          aria-labelledby="pending-invitations-title"
+        >
+          <div>
+            <p class="eyebrow">Pending invitations</p>
+            <h2 id="pending-invitations-title">Awaiting account setup</h2>
+            <p>
+              These people do not yet have workspace access. Revoke a link if it was sent in error.
+            </p>
+          </div>
+
+          {#if data.pendingInvites.length}
+            <div class="access-table-wrap">
+              <table class="access-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Email</th>
+                    <th scope="col">Access</th>
+                    <th scope="col">Expires</th>
+                    <th scope="col"><span class="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {#each data.pendingInvites as invitation (invitation.id)}
+                    <tr>
+                      <th class="invitation-email" scope="row">{invitation.email}</th>
+                      <td data-label="Access">{roleLabel(invitation.role)}</td>
+                      <td data-label="Expires">{invitationExpiry(invitation.expiresAt)}</td>
+                      <td class="access-actions" data-label="Actions">
+                        <button
+                          class="button danger-outline compact-action"
+                          onclick={() =>
+                            openRevocationDialog({
+                              id: invitation.id,
+                              kind: 'invitation',
+                              name: invitation.email
+                            })}
+                          type="button"
+                        >
+                          <IconTrash aria-hidden="true" size={16} stroke={1.8} />
+                          Revoke invitation
+                        </button>
+                      </td>
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            </div>
+          {:else}
+            <p class="access-empty">No invitations are awaiting account setup.</p>
+          {/if}
+        </section>
       {:else}
         <p class="access-intro">
           Only the workspace Owner can invite people or change their access.
@@ -264,6 +478,49 @@
     </section>
   {/if}
 </section>
+
+{#if data.authMode === 'supabase' && data.accessManagement === 'owner'}
+  <dialog bind:this={revokeDialog} aria-labelledby="revoke-access-title">
+    <form
+      method="POST"
+      action={revokeTarget?.kind === 'member' ? '?/revokeMembership' : '?/revokeInvitation'}
+      use:enhance={trackAccessAction(`revoke-${revokeTarget?.id ?? ''}`, true)}
+    >
+      <p class="dialog-context">Workspace access</p>
+      <h2 id="revoke-access-title">
+        {revokeTarget?.kind === 'member' ? 'Remove workspace access?' : 'Revoke invitation?'}
+      </h2>
+      <p>
+        {#if revokeTarget?.kind === 'member'}
+          {revokeTarget.name} will no longer be able to open this workspace. Their people records are
+          not deleted.
+        {:else}
+          The link for {revokeTarget?.name} will stop working immediately. You can create a new invitation
+          later if needed.
+        {/if}
+      </p>
+      {#if revokeTarget?.kind === 'member'}
+        <input name="userId" type="hidden" value={revokeTarget.id} />
+      {:else}
+        <input name="invitationId" type="hidden" value={revokeTarget?.id ?? ''} />
+      {/if}
+      <div class="dialog-actions">
+        <button type="button" class="button secondary" onclick={() => revokeDialog?.close()}>
+          Keep access
+        </button>
+        <PendingButton
+          class="button"
+          pending={accessActionPending === `revoke-${revokeTarget?.id ?? ''}`}
+          pendingLabel="Removing…"
+          type="submit"
+          variant="danger"
+        >
+          {revokeTarget?.kind === 'member' ? 'Remove access' : 'Revoke invitation'}
+        </PendingButton>
+      </div>
+    </form>
+  </dialog>
+{/if}
 
 <style>
   .access-panel {
@@ -345,6 +602,126 @@
     color: var(--text-secondary);
     font-size: 14px;
   }
+  .access-list {
+    display: grid;
+    gap: 16px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .access-list h2 {
+    margin: 4px 0 0;
+  }
+  .access-list p:not(.eyebrow) {
+    max-width: 76ch;
+    margin: 8px 0 0;
+    color: var(--text-secondary);
+  }
+  .access-list-heading {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .access-list-heading :global(svg) {
+    flex: 0 0 auto;
+    color: var(--primary);
+  }
+  .access-feedback,
+  .access-success {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+  }
+  .access-success {
+    color: var(--primary);
+    background: #e7ede3;
+  }
+  .access-table-wrap {
+    overflow-x: auto;
+  }
+  .access-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  .access-table th,
+  .access-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .access-table thead th {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .access-table tbody th {
+    min-width: 220px;
+  }
+  .access-person-name,
+  .access-person-email {
+    display: block;
+  }
+  .access-person-name {
+    font-weight: 600;
+  }
+  .access-person-email,
+  .owner-protected {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 400;
+  }
+  .access-owner-badge {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    padding: 3px 8px;
+    border: 1px solid #94a790;
+    border-radius: 6px;
+    color: var(--primary);
+    background: #e7ede3;
+    font-size: 14px;
+    font-weight: 650;
+  }
+  .role-change-form {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+  .role-change-form :global(.eglise-select) {
+    min-width: 150px;
+  }
+  .compact-action {
+    min-height: 40px;
+    padding: 7px 10px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .access-actions {
+    width: 1%;
+    white-space: nowrap;
+  }
+  .danger-outline {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: transparent;
+  }
+  .danger-outline:hover,
+  .danger-outline:focus-visible {
+    background: #f8e9e5;
+  }
+  .invitation-email {
+    font-weight: 600;
+  }
+  .access-empty {
+    padding: 16px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
   @media (max-width: 760px) {
     .access-form {
       grid-template-columns: 1fr;
@@ -356,6 +733,50 @@
     .role-guide dl {
       grid-template-columns: 1fr;
       gap: 12px;
+    }
+    .access-table-wrap {
+      overflow: visible;
+    }
+    .access-table,
+    .access-table tbody,
+    .access-table tr,
+    .access-table th,
+    .access-table td {
+      display: block;
+      width: 100%;
+    }
+    .access-table thead {
+      display: none;
+    }
+    .access-table tr {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .access-table th,
+    .access-table td {
+      padding: 4px 0;
+      border: 0;
+    }
+    .access-table td[data-label] {
+      display: grid;
+      grid-template-columns: minmax(88px, 0.42fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+    .access-table td[data-label]::before {
+      color: var(--text-secondary);
+      content: attr(data-label);
+      font-size: 14px;
+    }
+    .role-change-form {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .access-actions {
+      width: 100%;
+    }
+    .access-actions .button {
+      width: 100%;
+      margin-top: 4px;
     }
   }
 </style>
