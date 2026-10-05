@@ -52,6 +52,18 @@ export function createSupabaseAdminClient(): SupabaseClient {
   });
 }
 
+export function invitationEncryptionSecret(): string {
+  const secret =
+    requiredEnvironmentValue('EGLISE_INVITE_ENCRYPTION_KEY') ??
+    requiredEnvironmentValue('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!secret) {
+    throw new Error('Invitation encryption configuration is incomplete.');
+  }
+
+  return secret;
+}
+
 export function configuredSiteUrl(fallback: string): string {
   return requiredEnvironmentValue('PUBLIC_SITE_URL') ?? fallback;
 }

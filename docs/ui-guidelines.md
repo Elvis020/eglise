@@ -131,12 +131,25 @@ The admin shell is a Phase 1 deliverable.
 - Use a dialog only for a decision that interrupts the current task: destructive changes, import confirmation, or leaving unsaved work. Give it a specific title, consequence, and clear cancel/confirm actions.
 - Do not use toasts for errors that require user action; keep those visible until resolved.
 
+### Settings pages
+
+- Settings are a page canvas, not a collection of oversized cards. A category starts with its own
+  eyebrow, heading, and concise explanation; use spacing to separate its settings groups, adding a
+  divider only when the content would otherwise be difficult to scan.
+- Do not wrap a whole settings category in a panel merely to create visual grouping. Reserve raised
+  surfaces for a form result, a role guide, a table empty state, or another locally grouped detail.
+- Keep reference information that affects a choice visible beside that choice. Do not collapse a
+  role guide, policy summary, or comparable decision aid unless the page would otherwise become
+  impractical to scan.
+- Make settings content wide enough for its task. Data and filters may use the normal workspace
+  width; reading-only account copy should retain a readable text measure.
+
 ### Navigation and responsive behaviour
 
 - Navigation must show the current workspace and make the active state clear without colour alone.
 - In the sidebar, use a small `accent-warm` dot plus modest type weight for the active item; do not turn ordinary navigation into a card or filled row.
 - At desktop widths, the sidebar is 248px expanded and 72px collapsed. At 960px and below, replace the desktop rail with the mobile top bar and drawer; never leave a desktop rail beside a narrow workspace.
-- Use breadcrumbs for in-workspace navigation beyond the primary sidebar. Place one compact, single-line breadcrumb row above the page title; use the UI font at 14px, muted separators, linked ancestor segments, and a non-linked current segment. On narrow screens, preserve the current segment and truncate earlier segments rather than wrapping the trail.
+- Use breadcrumbs for in-workspace navigation beyond the primary sidebar. Place one compact, single-line breadcrumb row above the page title; use the UI font at 14px, muted separators, and linked ancestor segments only. The page title is the single current-location label, so do not repeat it as a final breadcrumb segment. Do not render breadcrumbs on top-level sidebar destinations. On narrow screens, truncate earlier ancestor segments rather than wrapping the trail.
 - The People workflow is desktop-friendly and must remain usable on smaller screens. Prioritise readable forms, review states, and search over trying to reproduce a full desktop table on a phone.
 - Keep primary actions reachable on small screens without covering content. Do not rely on hover for essential actions.
 

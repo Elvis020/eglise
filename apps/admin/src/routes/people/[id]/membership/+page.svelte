@@ -224,8 +224,7 @@
     <Breadcrumbs
       items={[
         { label: 'People & Membership', href: '/people' },
-        { label: person.name, href: `/people/${person.id}` },
-        { label: person.membership.recognised ? 'Correct membership' : 'Record membership' }
+        { label: person.name, href: `/people/${person.id}` }
       ]}
     />
 
@@ -382,9 +381,7 @@
   </section>
 {:else}
   <section class="page">
-    <Breadcrumbs
-      items={[{ label: 'People & Membership', href: '/people' }, { label: 'Person not found' }]}
-    />
+    <Breadcrumbs items={[{ label: 'People & Membership', href: '/people' }]} />
 
     <h1 tabindex="-1">Person not found</h1>
     <p class="page-intro">This person is not in the current sample.</p>

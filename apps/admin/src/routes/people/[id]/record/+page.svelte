@@ -99,8 +99,7 @@
     <Breadcrumbs
       items={[
         { label: 'People & Membership', href: '/people' },
-        { label: person.name, href: `/people/${person.id}` },
-        { label: 'Record management' }
+        { label: person.name, href: `/people/${person.id}` }
       ]}
     />
 

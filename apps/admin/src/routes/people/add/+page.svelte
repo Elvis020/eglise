@@ -100,9 +100,7 @@
 <svelte:head><title>Add a person | Eglise</title></svelte:head>
 
 <section class="page">
-  <Breadcrumbs
-    items={[{ label: 'People & Membership', href: '/people' }, { label: 'Add a person' }]}
-  />
+  <Breadcrumbs items={[{ label: 'People & Membership', href: '/people' }]} />
 
   <header class="page-head">
     <div>

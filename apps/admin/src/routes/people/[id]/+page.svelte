@@ -39,9 +39,7 @@
 
 {#if person}
   <section class="page person-detail-page">
-    <Breadcrumbs
-      items={[{ label: 'People & Membership', href: '/people' }, { label: person.name }]}
-    />
+    <Breadcrumbs items={[{ label: 'People & Membership', href: '/people' }]} />
 
     <header class="page-head person-page-head">
       <div class="person-heading">
@@ -228,9 +226,7 @@
   </section>
 {:else}
   <section class="page">
-    <Breadcrumbs
-      items={[{ label: 'People & Membership', href: '/people' }, { label: 'Person not found' }]}
-    />
+    <Breadcrumbs items={[{ label: 'People & Membership', href: '/people' }]} />
 
     <h1 tabindex="-1">Person not found</h1>
     <p class="page-intro">This person is not in the current sample.</p>

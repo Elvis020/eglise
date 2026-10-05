@@ -174,9 +174,7 @@
 <svelte:head><title>Import people | Eglise</title></svelte:head>
 
 <section class="page import-page">
-  <Breadcrumbs
-    items={[{ label: 'People & Membership', href: '/people' }, { label: 'Import people' }]}
-  />
+  <Breadcrumbs items={[{ label: 'People & Membership', href: '/people' }]} />
 
   <header class="page-head">
     <div>

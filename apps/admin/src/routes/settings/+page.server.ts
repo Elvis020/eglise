@@ -6,9 +6,11 @@ import {
   normaliseEmail,
   requireOwnerWorkspace
 } from '$lib/server/manual-invites';
+import { decryptInviteToken, encryptInviteToken } from '$lib/server/invite-crypto';
 import {
   configuredSiteUrl,
   createSupabaseAdminClient,
+  invitationEncryptionSecret,
   isSupabaseAuthConfigured
 } from '$lib/server/supabase';
 import type { Actions, PageServerLoad } from './$types';
@@ -129,17 +131,23 @@ export const actions: Actions = {
     const workspaceId = await requireOwnerWorkspace(locals);
     const token = createInviteToken();
     const tokenHash = await hashInviteToken(token);
+    const tokenCiphertext = await encryptInviteToken(token, invitationEncryptionSecret());
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const admin = createSupabaseAdminClient();
 
-    const { error: inviteError } = await admin.from('workspace_invites').insert({
-      created_by: locals.user?.id,
-      email,
-      expires_at: expiresAt,
-      role,
-      token_hash: tokenHash,
-      workspace_id: workspaceId
-    });
+    const { data: invitation, error: inviteError } = await admin
+      .from('workspace_invites')
+      .insert({
+        created_by: locals.user?.id,
+        email,
+        expires_at: expiresAt,
+        role,
+        token_ciphertext: tokenCiphertext,
+        token_hash: tokenHash,
+        workspace_id: workspaceId
+      })
+      .select('id')
+      .single();
 
     if (inviteError) {
       return fail(500, {
@@ -162,10 +170,59 @@ export const actions: Actions = {
     inviteUrl.searchParams.set('token', token);
 
     return {
+      invitationId: invitation.id,
       inviteLink: inviteUrl.toString(),
       invitedEmail: email,
       invitedRole: roleLabels[role]
     };
+  },
+
+  copyInvitation: async ({ locals, request, url }) => {
+    const formData = await request.formData();
+    const invitationId = String(formData.get('invitationId') ?? '');
+
+    if (!isUuid(invitationId)) {
+      return fail(400, { accessError: 'We could not identify that invitation.' });
+    }
+
+    const workspaceId = await requireOwnerWorkspace(locals);
+    const admin = createSupabaseAdminClient();
+    const { data: invitation, error: invitationError } = await admin
+      .from('workspace_invites')
+      .select('token_ciphertext')
+      .eq('id', invitationId)
+      .eq('workspace_id', workspaceId)
+      .is('accepted_at', null)
+      .is('revoked_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+
+    if (invitationError || !invitation) {
+      return fail(404, { accessError: 'That invitation is no longer available.' });
+    }
+
+    if (!invitation.token_ciphertext) {
+      return fail(409, {
+        accessError:
+          'This older invitation cannot be copied again. Revoke it and create a new invitation.'
+      });
+    }
+
+    let token: string;
+
+    try {
+      token = await decryptInviteToken(invitation.token_ciphertext, invitationEncryptionSecret());
+    } catch {
+      return fail(500, {
+        accessError: 'We could not copy this invitation. Create a new invitation.'
+      });
+    }
+
+    const inviteUrl = new URL('/accept-invite', configuredSiteUrl(url.origin));
+
+    inviteUrl.searchParams.set('token', token);
+
+    return { invitationId, inviteLink: inviteUrl.toString() };
   },
 
   changeRole: async ({ locals, request }) => {

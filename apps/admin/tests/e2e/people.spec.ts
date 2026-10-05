@@ -588,9 +588,7 @@ test('uses the app-native date picker with local date validation and keyboard se
   await expect(dateOfBirth).toHaveValue('01/01/3000');
 });
 
-test('uses the People and Membership breadcrumb and preserves the unsaved-entry guard', async ({
-  page
-}) => {
+test('uses ancestor-only breadcrumbs and preserves the unsaved-entry guard', async ({ page }) => {
   await page.goto('/people/add');
 
   await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText(
@@ -598,7 +596,7 @@ test('uses the People and Membership breadcrumb and preserves the unsaved-entry 
   );
   await expect(
     page.getByRole('navigation', { name: 'Breadcrumb' }).getByText('Add a person', { exact: true })
-  ).toHaveAttribute('aria-current', 'page');
+  ).toHaveCount(0);
 
   await page.getByLabel('Full name').fill('Unsaved Person');
   await page.getByRole('link', { name: 'People & Membership' }).click();
