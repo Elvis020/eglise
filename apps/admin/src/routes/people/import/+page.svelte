@@ -220,11 +220,12 @@
     </div>
     <div class="import-upload-actions">
       <PendingButton
-        class="button secondary"
+        class="button"
         type="button"
         onclick={downloadTemplate}
         pending={isDownloading}
         pendingLabel="Preparing template…"
+        variant="secondary"
       >
         <IconDownload aria-hidden="true" size={18} stroke={1.8} />
         Download {PEOPLE_IMPORT_TEMPLATE_VERSION} template
@@ -419,11 +420,12 @@
         <IconArrowLeft aria-hidden="true" size={18} stroke={1.8} />Cancel
       </button>
       <PendingButton
-        class="button primary"
+        class="button"
         pending={isCreatingPeople}
         pendingLabel="Creating people…"
         type="button"
         onclick={() => void createPeople()}
+        variant="primary"
       >
         <IconUsersPlus aria-hidden="true" size={18} stroke={1.8} />Create people
       </PendingButton>

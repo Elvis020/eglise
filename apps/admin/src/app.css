@@ -53,6 +53,15 @@ a:focus-visible {
   border-color: #6f8b75;
   box-shadow: 0 0 0 2px rgb(49 84 59 / 12%);
 }
+.field input[aria-invalid='true'],
+.field select[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.field input[aria-invalid='true']:focus,
+.field select[aria-invalid='true']:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgb(168 69 53 / 16%);
+}
 @media (forced-colors: active) {
   .field input:focus,
   .field select:focus,

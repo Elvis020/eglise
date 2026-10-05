@@ -2,9 +2,12 @@
   import IconLoader2 from '@tabler/icons-svelte-runes/icons/loader-2';
   import type { Snippet } from 'svelte';
 
+  type ButtonVariant = 'primary' | 'secondary';
+
   let {
     pending = false,
     pendingLabel = 'Working…',
+    variant = 'primary',
     class: className = '',
     disabled = false,
     type = 'button',
@@ -13,6 +16,7 @@
   }: {
     pending?: boolean;
     pendingLabel?: string;
+    variant?: ButtonVariant;
     class?: string;
     disabled?: boolean;
     children?: Snippet;
@@ -23,7 +27,7 @@
 
 <button
   aria-busy={pending || undefined}
-  class={`pending-button ${className}`}
+  class={`pending-button pending-button--${variant} ${className}`}
   disabled={disabled || pending}
   {onclick}
   {type}
@@ -38,7 +42,45 @@
 
 <style>
   .pending-button {
-    position: relative;
+    display: inline-flex;
+    gap: 8px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 14px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    text-wrap-style: auto;
+    transition:
+      background-color 120ms cubic-bezier(0.2, 0, 0, 1),
+      border-color 120ms cubic-bezier(0.2, 0, 0, 1),
+      color 120ms cubic-bezier(0.2, 0, 0, 1),
+      transform 120ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .pending-button--primary {
+    color: white;
+    background: var(--primary);
+  }
+
+  .pending-button--primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+
+  .pending-button--secondary {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: transparent;
+  }
+
+  .pending-button--secondary:hover:not(:disabled) {
+    background: #e7ede3;
+  }
+
+  .pending-button:active:not(:disabled) {
+    transform: translateY(1px);
   }
 
   .pending-button-spinner {

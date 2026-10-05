@@ -90,6 +90,7 @@ The admin shell is a Phase 1 deliverable.
 
 - Use one obvious primary action per view. It uses `primary` with light text; hover and pressed states use `primary-hover`.
 - Secondary actions are quiet: outlined or text buttons with a clear hover/focus treatment.
+- Reusable button components own their `primary`, `secondary`, and `danger` variants through semantic tokens. A route may control a button's placement or width, but must not define a reusable button's core colour, border, or interaction states.
 - Destructive actions use `danger` only when the action is genuinely destructive; require confirmation when the consequence is material.
 - Label actions with verbs: “Add person”, “Review import”, “Save membership record”. Avoid vague labels such as “Submit” or “Continue” when a clearer verb exists.
 - A disabled button explains why it is unavailable when that reason is not already clear nearby.

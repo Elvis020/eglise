@@ -16,6 +16,8 @@
   let churchName = $state('');
   let error = $state('');
   let hasEditedChurchName = $state(false);
+  let inviteEmail = $state('');
+  let inviteEmailTouched = $state(false);
   let inviteRole = $state('people_editor');
   let isCreatingInvitation = $state(false);
   let isCopyingInvitation = $state(false);
@@ -23,11 +25,20 @@
   const inviteRoleOptions: EgliseSelectOption[] = [
     {
       value: 'people_administrator',
-      label: 'People administrator — imports and membership recognition'
+      label: 'Administrator'
     },
-    { value: 'people_editor', label: 'People editor — ordinary record changes' },
-    { value: 'people_viewer', label: 'People viewer — read only' }
+    { value: 'people_editor', label: 'Editor' },
+    { value: 'people_viewer', label: 'Viewer' }
   ];
+
+  const inviteEmailError = $derived(
+    !inviteEmail.trim()
+      ? 'Enter an email address.'
+      : /^\S+@\S+\.\S+$/.test(inviteEmail.trim())
+        ? ''
+        : 'Enter a valid email address.'
+  );
+  const canCreateInvitation = $derived(!inviteEmailError);
 
   $effect(() => {
     if (!hasEditedChurchName) {
@@ -38,6 +49,12 @@
   $effect(() => {
     if (form?.role) {
       inviteRole = form.role;
+    }
+  });
+
+  $effect(() => {
+    if (!inviteEmailTouched && form?.email) {
+      inviteEmail = form.email;
     }
   });
 
@@ -162,13 +179,21 @@
           <div class="field">
             <label for="invite-email">Email address</label>
             <input
-              aria-describedby={form?.inviteError ? 'invite-error' : undefined}
+              aria-describedby={inviteEmailTouched && inviteEmailError
+                ? 'invite-email-error'
+                : undefined}
+              aria-invalid={inviteEmailTouched && inviteEmailError ? 'true' : undefined}
+              bind:value={inviteEmail}
               id="invite-email"
               name="email"
+              onblur={() => (inviteEmailTouched = true)}
+              oninput={() => (inviteEmailTouched = true)}
               required
               type="email"
-              value={form?.email ?? ''}
             />
+            {#if inviteEmailTouched && inviteEmailError}
+              <p class="field-error" id="invite-email-error" role="alert">{inviteEmailError}</p>
+            {/if}
           </div>
 
           <div class="field">
@@ -182,14 +207,34 @@
           {/if}
 
           <PendingButton
-            class="button primary"
+            class="button"
+            disabled={!canCreateInvitation}
             pending={isCreatingInvitation}
             pendingLabel="Creating invitation…"
             type="submit"
+            variant="primary"
           >
             Create invitation link
           </PendingButton>
         </form>
+
+        <section class="role-guide" aria-labelledby="role-guide-title">
+          <h3 id="role-guide-title">Role guide</h3>
+          <dl>
+            <div>
+              <dt>Administrator</dt>
+              <dd>Imports people and records membership recognition.</dd>
+            </div>
+            <div>
+              <dt>Editor</dt>
+              <dd>Makes ordinary changes to people records.</dd>
+            </div>
+            <div>
+              <dt>Viewer</dt>
+              <dd>Views People &amp; Membership records without making changes.</dd>
+            </div>
+          </dl>
+        </section>
 
         {#if form?.inviteLink}
           <div class="invite-created" aria-live="polite">
@@ -200,11 +245,12 @@
             </p>
             <input aria-label="Invitation link" readonly value={form.inviteLink} />
             <PendingButton
-              class="button secondary"
+              class="button"
               onclick={() => void copyInvitationLink(form.inviteLink)}
               pending={isCopyingInvitation}
               pendingLabel="Copying link…"
               type="button"
+              variant="secondary"
             >
               Copy invitation link
             </PendingButton>
@@ -230,7 +276,6 @@
     font: 400 28px/1.15 var(--font-display);
   }
   .access-intro {
-    max-width: 62ch;
     margin: 8px 0 0;
     color: var(--text-secondary);
   }
@@ -238,7 +283,10 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(240px, 1fr) auto;
     gap: 16px;
-    align-items: end;
+    align-items: start;
+  }
+  .access-form > :global(.button) {
+    margin-top: 30px;
   }
   .access-form .field-error {
     grid-column: 1 / -1;
@@ -270,12 +318,44 @@
   .invite-created :global(.button) {
     width: fit-content;
   }
+  .role-guide {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  .role-guide h3 {
+    margin: 0;
+    font-size: 14px;
+  }
+  .role-guide dl {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 12px 0 0;
+  }
+  .role-guide dl > div {
+    min-width: 0;
+  }
+  .role-guide dt {
+    font-weight: 700;
+  }
+  .role-guide dd {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
   @media (max-width: 760px) {
     .access-form {
       grid-template-columns: 1fr;
     }
     .access-form :global(.button) {
       width: 100%;
+      margin-top: 0;
+    }
+    .role-guide dl {
+      grid-template-columns: 1fr;
+      gap: 12px;
     }
   }
 </style>

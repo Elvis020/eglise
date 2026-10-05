@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import type { SubmitFunction } from '@sveltejs/kit';
+  import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconArrowRight from '@tabler/icons-svelte-runes/icons/arrow-right';
   import IconInfoCircle from '@tabler/icons-svelte-runes/icons/info-circle';
 
@@ -116,10 +117,11 @@
         </div>
 
         <PendingButton
-          class="button primary"
+          class="button"
           pending={isContinuing}
           pendingLabel="Opening invitation…"
           type="submit"
+          variant="primary"
         >
           Continue with invitation
           <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
@@ -176,10 +178,11 @@
         {/if}
 
         <PendingButton
-          class="button primary"
+          class="button"
           pending={isSubmitting}
           pendingLabel="Creating account…"
           type="submit"
+          variant="primary"
         >
           Create account and enter workspace
         </PendingButton>
@@ -193,6 +196,20 @@
         </p>
       </aside>
     {/if}
+
+    {#if token && data.authConfigured}
+      <p class="invite-change">
+        <a href="/accept-invite">
+          <IconArrowLeft aria-hidden="true" size={16} stroke={1.8} />
+          Use a different invitation
+        </a>
+      </p>
+    {/if}
+
+    <p class="invite-alternate">
+      Already have an account?
+      <a href="/login">Sign in</a>
+    </p>
   </section>
 </main>
 
@@ -302,6 +319,31 @@
   .invite-note :global(svg) {
     margin-top: 1px;
     color: var(--info);
+  }
+  .invite-change {
+    margin: 20px 0 0;
+    text-align: center;
+  }
+  .invite-change a,
+  .invite-alternate a {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 4px;
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+  .invite-alternate {
+    margin: 18px 0 0;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
+    text-align: center;
   }
   @media (max-width: 560px) {
     .invite-page {

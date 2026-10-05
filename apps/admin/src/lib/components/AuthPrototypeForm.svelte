@@ -277,10 +277,10 @@
                 </p>
               </div>
 
-              <button class="auth-submit" type="button" onclick={advanceSignup}>
+              <PendingButton class="auth-submit" onclick={advanceSignup} type="button">
                 <span>Continue</span>
                 <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
-              </button>
+              </PendingButton>
             {:else}
               <div class="auth-account-summary">
                 <span>Administrator</span>
@@ -321,6 +321,7 @@
                   pending={isSubmitting}
                   pendingLabel="Opening workspace…"
                   type="submit"
+                  variant="primary"
                 >
                   <span>{isSubmitting ? 'Opening workspace…' : submitLabel}</span>
                   <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
@@ -374,6 +375,7 @@
           pending={isSubmitting}
           pendingLabel="Opening workspace…"
           type="submit"
+          variant="primary"
         >
           <span>{submitLabel}</span>
           <IconArrowRight aria-hidden="true" size={18} stroke={1.8} />
@@ -616,22 +618,10 @@
   .auth-field input[aria-invalid='true'] {
     border-color: var(--danger);
   }
-  .auth-submit {
-    display: inline-flex;
-    gap: 8px;
+  :global(.auth-submit) {
     min-height: 46px;
-    align-items: center;
-    justify-content: center;
     margin-top: 2px;
-    padding: 9px 14px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    color: #fffdf8;
-    background: var(--primary);
     font-weight: 600;
-    transition:
-      background-color 120ms cubic-bezier(0.2, 0, 0, 1),
-      transform 120ms cubic-bezier(0.2, 0, 0, 1);
   }
   .auth-back {
     display: inline-flex;
@@ -650,24 +640,18 @@
   .auth-back:focus-visible {
     background: #e7ede3;
   }
-  .auth-submit:hover {
-    background: var(--primary-hover);
-  }
-  .auth-submit:active {
-    transform: translateY(1px);
-  }
-  .auth-submit:not(:disabled):hover :global(svg) {
+  :global(.auth-submit:not(:disabled):hover svg) {
     transform: translateX(2px);
   }
-  .auth-submit :global(svg) {
+  :global(.auth-submit svg) {
     transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
   }
   .auth-form-error {
     padding: 10px 12px;
-    border: 1px solid #aebca7;
+    border: 1px solid var(--danger);
     border-radius: 8px;
-    color: var(--primary-hover);
-    background: #edf2e9;
+    color: #7a2f25;
+    background: #fbefec;
     font-size: 14px;
   }
   .auth-alternate {
@@ -727,8 +711,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .auth-field input,
-    .auth-submit,
-    .auth-submit :global(svg),
+    :global(.auth-submit),
+    :global(.auth-submit svg),
     .auth-step {
       animation: none;
       transition-duration: 0.01ms;
