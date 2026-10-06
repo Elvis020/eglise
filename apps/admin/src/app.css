@@ -703,14 +703,9 @@ a:focus-visible {
   margin: 0 auto;
 }
 .directory-page {
-  display: flex;
-  min-height: 0;
   margin: 0 auto;
-  flex: 1;
-  flex-direction: column;
 }
 .directory-page .import-prompt {
-  margin-top: auto;
   margin-bottom: 0;
 }
 .page-head {
@@ -961,7 +956,7 @@ a:focus-visible {
 }
 .person-name {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 400;
 }
 .person-copy {
   display: grid;
@@ -1093,8 +1088,52 @@ a:focus-visible {
 .attendance-page {
   padding-bottom: 48px;
 }
+.attendance-page:has(.attendance-register-panel) {
+  padding-bottom: 0;
+}
+.content:has(.attendance-register-panel) {
+  padding-bottom: 24px;
+}
 .attendance-page-head {
-  align-items: start;
+  display: block;
+}
+.attendance-heading-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.attendance-page-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+.attendance-event-groups {
+  display: grid;
+  gap: 32px;
+}
+.attendance-completed-section {
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.attendance-create-panel {
+  max-width: 760px;
+}
+.attendance-settings-section {
+  margin-top: 32px;
+}
+.attendance-complete-notice {
+  margin-bottom: 24px;
+}
+.attendance-unknown-event {
+  display: grid;
+  gap: 16px;
+  max-width: 640px;
+}
+.attendance-unknown-event h1,
+.attendance-unknown-event p {
+  margin: 0;
 }
 .attendance-layout {
   display: grid;
@@ -1125,8 +1164,10 @@ a:focus-visible {
 .attendance-leader-field {
   grid-column: 1 / -1;
 }
-.attendance-form .button {
-  justify-self: start;
+.attendance-form-actions,
+.attendance-manual-actions {
+  width: 100%;
+  margin-top: 0;
 }
 .attendance-event-list {
   display: grid;
@@ -1183,7 +1224,7 @@ a:focus-visible {
   color: var(--primary);
 }
 .attendance-register-panel {
-  margin-bottom: 48px;
+  margin-bottom: 0;
 }
 .attendance-register-head {
   display: flex;
@@ -1304,9 +1345,6 @@ a:focus-visible {
 .attendance-person-results + .directory-pagination {
   border-top: 0;
 }
-.attendance-manual-content .button {
-  justify-self: start;
-}
 .attendance-manual-note {
   margin: -8px 0 8px;
   color: var(--text-secondary);
@@ -1345,7 +1383,8 @@ a:focus-visible {
 }
 .attendance-type-list {
   display: grid;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
 }
 .attendance-type-row {
   display: flex;
@@ -1377,7 +1416,7 @@ a:focus-visible {
 }
 .attendance-add-type {
   display: flex;
-  grid-column: 2;
+  grid-column: auto;
   gap: 8px;
 }
 .attendance-add-type input {
@@ -1409,9 +1448,15 @@ a:focus-visible {
 }
 
 @media (max-width: 640px) {
-  .attendance-page-head,
+  .attendance-heading-row,
   .attendance-register-head {
     display: grid;
+  }
+  .attendance-page-actions {
+    width: 100%;
+  }
+  .attendance-page-actions .button {
+    flex: 1 1 auto;
   }
   .attendance-register-head .button,
   .attendance-form .button,
@@ -2099,6 +2144,10 @@ dialog p {
   }
   .page-head .button {
     margin-top: 16px;
+  }
+  .attendance-page-actions .button {
+    display: inline-flex;
+    margin-top: 0;
   }
   .controls,
   .form-grid {

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { onMount, tick } from 'svelte';
 
   import IconFileImport from '@tabler/icons-svelte-runes/icons/file-import';
   import IconUserPlus from '@tabler/icons-svelte-runes/icons/user-plus';
@@ -18,10 +17,6 @@
   let membership = 'all';
   let kindFilter: DirectoryKindFilter = 'all';
   let currentPage = 1;
-  let pageSize = DIRECTORY_PAGE_SIZE;
-  let directoryPage: HTMLElement;
-  let directoryTable: HTMLTableElement;
-  let importPrompt: HTMLElement;
 
   let peopleAccess: typeof page.data.peopleAccess;
 
@@ -53,8 +48,8 @@
   $: filteredPeople = activePeople.filter((person) =>
     matches(person, query, membership, kindFilter)
   );
-  $: currentPage = clampPage(currentPage, filteredPeople.length, pageSize);
-  $: pagedPeople = pageItems(filteredPeople, currentPage, pageSize);
+  $: currentPage = clampPage(currentPage, filteredPeople.length, DIRECTORY_PAGE_SIZE);
+  $: pagedPeople = pageItems(filteredPeople, currentPage, DIRECTORY_PAGE_SIZE);
 
   function resetPage(): void {
     currentPage = 1;
@@ -89,92 +84,11 @@
     event.preventDefault();
     openPerson(id);
   }
-
-  function setPageSizePreservingFirstVisible(nextPageSize: number): void {
-    if (nextPageSize === pageSize) return;
-
-    const firstVisibleIndex = (currentPage - 1) * pageSize;
-
-    pageSize = nextPageSize;
-    currentPage = clampPage(
-      Math.floor(firstVisibleIndex / pageSize) + 1,
-      filteredPeople.length,
-      pageSize
-    );
-  }
-
-  onMount(() => {
-    const desktopMediaQuery = window.matchMedia('(min-width: 961px)');
-    let frame: number | undefined;
-
-    const measurePageCapacity = (): void => {
-      frame = undefined;
-
-      if (!desktopMediaQuery.matches) {
-        setPageSizePreservingFirstVisible(DIRECTORY_PAGE_SIZE);
-
-        return;
-      }
-
-      const firstRow = directoryTable?.tBodies[0]?.rows[0];
-
-      if (!firstRow || !importPrompt) return;
-
-      const rowHeight = firstRow.getBoundingClientRect().height;
-
-      if (rowHeight <= 0) return;
-
-      const pagination = directoryPage.querySelector<HTMLElement>('.directory-pagination');
-
-      if (!pagination) return;
-
-      const footerBounds = importPrompt.getBoundingClientRect();
-      const paginationBottom = pagination.getBoundingClientRect().bottom;
-      const tablePanel = pagination.closest<HTMLElement>('.panel');
-      const panelBottom = tablePanel?.getBoundingClientRect().bottom ?? paginationBottom;
-      const panelMarginBottom = tablePanel
-        ? Number.parseFloat(window.getComputedStyle(tablePanel).marginBottom)
-        : 0;
-      const flexibleFooterGap = footerBounds.top - panelBottom - panelMarginBottom;
-      const availableRowChange = Math.floor(
-        (footerBounds.bottom > window.innerHeight
-          ? window.innerHeight - footerBounds.bottom
-          : flexibleFooterGap) / rowHeight
-      );
-      const nextPageSize = Math.min(
-        filteredPeople.length,
-        Math.max(1, pageSize + availableRowChange)
-      );
-
-      setPageSizePreservingFirstVisible(nextPageSize);
-    };
-
-    const scheduleMeasurement = (): void => {
-      if (frame !== undefined) cancelAnimationFrame(frame);
-
-      frame = requestAnimationFrame(measurePageCapacity);
-    };
-
-    const resizeObserver = new ResizeObserver(scheduleMeasurement);
-
-    resizeObserver.observe(directoryPage);
-    window.addEventListener('resize', scheduleMeasurement);
-    desktopMediaQuery.addEventListener('change', scheduleMeasurement);
-    void tick().then(scheduleMeasurement);
-
-    return () => {
-      if (frame !== undefined) cancelAnimationFrame(frame);
-
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', scheduleMeasurement);
-      desktopMediaQuery.removeEventListener('change', scheduleMeasurement);
-    };
-  });
 </script>
 
 <svelte:head><title>People directory | Eglise</title></svelte:head>
 
-<section bind:this={directoryPage} class="page directory-page">
+<section class="page directory-page">
   <header class="page-head">
     <div>
       <p class="eyebrow">People &amp; Membership</p>
@@ -233,7 +147,7 @@
 
     {#if filteredPeople.length}
       <div class="table-wrap">
-        <table bind:this={directoryTable} class="directory people-directory">
+        <table class="directory people-directory">
           <colgroup>
             <col class="person-column" />
             <col class="phone-column" />
@@ -284,7 +198,11 @@
           </tbody>
         </table>
       </div>
-      <DirectoryPagination bind:page={currentPage} {pageSize} total={filteredPeople.length} />
+      <DirectoryPagination
+        bind:page={currentPage}
+        pageSize={DIRECTORY_PAGE_SIZE}
+        total={filteredPeople.length}
+      />
     {:else}
       <p class="empty">
         No people match this search. Try another term or <a href="/people/add">add a person</a>.
@@ -293,7 +211,7 @@
   </div>
 
   {#if peopleAccess?.canImport}
-    <div bind:this={importPrompt} class="panel import-prompt">
+    <div class="panel import-prompt">
       <div>
         <h2>Review a sample import</h2>
         <p class="muted">

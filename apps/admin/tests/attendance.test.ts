@@ -11,7 +11,7 @@ import {
   retireAttendanceEventType,
   removeAttendee,
   setManualHeadcount
-} from './attendance';
+} from '$lib/attendance';
 
 describe('attendance discovery rules', () => {
   it('keeps individual attendance duplicate-safe within one event', () => {
