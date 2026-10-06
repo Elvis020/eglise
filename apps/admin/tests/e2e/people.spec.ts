@@ -96,7 +96,7 @@ test('uses directory totals as working type filters', async ({ page }) => {
   await page.goto('/people');
 
   const summary = page.getByRole('region', { name: 'Directory filters' });
-  const controls = page.locator('.directory-page .controls');
+  const next = page.getByRole('button', { name: 'Next' });
 
   await expect(summary).toBeVisible();
   await expect(summary.locator('[data-summary="directory"]')).toContainText('Total people');
@@ -111,14 +111,21 @@ test('uses directory totals as working type filters', async ({ page }) => {
   await expect(heatmap).toContainText('Neighbourhood heatmap');
   await expect(heatmap).toContainText('Coming soon');
 
-  await summary.locator('[data-summary="first-timers"]').click();
-  await expect(summary.locator('[data-summary="first-timers"]')).toHaveAttribute(
-    'aria-pressed',
-    'true'
-  );
-  await expect(page.locator('.people-directory tbody tr')).toHaveCount(1);
-  await expect(page.getByText('First-time visitor', { exact: true })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Membership' })).toHaveCount(0);
+  await next.click();
+  await expect(page.getByText('Showing 11–20 of 25 records')).toBeVisible();
+  await expect(page.getByText('Page 2 of 3')).toBeVisible();
+
+  const membership = page.getByRole('combobox', { name: 'Membership' });
+
+  await membership.focus();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('End');
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator('.people-directory tbody tr')).toHaveCount(10);
+  await expect(page.getByText('Showing 1–10 of 16 records')).toBeVisible();
+  await expect(page.getByText('Page 1 of 2')).toBeVisible();
+  await expect(membership).toHaveText('Not members');
   await expect(page.getByRole('button', { name: 'Clear filters' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Clear filters' }).click();
@@ -129,26 +136,11 @@ test('uses directory totals as working type filters', async ({ page }) => {
   await expect(page.getByRole('combobox', { name: 'Membership' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Clear filters' })).toHaveCount(0);
 
-  const [summaryBox, controlsBox] = await Promise.all([
-    summary.boundingBox(),
-    controls.boundingBox()
-  ]);
-
-  expect(summaryBox).not.toBeNull();
-  expect(controlsBox).not.toBeNull();
-
-  if (summaryBox && controlsBox) {
-    expect(summaryBox.y).toBeLessThan(controlsBox.y);
-  }
-
   const pageLayout = await page.evaluate(() => ({
-    documentHeight: document.documentElement.scrollHeight,
-    pageHeight: document.documentElement.clientHeight,
     documentWidth: document.documentElement.scrollWidth,
     viewportWidth: document.documentElement.clientWidth
   }));
 
-  expect(pageLayout.documentHeight).toBeLessThanOrEqual(pageLayout.pageHeight);
   expect(pageLayout.documentWidth).toBe(pageLayout.viewportWidth);
 });
 
@@ -218,16 +210,18 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
   await expect(
     page.getByRole('link', { name: 'People and Membership', exact: true })
   ).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('link', { name: 'Attendance' })).toHaveAttribute(
+    'href',
+    '/attendance'
+  );
 
-  const attendance = page
-    .locator('#application-sidebar .nav-future')
-    .filter({ hasText: 'Attendance' });
+  const reports = page.locator('#application-sidebar .nav-future').filter({ hasText: 'Reports' });
 
-  await expect(attendance).toHaveJSProperty('tagName', 'DIV');
-  await expect(attendance).not.toHaveAttribute('role');
-  await expect(attendance).not.toHaveAttribute('tabindex');
-  await expect(attendance).not.toHaveAttribute('href');
-  await expect(page.getByRole('link', { name: 'Attendance' })).toHaveCount(0);
+  await expect(reports).toHaveJSProperty('tagName', 'DIV');
+  await expect(reports).not.toHaveAttribute('role');
+  await expect(reports).not.toHaveAttribute('tabindex');
+  await expect(reports).not.toHaveAttribute('href');
+  await expect(page.getByRole('link', { name: 'Reports' })).toHaveCount(0);
   await expect(page.locator('#application-sidebar a[href^="/planned/"]')).toHaveCount(0);
   await expect(page.getByText(/Coming later|Planned next/)).toHaveCount(0);
 
@@ -252,12 +246,12 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
   expect(layout.transform).toBe('none');
   expect(layout.clipPath).toBe('none');
 
-  await attendance.hover();
-  const attendanceTooltip = attendance.locator('.nav-tooltip');
+  await reports.hover();
+  const reportsTooltip = reports.locator('.nav-tooltip');
 
-  await expect(attendanceTooltip).toBeVisible();
-  await expect(attendanceTooltip).toHaveAttribute('aria-hidden', 'true');
-  await expect(attendanceTooltip).toHaveCSS('opacity', '1');
+  await expect(reportsTooltip).toBeVisible();
+  await expect(reportsTooltip).toHaveAttribute('aria-hidden', 'true');
+  await expect(reportsTooltip).toHaveCSS('opacity', '1');
 
   const collapsedGeometry = await page.evaluate(() => {
     const activeLink = document.querySelector<HTMLElement>('.nav-link.active');
@@ -265,7 +259,7 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
     const sidebar = document.querySelector<HTMLElement>('#application-sidebar');
     const tooltip = Array.from(
       document.querySelectorAll<HTMLElement>('.nav-future .nav-tooltip')
-    ).find((element) => element.textContent?.includes('Attendance'));
+    ).find((element) => element.textContent?.includes('Reports'));
 
     return {
       activeDotColor: activeLink ? getComputedStyle(activeLink, '::before').backgroundColor : '',
@@ -285,7 +279,7 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
   ).toBeLessThan(collapsedGeometry.activeIconLeft - collapsedGeometry.activeLinkLeft);
   expect(collapsedGeometry.tooltipLeft).toBeGreaterThan(collapsedGeometry.sidebarRight);
 
-  await expect(attendance).toHaveCSS('opacity', '0.66');
+  await expect(reports).toHaveCSS('opacity', '0.66');
 
   await expect(sidebar.getByText('Refresh resets every sample record.')).toHaveCount(0);
   await expect(page.locator('.pilot-context')).toHaveCount(0);
@@ -664,12 +658,13 @@ test('keeps the sample import prompt as a flowing low-priority directory footer'
 }) => {
   await page.goto('/people');
 
-  const directory = page.locator('.directory-page');
+  const summary = page.getByRole('region', { name: 'Directory filters' });
   const importPrompt = page.locator('.directory-page .import-prompt');
 
+  await summary.locator('[data-summary="first-timers"]').click();
+  await expect(page.locator('.people-directory tbody tr')).toHaveCount(1);
+  await expect(page.getByText('Showing 1–1 of 1 record')).toBeVisible();
   await expect(importPrompt).toHaveCSS('position', 'static');
-  await expect(directory).toHaveCSS('display', 'flex');
-  await expect(directory).toHaveCSS('flex-direction', 'column');
 
   const footerFlow = await page.evaluate(() => {
     const pagination = document.querySelector<HTMLElement>('.directory-pagination');
@@ -684,7 +679,7 @@ test('keeps the sample import prompt as a flowing low-priority directory footer'
   expect(footerFlow.promptTop).toBeGreaterThan(footerFlow.paginationBottom);
 });
 
-test('uses more than ten rows on a tall desktop while keeping the directory footer visible', async ({
+test('keeps fixed ten-row pagination on a tall desktop while keeping the directory footer visible', async ({
   page
 }) => {
   await page.setViewportSize({ width: 1280, height: 1400 });
@@ -697,7 +692,8 @@ test('uses more than ten rows on a tall desktop while keeping the directory foot
   await expect
     .poll(async () => (await page.locator('.people-directory tbody tr').count()) > 0)
     .toBe(true);
-  expect(await page.locator('.people-directory tbody tr').count()).toBeGreaterThan(10);
+  await expect(page.locator('.people-directory tbody tr')).toHaveCount(10);
+  await expect(page.getByText('Showing 1–10 of 25 records')).toBeVisible();
   await expect(importPrompt).toBeVisible();
   await expect(importAction).toBeVisible();
   await expect(motif).toHaveCSS('overflow', 'clip');
@@ -710,44 +706,37 @@ test('uses more than ten rows on a tall desktop while keeping the directory foot
     return {
       actionRight: action?.getBoundingClientRect().right ?? 0,
       contentRight: content?.getBoundingClientRect().right ?? 0,
-      documentHeight: document.documentElement.scrollHeight,
       documentWidth: document.documentElement.scrollWidth,
-      footerBottom: footer?.getBoundingClientRect().bottom ?? 0,
-      footerTop: footer?.getBoundingClientRect().top ?? 0,
-      pageHeight: document.documentElement.clientHeight,
       viewportWidth: document.documentElement.clientWidth
     };
   });
 
-  expect(fittedLayout.footerBottom).toBeLessThanOrEqual(fittedLayout.pageHeight);
-  expect(fittedLayout.documentHeight).toBeLessThanOrEqual(fittedLayout.pageHeight);
   expect(fittedLayout.documentWidth).toBe(fittedLayout.viewportWidth);
   expect(fittedLayout.actionRight).toBeGreaterThan(fittedLayout.contentRight - 72);
-  expect(fittedLayout.footerTop).toBeLessThan(fittedLayout.pageHeight);
 });
 
-test('adapts desktop pagination to the available table capacity and falls back to document scroll', async ({
+test('keeps fixed desktop pagination through resizing and falls back to document scroll', async ({
   page
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/people');
 
   const tableRows = page.locator('.people-directory tbody tr');
-  const fullCapacity = await tableRows.count();
+
+  await expect(tableRows).toHaveCount(10);
 
   await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByText('Showing 11–20 of 25 records')).toBeVisible();
+  await expect(page.getByText('Page 2 of 3')).toBeVisible();
   const firstVisibleBeforeResize = await tableRows.first().locator('.person-name').textContent();
 
   await page.setViewportSize({ width: 1280, height: 620 });
-  await expect.poll(async () => (await tableRows.count()) < fullCapacity).toBe(true);
+  await expect(tableRows).toHaveCount(10);
+  await expect(page.getByText('Showing 11–20 of 25 records')).toBeVisible();
+  await expect(page.getByText('Page 2 of 3')).toBeVisible();
   await expect(tableRows.first().locator('.person-name')).toHaveText(
     firstVisibleBeforeResize ?? ''
   );
-
-  const compactCapacity = await tableRows.count();
-
-  expect(compactCapacity).toBeGreaterThanOrEqual(1);
-  expect(compactCapacity).toBeLessThanOrEqual(10);
 
   await page.setViewportSize({ width: 1280, height: 360 });
   await expect
