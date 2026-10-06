@@ -589,6 +589,11 @@ test('uses ancestor-only breadcrumbs and preserves the unsaved-entry guard', asy
     'People & Membership'
   );
   await expect(
+    page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', {
+      name: 'People & Membership'
+    })
+  ).toHaveCSS('cursor', 'pointer');
+  await expect(
     page.getByRole('navigation', { name: 'Breadcrumb' }).getByText('Add a person', { exact: true })
   ).toHaveCount(0);
 

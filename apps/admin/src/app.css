@@ -693,7 +693,11 @@ a:focus-visible {
   transform: rotate(45deg);
 }
 .breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
   color: var(--primary);
+  cursor: pointer;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
