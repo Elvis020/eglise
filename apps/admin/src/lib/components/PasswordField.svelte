@@ -117,11 +117,11 @@
     border-radius: 6px;
     color: var(--text-secondary);
     background: transparent;
+    cursor: pointer;
   }
 
   .password-field-toggle:hover {
     color: var(--primary);
-    background: #e7ede3;
   }
 
   .password-field-toggle:focus-visible {
