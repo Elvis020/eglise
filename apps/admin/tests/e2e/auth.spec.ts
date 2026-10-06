@@ -122,7 +122,10 @@ test('lets a person reveal and hide their password without losing their place', 
   const password = page.getByRole('textbox', { name: 'Password' });
   const toggle = page.getByRole('button', { name: 'Show password' });
 
+  await password.fill('');
+  await expect(toggle).toHaveCount(0);
   await password.fill('prototype-password');
+  await expect(toggle).toBeVisible();
   await password.focus();
   await expect(password).toHaveAttribute('type', 'password');
 
@@ -138,4 +141,7 @@ test('lets a person reveal and hide their password without losing their place', 
   await page.getByRole('button', { name: 'Hide password' }).click();
   await expect(password).toHaveAttribute('type', 'password');
   await expect(password).toBeFocused();
+
+  await password.fill('');
+  await expect(toggle).toHaveCount(0);
 });

@@ -28,6 +28,7 @@
   } = $props();
 
   let input = $state<HTMLInputElement>();
+  let hasValue = $state(false);
   let passwordVisible = $state(false);
 
   $effect(() => {
@@ -38,6 +39,13 @@
     passwordVisible = !passwordVisible;
     await tick();
     input?.focus();
+  }
+
+  function updateValue(nextValue: string): void {
+    value = nextValue;
+    hasValue = Boolean(nextValue);
+
+    if (!hasValue) passwordVisible = false;
   }
 </script>
 
@@ -52,22 +60,25 @@
     {name}
     {oninput}
     {required}
+    class:password-field-input--with-toggle={hasValue}
     type={passwordVisible ? 'text' : 'password'}
-    bind:value
+    bind:value={() => value, updateValue}
   />
-  <button
-    aria-label={passwordVisible ? 'Hide password' : 'Show password'}
-    aria-pressed={passwordVisible}
-    class="password-field-toggle"
-    onclick={togglePasswordVisibility}
-    type="button"
-  >
-    {#if passwordVisible}
-      <IconEyeOff aria-hidden="true" size={20} stroke={1.8} />
-    {:else}
-      <IconEye aria-hidden="true" size={20} stroke={1.8} />
-    {/if}
-  </button>
+  {#if hasValue}
+    <button
+      aria-label={passwordVisible ? 'Hide password' : 'Show password'}
+      aria-pressed={passwordVisible}
+      class="password-field-toggle"
+      onclick={togglePasswordVisibility}
+      type="button"
+    >
+      {#if passwordVisible}
+        <IconEyeOff aria-hidden="true" size={20} stroke={1.8} />
+      {:else}
+        <IconEye aria-hidden="true" size={20} stroke={1.8} />
+      {/if}
+    </button>
+  {/if}
 </div>
 
 <style>
@@ -78,7 +89,7 @@
   input {
     width: 100%;
     min-height: 46px;
-    padding: 9px 52px 9px 11px;
+    padding: 9px 11px;
     border: 2px solid var(--border);
     border-radius: 8px;
     color: var(--text-primary);
@@ -90,6 +101,10 @@
 
   input:hover {
     border-color: #a9b7a5;
+  }
+
+  .password-field-input--with-toggle {
+    padding-right: 52px;
   }
 
   input:focus {
