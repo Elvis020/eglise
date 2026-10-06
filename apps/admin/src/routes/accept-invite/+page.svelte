@@ -8,6 +8,7 @@
 
   import EgliseChurchMark from '$lib/components/EgliseChurchMark.svelte';
   import PendingButton from '$lib/components/PendingButton.svelte';
+  import PasswordField from '$lib/components/PasswordField.svelte';
 
   let { data, form } = $props();
   let isSubmitting = $state(false);
@@ -170,13 +171,12 @@
 
         <div class="field">
           <label for="invite-password">Create password</label>
-          <input
+          <PasswordField
             autocomplete="new-password"
             id="invite-password"
-            minlength="12"
+            minlength={12}
             name="password"
             required
-            type="password"
           />
           <p class="help">Use at least 12 characters.</p>
         </div>

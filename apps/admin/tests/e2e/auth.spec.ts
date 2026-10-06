@@ -27,7 +27,7 @@ test('creates a prototype administrator, preserves the workspace, and logs out',
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByLabel('Full name')).toHaveValue('Ama Owusu');
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByLabel('Password').fill('prototype-password');
+  await page.getByRole('textbox', { name: 'Password' }).fill('prototype-password');
   await page.getByRole('button', { name: 'Create account' }).click();
 
   await expect(page).toHaveURL(/\/people$/);
@@ -60,7 +60,7 @@ test('creates a prototype administrator, preserves the workspace, and logs out',
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 
   await page.getByLabel('Email address').fill('ama@church.org');
-  await page.getByLabel('Password').fill('another-password');
+  await page.getByRole('textbox', { name: 'Password' }).fill('another-password');
   await page.getByRole('button', { name: 'Sign in to workspace' }).click();
 
   await expect(page).toHaveURL(/\/people$/);
@@ -93,7 +93,7 @@ test('keeps authentication validation beneath the affected field', async ({ page
   const error = page.locator('#auth-email-error');
 
   await email.fill('not-an-email');
-  await page.getByLabel('Password').fill('prototype-password');
+  await page.getByRole('textbox', { name: 'Password' }).fill('prototype-password');
   await page.getByRole('button', { name: 'Sign in to workspace' }).click();
 
   await expect(email).toHaveAttribute('aria-invalid', 'true');
@@ -114,4 +114,28 @@ test('keeps authentication validation beneath the affected field', async ({ page
   await email.fill('admin@church.org');
   await expect(email).not.toHaveAttribute('aria-invalid', 'true');
   await expect(error).toBeEmpty();
+});
+
+test('lets a person reveal and hide their password without losing their place', async ({
+  page
+}) => {
+  const password = page.getByRole('textbox', { name: 'Password' });
+  const toggle = page.getByRole('button', { name: 'Show password' });
+
+  await password.fill('prototype-password');
+  await password.focus();
+  await expect(password).toHaveAttribute('type', 'password');
+
+  await toggle.click();
+  await expect(password).toHaveAttribute('type', 'text');
+  await expect(password).toHaveValue('prototype-password');
+  await expect(password).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Hide password' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+
+  await page.getByRole('button', { name: 'Hide password' }).click();
+  await expect(password).toHaveAttribute('type', 'password');
+  await expect(password).toBeFocused();
 });

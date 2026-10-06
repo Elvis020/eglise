@@ -2,7 +2,6 @@
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
   import type { SubmitFunction } from '@sveltejs/kit';
-  import { tick } from 'svelte';
   import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconArrowRight from '@tabler/icons-svelte-runes/icons/arrow-right';
   import IconCheck from '@tabler/icons-svelte-runes/icons/check';
@@ -10,6 +9,7 @@
 
   import EgliseChurchMark from '$lib/components/EgliseChurchMark.svelte';
   import PendingButton from '$lib/components/PendingButton.svelte';
+  import PasswordField from '$lib/components/PasswordField.svelte';
   import {
     prototypeSession,
     signInPrototypeAdministrator,
@@ -38,7 +38,6 @@
   let name = $state('');
   let email = $state('');
   let password = $state('');
-  let passwordInput = $state<HTMLInputElement | undefined>(undefined);
 
   const isLogin = $derived(mode === 'login');
   const title = $derived(isLogin ? 'Welcome back' : 'Create your account');
@@ -98,7 +97,7 @@
     return /^\S+@\S+\.\S+$/.test(value);
   }
 
-  async function advanceSignup() {
+  function advanceSignup() {
     if (!name.trim()) {
       nameError = 'Enter your name to create an administrator profile.';
 
@@ -114,8 +113,6 @@
     nameError = '';
     emailError = '';
     signupStep = 2;
-    await tick();
-    passwordInput?.focus();
   }
 
   function returnToProfile() {
@@ -290,16 +287,15 @@
 
               <div class="auth-field">
                 <label for="auth-password">Password</label>
-                <input
-                  bind:this={passwordInput}
+                <PasswordField
                   autocomplete="new-password"
                   bind:value={password}
-                  aria-describedby={passwordError ? 'auth-password-error' : undefined}
-                  aria-invalid={passwordError ? 'true' : undefined}
+                  ariaDescribedby={passwordError ? 'auth-password-error' : undefined}
+                  ariaInvalid={Boolean(passwordError)}
+                  focusOnMount
                   id="auth-password"
-                  minlength="8"
+                  minlength={8}
                   oninput={() => clearFieldError('password')}
-                  type="password"
                 />
                 <p class="auth-help">Use at least 8 characters for this preview.</p>
                 <p
@@ -351,15 +347,14 @@
 
         <div class="auth-field">
           <label for="auth-password">Password</label>
-          <input
+          <PasswordField
             autocomplete="current-password"
             bind:value={password}
-            aria-describedby={passwordError ? 'auth-password-error' : undefined}
-            aria-invalid={passwordError ? 'true' : undefined}
+            ariaDescribedby={passwordError ? 'auth-password-error' : undefined}
+            ariaInvalid={Boolean(passwordError)}
             id="auth-password"
             name="password"
             oninput={() => clearFieldError('password')}
-            type="password"
           />
           <p
             class="auth-field-error"
