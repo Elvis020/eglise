@@ -117,4 +117,17 @@
     margin: 16px 0 0;
     padding-left: 24px;
   }
+
+  .dialog-actions .button.primary:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 2px var(--surface-raised);
+  }
+
+  @media (forced-colors: active) {
+    .dialog-actions .button.primary:focus-visible {
+      outline: 2px solid Highlight;
+      outline-offset: 2px;
+      box-shadow: none;
+    }
+  }
 </style>

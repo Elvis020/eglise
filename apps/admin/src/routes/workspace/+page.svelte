@@ -110,23 +110,21 @@
     </section>
   {/if}
 
-  <section aria-labelledby="workspace-app" class="workspace-group mobile-app-group">
-    <p class="eyebrow" id="workspace-app">App</p>
-    <AppInstallAction />
-  </section>
-
-  <section aria-labelledby="workspace-account" class="workspace-group mobile-account-group">
-    <p class="eyebrow" id="workspace-account">Account</p>
-    <button
-      aria-busy={isLoggingOut || undefined}
-      class="workspace-account-action"
-      disabled={isLoggingOut}
-      onclick={appShell.requestLogout}
-      type="button"
-    >
-      <IconLogout aria-hidden="true" size={22} stroke={1.8} />
-      <span>{isLoggingOut ? 'Logging out…' : 'Log out'}</span>
-    </button>
+  <section aria-labelledby="workspace-app-account" class="workspace-group mobile-app-account-group">
+    <p class="eyebrow" id="workspace-app-account">App &amp; account</p>
+    <div class="workspace-app-account-actions">
+      <AppInstallAction />
+      <button
+        aria-busy={isLoggingOut || undefined}
+        class="workspace-account-action"
+        disabled={isLoggingOut}
+        onclick={appShell.requestLogout}
+        type="button"
+      >
+        <IconLogout aria-hidden="true" size={22} stroke={1.8} />
+        <span>{isLoggingOut ? 'Logging out…' : 'Log out'}</span>
+      </button>
+    </div>
   </section>
 </section>
 
@@ -196,21 +194,18 @@
     font-size: 14px;
   }
 
-  .mobile-account-group {
-    display: none;
-  }
-
-  .mobile-app-group {
+  .mobile-app-account-group {
     display: none;
   }
 
   @media (max-width: 960px) {
-    .mobile-account-group {
+    .mobile-app-account-group {
       display: grid;
     }
 
-    .mobile-app-group {
+    .workspace-app-account-actions {
       display: grid;
+      gap: 12px;
     }
 
     .workspace-account-action {
