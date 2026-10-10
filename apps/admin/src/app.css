@@ -2055,6 +2055,21 @@ dialog p {
     transform: translateY(1px);
   }
 
+  .mobile-navigation-toggle:focus-visible,
+  .mobile-navigation-close:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 2px var(--info);
+  }
+
+  @media (forced-colors: active) {
+    .mobile-navigation-toggle:focus-visible,
+    .mobile-navigation-close:focus-visible {
+      outline: 2px solid Highlight;
+      outline-offset: -4px;
+      box-shadow: none;
+    }
+  }
+
   .mobile-brand {
     display: flex;
     gap: 8px;
