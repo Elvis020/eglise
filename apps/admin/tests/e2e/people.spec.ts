@@ -443,7 +443,87 @@ test('identifies the active workspace in the mobile top bar', async ({ page }) =
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/reports');
 
-  await expect(page.locator('.mobile-topbar .mobile-workspace-name')).toHaveText('Reports');
+  const workspaceName = page.locator('.mobile-topbar .mobile-workspace-name');
+
+  await expect(workspaceName).toHaveText('Reports');
+
+  const alignment = await page.evaluate(() => {
+    const brand = document.querySelector<HTMLElement>('.mobile-topbar .mobile-brand');
+    const workspace = document.querySelector<HTMLElement>('.mobile-topbar .mobile-workspace-name');
+    const brandBounds = brand?.getBoundingClientRect();
+    const workspaceBounds = workspace?.getBoundingClientRect();
+
+    return {
+      brandHeight: brandBounds?.height ?? 0,
+      workspaceHeight: workspaceBounds?.height ?? 0,
+      workspaceCenter: workspaceBounds ? workspaceBounds.top + workspaceBounds.height / 2 : 0,
+      brandCenter: brandBounds ? brandBounds.top + brandBounds.height / 2 : 0
+    };
+  });
+
+  expect(alignment.workspaceHeight).toBeCloseTo(alignment.brandHeight, 0);
+  expect(alignment.workspaceCenter).toBeCloseTo(alignment.brandCenter, 0);
+});
+
+test('logs out from Workspace on the first mobile tap', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/workspace');
+
+  await page.getByRole('button', { name: 'Log out' }).click();
+
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+});
+
+test('offers the mobile install action only when the browser provides an install prompt', async ({
+  page
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/workspace');
+
+  await expect(page.getByRole('button', { name: 'Install Eglise' })).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const installPrompt = new Event('beforeinstallprompt');
+
+    Object.defineProperties(installPrompt, {
+      prompt: {
+        value: () => Promise.resolve()
+      },
+      userChoice: {
+        value: Promise.resolve({ outcome: 'accepted' })
+      }
+    });
+    window.dispatchEvent(installPrompt);
+  });
+
+  const installButton = page.getByRole('button', { name: 'Install Eglise' });
+
+  await expect(installButton).toBeVisible();
+  await installButton.click();
+  await expect(installButton).toHaveCount(0);
+});
+
+test('centres the mobile attendance actions within the page', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/attendance');
+
+  const layout = await page.evaluate(() => {
+    const content = document.querySelector<HTMLElement>('#main-content');
+    const actions = document.querySelector<HTMLElement>('.attendance-page-actions');
+    const contentBounds = content?.getBoundingClientRect();
+    const actionBounds = actions?.getBoundingClientRect();
+
+    return {
+      actionCenter: actionBounds ? actionBounds.left + actionBounds.width / 2 : 0,
+      actionWidth: actionBounds?.width ?? 0,
+      contentCenter: contentBounds ? contentBounds.left + contentBounds.width / 2 : 0
+    };
+  });
+
+  expect(layout.actionWidth).toBeLessThanOrEqual(320);
+  expect(layout.actionCenter).toBeCloseTo(layout.contentCenter, 0);
+  await expect(page.getByRole('link', { name: 'Create event' })).toBeVisible();
 });
 
 test('keeps the people directory within the mobile viewport without the removed prototype banner', async ({

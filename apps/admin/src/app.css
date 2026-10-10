@@ -1512,10 +1512,16 @@ a:focus-visible {
   .attendance-register-head {
     display: grid;
   }
+  .attendance-heading-row {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
   .attendance-page-actions {
-    width: min(100%, 320px);
+    width: 100%;
+    max-width: 320px;
     flex-direction: column;
     margin-inline: auto;
+    justify-self: center;
   }
   .attendance-page-actions .button {
     width: 100%;
@@ -2041,6 +2047,7 @@ dialog p {
 
   .mobile-context {
     display: flex;
+    min-height: 32px;
     min-width: 0;
     gap: 10px;
     align-items: center;
@@ -2061,11 +2068,14 @@ dialog p {
   }
 
   .mobile-workspace-name {
+    display: flex;
     min-width: 0;
+    align-self: stretch;
+    align-items: center;
     margin: 0;
     overflow: hidden;
     color: var(--text-secondary);
-    font: 600 14px/1.25 var(--font-ui);
+    font: 600 14px/1.2 var(--font-ui);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

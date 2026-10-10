@@ -11,15 +11,17 @@
   import IconSpeakerphone from '@tabler/icons-svelte-runes/icons/speakerphone';
   import IconUsersGroup from '@tabler/icons-svelte-runes/icons/users-group';
 
+  import AppInstallAction from '$lib/components/AppInstallAction.svelte';
+  import { useAppShellContext } from '$lib/app-shell-context';
+
+  const appShell = useAppShellContext();
   const canAccessSettings = $derived(
     page.data.authMode !== 'supabase' ||
       page.data.workspace?.role === 'owner' ||
       page.data.workspace?.role === 'people_administrator'
   );
 
-  function requestMobileLogout() {
-    document.dispatchEvent(new CustomEvent('eglise:request-mobile-logout'));
-  }
+  const isLoggingOut = $derived(appShell.isLoggingOut());
 </script>
 
 <svelte:head><title>Workspace | Eglise</title></svelte:head>
@@ -108,11 +110,22 @@
     </section>
   {/if}
 
+  <section aria-labelledby="workspace-app" class="workspace-group mobile-app-group">
+    <p class="eyebrow" id="workspace-app">App</p>
+    <AppInstallAction />
+  </section>
+
   <section aria-labelledby="workspace-account" class="workspace-group mobile-account-group">
     <p class="eyebrow" id="workspace-account">Account</p>
-    <button class="workspace-account-action" onclick={requestMobileLogout} type="button">
+    <button
+      aria-busy={isLoggingOut || undefined}
+      class="workspace-account-action"
+      disabled={isLoggingOut}
+      onclick={appShell.requestLogout}
+      type="button"
+    >
       <IconLogout aria-hidden="true" size={22} stroke={1.8} />
-      <span>Log out</span>
+      <span>{isLoggingOut ? 'Logging out…' : 'Log out'}</span>
     </button>
   </section>
 </section>
@@ -187,8 +200,16 @@
     display: none;
   }
 
+  .mobile-app-group {
+    display: none;
+  }
+
   @media (max-width: 960px) {
     .mobile-account-group {
+      display: grid;
+    }
+
+    .mobile-app-group {
       display: grid;
     }
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { beforeNavigate, goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { onMount, tick } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconDeviceFloppy from '@tabler/icons-svelte-runes/icons/device-floppy';
   import IconEdit from '@tabler/icons-svelte-runes/icons/edit';
@@ -10,6 +10,7 @@
 
   import { isOnOrBefore, type Person } from '$lib/domain';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import { useAppShellContext } from '$lib/app-shell-context';
   import EgliseDatePicker from '$lib/components/EgliseDatePicker.svelte';
   import { people, updatePerson } from '$lib/people';
   import { showToast } from '$lib/toast';
@@ -30,6 +31,8 @@
   let membershipError = '';
   let membershipErrors: Record<string, string> = {};
   let membershipStep: MembershipStep = 'assimilation';
+
+  const appShell = useAppShellContext();
 
   $: person = $people.find((record) => record.id === page.params.id);
   $: if (person && person.id !== loadedPersonId) {
@@ -183,18 +186,20 @@
     form.focus();
   }
 
-  function handleLogoutRequest(event: Event): void {
-    if (!dirty) return;
-
-    event.preventDefault();
-    const { continueLogout } = (event as CustomEvent<{ continueLogout: () => Promise<void> }>)
-      .detail;
+  function handleLogoutRequest(continueLogout: () => Promise<void>): boolean {
+    if (!dirty) return false;
 
     pendingNavigation = () => {
       void continueLogout();
     };
     leaveDialog.showModal();
+
+    return true;
   }
+
+  const unregisterLogoutGuard = appShell.registerLogoutGuard(handleLogoutRequest);
+
+  onDestroy(unregisterLogoutGuard);
 
   onMount(() => {
     const unload = (event: BeforeUnloadEvent) => {
@@ -205,11 +210,9 @@
     };
 
     window.addEventListener('beforeunload', unload);
-    document.addEventListener('eglise:before-logout', handleLogoutRequest);
 
     return () => {
       window.removeEventListener('beforeunload', unload);
-      document.removeEventListener('eglise:before-logout', handleLogoutRequest);
     };
   });
 

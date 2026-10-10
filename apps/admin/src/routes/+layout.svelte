@@ -21,6 +21,7 @@
   import AppToaster from '$lib/components/AppToaster.svelte';
   import AdministratorAccount from '$lib/components/AdministratorAccount.svelte';
   import EgliseChurchMark from '$lib/components/EgliseChurchMark.svelte';
+  import { provideAppShellContext } from '$lib/app-shell-context';
   import { showErrorToast } from '$lib/toast';
   import {
     initialisePrototypeSession,
@@ -32,6 +33,7 @@
   let sidebarCollapsed = $state(false);
   let sessionReady = $state(false);
   let isLoggingOut = $state(false);
+  let logoutGuard: ((continueLogout: () => Promise<void>) => boolean) | undefined;
   let navigationFeedbackTimer: number | undefined;
   let routeProgressVisible = $state(false);
 
@@ -142,22 +144,27 @@
     }
   }
 
-  function logOut() {
-    const logoutRequest = new CustomEvent('eglise:before-logout', {
-      cancelable: true,
-      detail: { continueLogout: completeLogOut }
-    });
+  function requestLogout() {
+    if (isLoggingOut || logoutGuard?.(completeLogOut)) return;
 
-    document.dispatchEvent(logoutRequest);
-
-    if (!logoutRequest.defaultPrevented) {
-      void completeLogOut();
-    }
+    void completeLogOut();
   }
 
-  onMount(() => {
-    const requestMobileLogout = () => logOut();
+  function registerLogoutGuard(guard: (continueLogout: () => Promise<void>) => boolean) {
+    logoutGuard = guard;
 
+    return () => {
+      if (logoutGuard === guard) logoutGuard = undefined;
+    };
+  }
+
+  provideAppShellContext({
+    isLoggingOut: () => isLoggingOut,
+    registerLogoutGuard,
+    requestLogout
+  });
+
+  onMount(() => {
     if (!usesSupabaseAuth) {
       initialisePrototypeSession();
     }
@@ -166,12 +173,6 @@
     if ('serviceWorker' in navigator) {
       void navigator.serviceWorker.register('/service-worker.js');
     }
-
-    document.addEventListener('eglise:request-mobile-logout', requestMobileLogout);
-
-    return () => {
-      document.removeEventListener('eglise:request-mobile-logout', requestMobileLogout);
-    };
   });
 
   $effect(() => {
@@ -413,7 +414,7 @@
         email={administratorEmail}
         {isLoggingOut}
         name={administratorName}
-        onlogout={logOut}
+        onlogout={requestLogout}
       />
     </aside>
 
