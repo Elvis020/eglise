@@ -540,7 +540,7 @@
                         {/if}
                         <span class="access-person-email">{row.email}</span>
                       </th>
-                      <td data-label="Access">
+                      <td class="access-status-cell" data-label="Access">
                         <span class:pending={row.status === 'pending'} class="access-status">
                           {#if row.status === 'active'}
                             <IconCircleCheck aria-hidden="true" size={18} stroke={1.8} />
@@ -550,7 +550,7 @@
                           <span>{row.status === 'active' ? 'Active' : 'Pending'}</span>
                         </span>
                       </td>
-                      <td data-label="Role">
+                      <td class="access-role-cell" data-label="Role">
                         {#if row.status === 'active' && row.role !== 'owner'}
                           <form
                             class="role-change-form"
@@ -596,14 +596,18 @@
                           <span>{roleLabel(row.role)}</span>
                         {/if}
                       </td>
-                      <td data-label="Expiry">
+                      <td class="access-expiry-cell" data-label="Expiry">
                         {#if row.status === 'active'}
                           <span aria-hidden="true">—</span><span class="sr-only">No expiry</span>
                         {:else}
                           {invitationExpiry(row.expiresAt)}
                         {/if}
                       </td>
-                      <td class="access-actions" data-label="Actions">
+                      <td
+                        class:owner-access={row.status === 'active' && row.role === 'owner'}
+                        class="access-actions"
+                        data-label="Actions"
+                      >
                         <div class="access-action-controls">
                           {#if row.status === 'active' && row.role === 'owner'}
                             <span class="owner-protected">Protected</span>
@@ -1066,10 +1070,12 @@
     }
     .access-table-wrap {
       overflow: visible;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
     .access-table,
     .access-table tbody,
-    .access-table tr,
     .access-table th,
     .access-table td {
       display: block;
@@ -1081,34 +1087,60 @@
     .access-table thead {
       display: none;
     }
+    .access-table tbody {
+      display: grid;
+      gap: 16px;
+    }
     .access-table tr {
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-raised);
     }
     .access-table th,
     .access-table td {
-      padding: 4px 0;
+      padding: 0;
       border: 0;
     }
-    .access-table td[data-label] {
-      display: grid;
-      grid-template-columns: minmax(88px, 0.42fr) minmax(0, 1fr);
-      gap: 12px;
-      align-items: start;
+    .access-table tbody th,
+    .access-role-cell,
+    .access-actions {
+      grid-column: 1 / -1;
     }
     .access-table td.access-empty {
+      grid-column: 1 / -1;
       padding: 16px 0;
       border: 1px dashed var(--border);
       border-radius: 8px;
       background: var(--surface);
     }
     .access-table td[data-label]::before {
+      display: none;
+    }
+    .access-role-cell::before {
+      display: block !important;
       color: var(--text-secondary);
       content: attr(data-label);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .access-status-cell,
+    .access-expiry-cell {
+      display: flex !important;
+      min-height: 24px;
+      align-items: center;
+    }
+    .access-expiry-cell {
+      justify-content: flex-end;
+      color: var(--text-secondary);
       font-size: 14px;
     }
     .role-change-form {
       grid-template-columns: 1fr;
+      gap: 8px;
     }
     .role-change-form :global(.eglise-select) {
       min-width: 0;
@@ -1118,16 +1150,27 @@
     }
     .access-actions {
       width: 100%;
+      text-align: left;
     }
     .access-action-controls {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       width: 100%;
+      justify-content: start;
     }
     .access-action-controls .button {
       grid-column: 1 / -1;
-      width: 100%;
-      margin-top: 4px;
+      justify-content: flex-start;
+      min-height: 44px;
+      margin-top: 0;
+      padding: 8px 0;
+      border: 0;
+    }
+    .access-action-controls .owner-protected {
+      display: none;
+    }
+    .access-actions.owner-access {
+      display: none;
     }
     .access-action-controls .icon-action {
       width: 100%;

@@ -125,8 +125,10 @@
 
   function buildCalendarDays(month: Date): CalendarDay[] {
     const firstVisibleDay = new Date(month.getFullYear(), month.getMonth(), 1 - month.getDay());
+    const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+    const weekCount = Math.ceil((month.getDay() + daysInMonth) / 7);
 
-    return Array.from({ length: 42 }, (_, index) => {
+    return Array.from({ length: weekCount * 7 }, (_, index) => {
       const date = new Date(
         firstVisibleDay.getFullYear(),
         firstVisibleDay.getMonth(),
@@ -148,6 +150,14 @@
     setViewDate(focusedDate);
     activeView = 'days';
     isOpen = true;
+
+    if (window.matchMedia('(max-width: 640px)').matches) {
+      root.scrollIntoView({
+        block: 'start',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      });
+    }
+
     focusActiveControl();
   }
 
@@ -687,6 +697,21 @@
     .eglise-date-picker-grid button,
     .eglise-date-picker-period-grid button {
       min-height: 44px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .eglise-date-picker {
+      scroll-margin-top: 96px;
+    }
+
+    .eglise-date-picker-popup {
+      width: min(328px, calc(100vw - 32px));
+      padding: 8px;
+    }
+
+    .eglise-date-picker-controls {
+      margin-bottom: 6px;
     }
   }
 </style>
