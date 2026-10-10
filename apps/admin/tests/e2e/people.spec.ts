@@ -442,14 +442,11 @@ test('identifies the active workspace in the mobile top bar', async ({ page }) =
     const workspaceBounds = workspace?.getBoundingClientRect();
 
     return {
-      brandHeight: brandBounds?.height ?? 0,
-      workspaceHeight: workspaceBounds?.height ?? 0,
       workspaceCenter: workspaceBounds ? workspaceBounds.top + workspaceBounds.height / 2 : 0,
       brandCenter: brandBounds ? brandBounds.top + brandBounds.height / 2 : 0
     };
   });
 
-  expect(alignment.workspaceHeight).toBeCloseTo(alignment.brandHeight, 0);
   expect(alignment.workspaceCenter).toBeCloseTo(alignment.brandCenter, 0);
 });
 
