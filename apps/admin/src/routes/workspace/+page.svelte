@@ -5,6 +5,7 @@
   import IconChartBar from '@tabler/icons-svelte-runes/icons/chart-bar';
   import IconFolder from '@tabler/icons-svelte-runes/icons/folder';
   import IconHeartHandshake from '@tabler/icons-svelte-runes/icons/heart-handshake';
+  import IconLogout from '@tabler/icons-svelte-runes/icons/logout';
   import IconSchool from '@tabler/icons-svelte-runes/icons/school';
   import IconSettings from '@tabler/icons-svelte-runes/icons/settings';
   import IconSpeakerphone from '@tabler/icons-svelte-runes/icons/speakerphone';
@@ -110,7 +111,8 @@
   <section aria-labelledby="workspace-account" class="workspace-group mobile-account-group">
     <p class="eyebrow" id="workspace-account">Account</p>
     <button class="workspace-account-action" onclick={requestMobileLogout} type="button">
-      Log out
+      <IconLogout aria-hidden="true" size={22} stroke={1.8} />
+      <span>Log out</span>
     </button>
   </section>
 </section>
@@ -129,7 +131,7 @@
 
   .workspace-group {
     display: grid;
-    gap: 8px;
+    gap: 10px;
   }
 
   .workspace-group .eyebrow {
@@ -137,17 +139,18 @@
   }
 
   .workspace-list {
-    border-top: 1px solid var(--border);
+    display: grid;
+    gap: 4px;
   }
 
   .workspace-list a {
     display: grid;
     grid-template-columns: 28px minmax(0, 1fr);
     gap: 12px;
-    min-height: 68px;
+    min-height: 64px;
     align-items: center;
-    padding: 12px 4px;
-    border-bottom: 1px solid var(--border);
+    padding: 12px 8px;
+    border-radius: 8px;
     color: var(--text-primary);
     text-decoration: none;
   }
@@ -190,19 +193,28 @@
     }
 
     .workspace-account-action {
-      min-height: 44px;
-      padding: 10px 4px;
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 12px;
+      min-height: 52px;
+      align-items: center;
+      padding: 8px 4px;
       border: 0;
-      border-bottom: 1px solid var(--border);
-      border-top: 1px solid var(--border);
+      border-radius: 8px;
       color: var(--danger);
       background: transparent;
       font: 600 16px var(--font-ui);
       text-align: left;
     }
 
+    .workspace-account-action:hover,
+    .workspace-account-action:focus-visible,
     .workspace-account-action:active {
-      background: var(--surface);
+      background: color-mix(in srgb, var(--danger) 8%, transparent);
+    }
+
+    .workspace-account-action:active {
+      transform: translateY(1px);
     }
   }
 </style>

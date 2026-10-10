@@ -1,4 +1,7 @@
 <script lang="ts">
+  import IconChevronLeft from '@tabler/icons-svelte-runes/icons/chevron-left';
+  import IconChevronRight from '@tabler/icons-svelte-runes/icons/chevron-right';
+
   import { clampPage, pageCount, pageSummary } from '$lib/directory';
 
   let {
@@ -22,21 +25,35 @@
   {#if totalPages > 1}
     <div class="directory-page-actions">
       <button
+        aria-label="Previous"
         class="button secondary compact-button"
         type="button"
         disabled={currentPage === 1}
         onclick={() => (page = currentPage - 1)}
       >
-        Previous
+        <IconChevronLeft
+          aria-hidden="true"
+          class="directory-page-action-icon"
+          size={18}
+          stroke={2}
+        />
+        <span class="directory-page-action-label">Previous</span>
       </button>
       <span aria-current="page">Page {currentPage} of {totalPages}</span>
       <button
+        aria-label="Next"
         class="button secondary compact-button"
         type="button"
         disabled={currentPage === totalPages}
         onclick={() => (page = currentPage + 1)}
       >
-        Next
+        <span class="directory-page-action-label">Next</span>
+        <IconChevronRight
+          aria-hidden="true"
+          class="directory-page-action-icon"
+          size={18}
+          stroke={2}
+        />
       </button>
     </div>
   {/if}
