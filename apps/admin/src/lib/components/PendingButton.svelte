@@ -98,23 +98,28 @@
   }
 
   .pending-button-pending-label {
-    display: inline-flex;
-    align-items: center;
+    display: inline;
   }
 
   .pending-button-dots {
-    display: inline-flex;
-    gap: 3px;
-    width: 20px;
+    display: inline;
     margin-left: 3px;
+    white-space: nowrap;
   }
 
   .pending-button-dots span {
+    display: inline-block;
     width: 4px;
     height: 4px;
+    margin-right: 3px;
     border-radius: 50%;
     background: currentcolor;
     animation: pending-button-dot 900ms ease-in-out infinite;
+    vertical-align: baseline;
+  }
+
+  .pending-button-dots span:last-child {
+    margin-right: 0;
   }
 
   .pending-button-dots span:nth-child(2) {
@@ -135,6 +140,13 @@
     50% {
       opacity: 1;
       transform: translateY(-2px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pending-button-dots span {
+      animation: none;
+      opacity: 0.7;
     }
   }
 </style>

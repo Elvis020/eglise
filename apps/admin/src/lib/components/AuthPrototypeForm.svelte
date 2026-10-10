@@ -26,7 +26,7 @@
     next = '/people'
   }: {
     authMode?: 'prototype' | 'supabase';
-    form?: { error?: string } | null;
+    form?: { error?: string; errorKind?: 'credentials' } | null;
     mode: AuthMode;
     next?: string;
   } = $props();
@@ -34,6 +34,7 @@
   let emailError = $state('');
   let passwordError = $state('');
   let formError = $state('');
+  let dismissedCredentialError = $state(false);
   let isSubmitting = $state(false);
   let signupStep = $state(1);
   let name = $state('');
@@ -67,9 +68,19 @@
   const alternateHref = $derived(
     isLogin ? (authMode === 'supabase' ? '/accept-invite' : '/signup') : '/login'
   );
+  const serverError = $derived(form?.error ?? '');
+  const visibleFormError = $derived(
+    formError || (form?.errorKind === 'credentials' && dismissedCredentialError ? '' : serverError)
+  );
 
   const trackSupabaseSubmission: SubmitFunction = ({ cancel }) => {
     if (authMode !== 'supabase') {
+      cancel();
+
+      return;
+    }
+
+    if (isLogin && !validateLogin()) {
       cancel();
 
       return;
@@ -80,6 +91,7 @@
     return async ({ update }) => {
       try {
         await update();
+        dismissedCredentialError = false;
       } finally {
         isSubmitting = false;
       }
@@ -92,6 +104,7 @@
     if (field === 'password') passwordError = '';
 
     formError = '';
+    dismissedCredentialError = form?.errorKind === 'credentials';
   }
 
   function hasValidEmail(value: string): boolean {
@@ -122,7 +135,28 @@
     signupStep = 1;
   }
 
+  function validateLogin(): boolean {
+    emailError = '';
+    passwordError = '';
+
+    if (!hasValidEmail(email.trim())) {
+      emailError = 'Enter a valid email address.';
+    }
+
+    if (!password) {
+      passwordError = 'Enter your password to continue.';
+    }
+
+    return !emailError && !passwordError;
+  }
+
   async function handleSubmit(event: SubmitEvent) {
+    if (isLogin && !validateLogin()) {
+      event.preventDefault();
+
+      return;
+    }
+
     if (authMode === 'supabase') {
       return;
     }
@@ -132,18 +166,6 @@
     const form = event.currentTarget;
 
     if (!(form instanceof HTMLFormElement)) return;
-
-    if (!hasValidEmail(email.trim())) {
-      emailError = 'Enter a valid email address.';
-
-      return;
-    }
-
-    if (isLogin && !password) {
-      passwordError = 'Enter your password to continue.';
-
-      return;
-    }
 
     if (!isLogin && signupStep === 1) {
       await advanceSignup();
@@ -383,8 +405,8 @@
         </PendingButton>
       {/if}
 
-      {#if formError || form?.error}
-        <p class="auth-form-error" role="alert">{formError || form?.error}</p>
+      {#if visibleFormError}
+        <p class="auth-form-error" role="alert">{visibleFormError}</p>
       {/if}
     </form>
 

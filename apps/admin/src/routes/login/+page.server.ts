@@ -31,7 +31,14 @@ export const actions: Actions = {
     });
 
     if (signInError) {
-      return fail(400, { error: 'We could not sign you in with those details.' });
+      if (signInError.status === 400) {
+        return fail(400, {
+          error: 'We could not sign you in with those details.',
+          errorKind: 'credentials' as const
+        });
+      }
+
+      return fail(503, { error: 'Sign-in is temporarily unavailable. Please try again.' });
     }
 
     throw redirect(303, next);

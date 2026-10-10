@@ -116,6 +116,23 @@ test('keeps authentication validation beneath the affected field', async ({ page
   await expect(error).toBeEmpty();
 });
 
+test('explains missing sign-in details beside both fields', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Sign in to workspace' }).click();
+
+  await expect(page.getByLabel('Email address')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('#auth-email-error')).toHaveText('Enter a valid email address.');
+  await expect(page.getByRole('textbox', { name: 'Password' })).toHaveAttribute(
+    'aria-invalid',
+    'true'
+  );
+  await expect(page.locator('#auth-password-error')).toHaveText('Enter your password to continue.');
+
+  await page.getByLabel('Email address').fill('admin@church.org');
+  await expect(page.locator('#auth-email-error')).toBeEmpty();
+  await expect(page.locator('#auth-password-error')).toHaveText('Enter your password to continue.');
+});
+
 test('lets a person reveal and hide their password without losing their place', async ({
   page
 }) => {
