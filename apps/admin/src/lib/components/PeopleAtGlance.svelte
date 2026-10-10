@@ -161,7 +161,7 @@
     background: #dfe8da;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 960px) {
     .directory-summary-filters {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }

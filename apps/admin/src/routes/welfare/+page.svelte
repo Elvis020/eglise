@@ -163,7 +163,7 @@
     font-weight: 600;
     text-underline-offset: 3px;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 960px) {
     .welfare-page {
       gap: 32px;
     }

@@ -110,7 +110,7 @@
   .care-school-topic-entry-actions {
     justify-content: flex-end;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 960px) {
     .care-school-topic-entry-form {
       padding: 16px;
     }

@@ -186,7 +186,7 @@
   .resources-empty-state a {
     margin-top: 12px;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 960px) {
     .resources-page {
       gap: 32px;
     }

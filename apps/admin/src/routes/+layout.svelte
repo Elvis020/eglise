@@ -69,6 +69,25 @@
     usesSupabaseAuth ? data.user?.name || 'Church administrator' : undefined
   );
   const administratorEmail = $derived(usesSupabaseAuth ? (data.user?.email ?? '') : undefined);
+  const mobileWorkspaceLabel = $derived(
+    page.url.pathname.startsWith('/attendance')
+      ? 'Attendance'
+      : page.url.pathname.startsWith('/reports')
+        ? 'Reports'
+        : page.url.pathname.startsWith('/welfare')
+          ? 'Welfare'
+          : page.url.pathname.startsWith('/bible-study')
+            ? 'Bible Study'
+            : page.url.pathname.startsWith('/care-school')
+              ? 'Care School'
+              : page.url.pathname.startsWith('/resources')
+                ? 'Resources'
+                : page.url.pathname.startsWith('/announcements')
+                  ? 'Announcements'
+                  : page.url.pathname.startsWith('/settings')
+                    ? 'Settings'
+                    : 'People & Membership'
+  );
 
   const navigationGroups = [
     { label: 'Essentials', modules: ['Attendance', 'Reports'] },
@@ -351,10 +370,13 @@
     class="app-shell"
   >
     <header class="mobile-topbar">
-      <a class="mobile-brand" href="/people" aria-label={`${churchName} People and Membership`}>
-        <EgliseChurchMark />
-        <span class="mobile-church-name" title={churchName}>{churchName}</span>
-      </a>
+      <div class="mobile-context">
+        <a class="mobile-brand" href="/people" aria-label={`${churchName} home`}>
+          <EgliseChurchMark />
+          <span class="mobile-church-name" title={churchName}>{churchName}</span>
+        </a>
+        <p class="mobile-workspace-name">{mobileWorkspaceLabel}</p>
+      </div>
       <button
         bind:this={menuButton}
         aria-controls="application-sidebar"

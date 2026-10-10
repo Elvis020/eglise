@@ -658,4 +658,31 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 4px;
   }
+
+  @media (max-width: 960px) {
+    .eglise-date-picker-toggle {
+      top: 0;
+      right: 0;
+      width: 44px;
+      height: 100%;
+    }
+
+    .eglise-date-picker-popup {
+      width: min(344px, calc(100vw - 32px));
+    }
+
+    .eglise-date-picker-controls {
+      grid-template-columns: 44px minmax(0, 1fr) auto 44px;
+    }
+
+    .eglise-date-picker-controls button {
+      width: 44px;
+      height: 44px;
+    }
+
+    .eglise-date-picker-grid button,
+    .eglise-date-picker-period-grid button {
+      min-height: 44px;
+    }
+  }
 </style>

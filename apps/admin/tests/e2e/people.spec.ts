@@ -380,6 +380,10 @@ test('opens and closes the mobile application drawer with a focus return', async
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/people');
 
+  await expect(page.locator('.mobile-topbar .mobile-workspace-name')).toHaveText(
+    'People & Membership'
+  );
+
   const menu = page.locator('.mobile-menu-button');
   const sidebar = page.locator('#application-sidebar');
   const peopleLink = sidebar.locator('a.nav-link[href="/people"]');
@@ -416,6 +420,13 @@ test('opens and closes the mobile application drawer with a focus return', async
   await menu.click();
   await page.keyboard.press('Escape');
   await expect(menu).toBeFocused();
+});
+
+test('identifies the active workspace in the mobile top bar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/reports');
+
+  await expect(page.locator('.mobile-topbar .mobile-workspace-name')).toHaveText('Reports');
 });
 
 test('keeps the people directory within the mobile viewport without the removed prototype banner', async ({

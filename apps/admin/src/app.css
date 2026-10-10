@@ -25,6 +25,7 @@ body {
   background: var(--canvas);
   font: 16px/1.5 var(--font-ui);
   text-wrap: pretty;
+  -webkit-tap-highlight-color: rgb(49 84 59 / 14%);
 }
 button,
 input,
@@ -1489,6 +1490,17 @@ a:focus-visible {
   .attendance-summary p {
     grid-column: 1 / -1;
   }
+
+  .attendance-alphabet button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
   .attendance-add-type {
     grid-column: 1;
   }
@@ -2001,11 +2013,14 @@ dialog p {
   }
 
   .mobile-topbar {
+    position: sticky;
+    z-index: 15;
+    top: 0;
     display: flex;
-    min-height: 64px;
+    min-height: calc(64px + env(safe-area-inset-top));
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: max(10px, env(safe-area-inset-top)) 16px 10px;
     border-bottom: 1px solid var(--border);
     background: var(--surface-raised);
   }
@@ -2020,6 +2035,13 @@ dialog p {
     text-decoration: none;
   }
 
+  .mobile-context {
+    display: flex;
+    min-width: 0;
+    gap: 10px;
+    align-items: center;
+  }
+
   .mobile-brand .church-mark {
     width: 32px;
     height: 32px;
@@ -2028,8 +2050,18 @@ dialog p {
 
   .mobile-church-name {
     min-width: 0;
-    max-width: calc(100vw - 128px);
+    max-width: calc(50vw - 78px);
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-workspace-name {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--text-secondary);
+    font: 600 14px/1.25 var(--font-ui);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -2073,7 +2105,7 @@ dialog p {
     bottom: 0;
     left: 0;
     width: min(320px, calc(100vw - 44px));
-    padding: 20px 16px 24px;
+    padding: max(20px, env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
     overflow: auto;
     pointer-events: none;
     transform: translateX(-105%);
@@ -2135,7 +2167,7 @@ dialog p {
   }
 
   .content {
-    padding: 16px 16px 40px;
+    padding: 24px 16px calc(40px + env(safe-area-inset-bottom));
   }
 
   .settings-actions {
@@ -2147,7 +2179,7 @@ dialog p {
     justify-content: center;
   }
   .content:has(.directory-page) {
-    padding-bottom: 40px;
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
   }
   .content-motif {
     display: none;
@@ -2155,6 +2187,18 @@ dialog p {
   .page-head,
   .person-summary {
     display: block;
+  }
+
+  .page-head {
+    margin-bottom: 24px;
+  }
+
+  .page h1 {
+    font-size: clamp(30px, 8vw, 36px);
+  }
+
+  .page-head .page-intro {
+    margin-top: 8px;
   }
   .person-summary-content {
     grid-template-columns: 1fr;
@@ -2187,10 +2231,8 @@ dialog p {
     margin-top: 16px;
   }
   .page-head .button {
-    display: block;
-    margin-top: 4px;
-  }
-  .page-head .button {
+    display: inline-flex;
+    width: 100%;
     margin-top: 16px;
   }
   .attendance-page-actions .button {
@@ -2292,6 +2334,15 @@ dialog p {
   .people-directory .person-identity {
     align-items: flex-start;
   }
+  .people-directory td:not(:first-child) {
+    display: inline-grid;
+    width: 50%;
+    padding-right: 12px;
+    vertical-align: top;
+  }
+  .people-directory td:nth-child(4) {
+    padding-right: 0;
+  }
   .detail-list {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -2304,7 +2355,8 @@ dialog p {
   }
   .form-actions,
   .dialog-actions {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr;
   }
   .directory-pagination,
   .directory-page-actions {
@@ -2316,7 +2368,24 @@ dialog p {
   }
   .form-actions .button,
   .dialog-actions .button {
-    flex: 1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  dialog {
+    width: 100%;
+    max-width: none;
+    max-height: min(84dvh, calc(100dvh - env(safe-area-inset-top)));
+    margin: auto 0 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 16px 16px 0 0;
+  }
+
+  dialog form {
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
   }
 }
 

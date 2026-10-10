@@ -374,7 +374,7 @@
     max-width: 420px;
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 960px) {
     .reports-page {
       gap: 32px;
     }

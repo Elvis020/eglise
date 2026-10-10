@@ -317,7 +317,7 @@
     font-size: 14px;
     text-transform: capitalize;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 960px) {
     .announcements-page {
       gap: 32px;
     }

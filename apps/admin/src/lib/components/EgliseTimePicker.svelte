@@ -311,6 +311,24 @@
     color: white;
     background: var(--primary);
   }
+
+  @media (max-width: 960px) {
+    .eglise-time-picker-toggle {
+      top: 0;
+      right: 0;
+      width: 44px;
+      height: 100%;
+    }
+
+    .eglise-time-picker-popup {
+      width: min(360px, calc(100vw - 32px));
+    }
+
+    .eglise-time-picker-options button {
+      min-height: 44px;
+    }
+  }
+
   @media (max-width: 480px) {
     .eglise-time-picker-popup {
       right: 0;

@@ -149,7 +149,7 @@
   .resource-entry-actions {
     justify-content: flex-end;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 960px) {
     .resource-entry-form {
       padding: 16px;
     }

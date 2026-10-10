@@ -129,7 +129,7 @@
   .study-material-entry-actions {
     justify-content: flex-end;
   }
-  @media (max-width: 720px) {
+  @media (max-width: 960px) {
     .study-material-entry-form {
       padding: 16px;
     }
