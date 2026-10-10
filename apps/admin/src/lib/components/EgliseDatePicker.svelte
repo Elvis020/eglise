@@ -660,6 +660,10 @@
   }
 
   @media (max-width: 960px) {
+    .eglise-date-picker input {
+      padding-right: 52px;
+    }
+
     .eglise-date-picker-toggle {
       top: 0;
       right: 0;

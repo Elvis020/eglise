@@ -1,5 +1,4 @@
 <script lang="ts">
-  import IconLoader2 from '@tabler/icons-svelte-runes/icons/loader-2';
   import type { Snippet } from 'svelte';
 
   type ButtonVariant = 'primary' | 'secondary' | 'danger';
@@ -23,6 +22,8 @@
     type?: 'button' | 'submit' | 'reset';
     onclick?: (event: MouseEvent) => void;
   } = $props();
+
+  const pendingVisibleLabel = $derived(pendingLabel.replace(/\s*(?:…|\.\.\.)$/, ''));
 </script>
 
 <button
@@ -33,8 +34,12 @@
   {type}
 >
   {#if pending}
-    <IconLoader2 aria-hidden="true" class="pending-button-spinner" size={18} stroke={2} />
-    <span aria-live="polite">{pendingLabel}</span>
+    <span aria-live="polite" class="pending-button-pending-label">
+      {pendingVisibleLabel}
+      <span aria-hidden="true" class="pending-button-dots">
+        <span></span><span></span><span></span>
+      </span>
+    </span>
   {:else}
     {@render children?.()}
   {/if}
@@ -92,20 +97,44 @@
     transform: translateY(1px);
   }
 
-  .pending-button-spinner {
-    flex: 0 0 auto;
-    animation: pending-button-spin 700ms linear infinite;
+  .pending-button-pending-label {
+    display: inline-flex;
+    align-items: center;
   }
 
-  @keyframes pending-button-spin {
-    to {
-      transform: rotate(360deg);
+  .pending-button-dots {
+    display: inline-flex;
+    gap: 3px;
+    width: 20px;
+    margin-left: 3px;
+  }
+
+  .pending-button-dots span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentcolor;
+    animation: pending-button-dot 900ms ease-in-out infinite;
+  }
+
+  .pending-button-dots span:nth-child(2) {
+    animation-delay: 120ms;
+  }
+
+  .pending-button-dots span:nth-child(3) {
+    animation-delay: 240ms;
+  }
+
+  @keyframes pending-button-dot {
+    0%,
+    100% {
+      opacity: 0.35;
+      transform: translateY(0);
     }
-  }
 
-  @media (prefers-reduced-motion: reduce) {
-    .pending-button-spinner {
-      animation-duration: 1.8s;
+    50% {
+      opacity: 1;
+      transform: translateY(-2px);
     }
   }
 </style>

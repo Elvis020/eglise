@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
+  import { tick } from 'svelte';
   import type { SubmitFunction } from '@sveltejs/kit';
   import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconArrowRight from '@tabler/icons-svelte-runes/icons/arrow-right';
@@ -158,19 +159,24 @@
 
     isSubmitting = true;
 
+    await tick();
+
     const saved = isLogin
       ? signInPrototypeAdministrator(email.trim())
       : signUpPrototypeAdministrator({ email: email.trim(), name: name.trim() });
 
-    isSubmitting = false;
-
     if (!saved) {
       formError = 'This browser could not save prototype access.';
+      isSubmitting = false;
 
       return;
     }
 
-    await goto('/people');
+    try {
+      await goto('/people');
+    } finally {
+      isSubmitting = false;
+    }
   }
 </script>
 

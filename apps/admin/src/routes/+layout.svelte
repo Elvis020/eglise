@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
 
   import { navigating, page } from '$app/state';
   import IconBible from '@tabler/icons-svelte-runes/icons/bible';
@@ -15,7 +15,6 @@
   import IconSettings from '@tabler/icons-svelte-runes/icons/settings';
   import IconSpeakerphone from '@tabler/icons-svelte-runes/icons/speakerphone';
   import IconUsersGroup from '@tabler/icons-svelte-runes/icons/users-group';
-  import IconX from '@tabler/icons-svelte-runes/icons/x';
 
   import '../app.css';
 
@@ -31,14 +30,6 @@
 
   let { children, data } = $props();
   let sidebarCollapsed = $state(false);
-  let isMobile = $state(false);
-  let mobileNavigationOpen = $state(false);
-  let mobileNavigationRendered = $state(false);
-  let mobileNavigationClosing = $state(false);
-  let mobileCloseToken = 0;
-  let sidebarElement = $state<HTMLElement | undefined>(undefined);
-  let drawerCloseButton = $state<HTMLButtonElement | undefined>(undefined);
-  let menuButton = $state<HTMLButtonElement | undefined>(undefined);
   let sessionReady = $state(false);
   let isLoggingOut = $state(false);
   let navigationFeedbackTimer: number | undefined;
@@ -86,7 +77,12 @@
                   ? 'Announcements'
                   : page.url.pathname.startsWith('/settings')
                     ? 'Settings'
-                    : 'People & Membership'
+                    : page.url.pathname.startsWith('/workspace')
+                      ? 'Workspace'
+                      : 'People & Membership'
+  );
+  const mobileWorkspaceActive = $derived(
+    !page.url.pathname.startsWith('/people') && !page.url.pathname.startsWith('/attendance')
   );
 
   const navigationGroups = [
@@ -111,116 +107,6 @@
 
   function moduleIcon(module: keyof typeof moduleIcons) {
     return moduleIcons[module];
-  }
-
-  function focusableDrawerElements() {
-    const elements = Array.from(
-      sidebarElement?.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      ) ?? []
-    ).filter((element) => !element.hasAttribute('inert') && element.offsetParent !== null);
-
-    if (isMobile && drawerCloseButton && elements.includes(drawerCloseButton)) {
-      return [drawerCloseButton, ...elements.filter((element) => element !== drawerCloseButton)];
-    }
-
-    return elements;
-  }
-
-  function setDocumentScrollLocked(locked: boolean) {
-    document.body.style.overflow = locked ? 'hidden' : '';
-  }
-
-  async function openMobileNavigation() {
-    mobileCloseToken += 1;
-    mobileNavigationRendered = true;
-    mobileNavigationClosing = false;
-    setDocumentScrollLocked(true);
-    await tick();
-    mobileNavigationOpen = true;
-    await tick();
-    drawerCloseButton?.focus();
-  }
-
-  function finishMobileNavigationClose(token: number) {
-    if (token !== mobileCloseToken || mobileNavigationOpen) {
-      return;
-    }
-
-    mobileNavigationRendered = false;
-    mobileNavigationClosing = false;
-    setDocumentScrollLocked(false);
-    void tick().then(() => menuButton?.focus());
-  }
-
-  function closeMobileNavigation() {
-    if (!mobileNavigationOpen || mobileNavigationClosing) {
-      return;
-    }
-
-    const closeToken = ++mobileCloseToken;
-
-    mobileNavigationClosing = true;
-    mobileNavigationOpen = false;
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      finishMobileNavigationClose(closeToken);
-
-      return;
-    }
-
-    window.setTimeout(() => finishMobileNavigationClose(closeToken), 400);
-  }
-
-  function handleMobileSidebarTransitionEnd(event: TransitionEvent) {
-    if (
-      event.target === event.currentTarget &&
-      event.propertyName === 'transform' &&
-      mobileNavigationClosing
-    ) {
-      finishMobileNavigationClose(mobileCloseToken);
-    }
-  }
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape' && mobileNavigationOpen) {
-      closeMobileNavigation();
-    }
-
-    if (event.key !== 'Tab' || !mobileNavigationOpen) {
-      return;
-    }
-
-    const focusableElements = focusableDrawerElements();
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements.at(-1);
-
-    if (!firstElement || !lastElement) {
-      return;
-    }
-
-    if (
-      event.shiftKey &&
-      document.activeElement instanceof HTMLElement &&
-      document.activeElement.matches('.drawer-close-button')
-    ) {
-      event.preventDefault();
-      lastElement.focus();
-    }
-
-    if (!event.shiftKey && document.activeElement === lastElement) {
-      event.preventDefault();
-      firstElement.focus();
-    }
-  }
-
-  function handleDrawerCloseKeydown(event: KeyboardEvent) {
-    if (event.key !== 'Tab' || !event.shiftKey) {
-      return;
-    }
-
-    event.preventDefault();
-    focusableDrawerElements().at(-1)?.focus();
   }
 
   async function completeLogOut() {
@@ -270,6 +156,8 @@
   }
 
   onMount(() => {
+    const requestMobileLogout = () => logOut();
+
     if (!usesSupabaseAuth) {
       initialisePrototypeSession();
     }
@@ -279,29 +167,10 @@
       void navigator.serviceWorker.register('/service-worker.js');
     }
 
-    const mediaQuery = window.matchMedia('(max-width: 960px)');
-    const syncViewport = () => {
-      isMobile = mediaQuery.matches;
-
-      if (isMobile) {
-        sidebarCollapsed = false;
-      }
-
-      if (!isMobile && mobileNavigationRendered) {
-        mobileCloseToken += 1;
-        mobileNavigationOpen = false;
-        mobileNavigationRendered = false;
-        mobileNavigationClosing = false;
-        setDocumentScrollLocked(false);
-      }
-    };
-
-    syncViewport();
-    mediaQuery.addEventListener('change', syncViewport);
+    document.addEventListener('eglise:request-mobile-logout', requestMobileLogout);
 
     return () => {
-      mediaQuery.removeEventListener('change', syncViewport);
-      setDocumentScrollLocked(false);
+      document.removeEventListener('eglise:request-mobile-logout', requestMobileLogout);
     };
   });
 
@@ -310,7 +179,6 @@
 
     if (!usesSupabaseAuth && isAuthenticationRoute && page.url.searchParams.get('logout') === '1') {
       signOutPrototypeAdministrator();
-      closeMobileNavigation();
       void goto('/login', { replaceState: true });
 
       return;
@@ -351,8 +219,6 @@
   <title>{churchName} | People &amp; Membership</title>
 </svelte:head>
 
-<svelte:window onkeydown={handleKeydown} />
-
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
 {#if routeProgressVisible}
@@ -363,12 +229,7 @@
 {#if isAuthenticationRoute || isErrorRoute}
   {@render children()}
 {:else}
-  <div
-    class:sidebar-collapsed={sidebarCollapsed}
-    class:mobile-navigation-open={mobileNavigationOpen}
-    class:mobile-navigation-rendered={mobileNavigationRendered}
-    class="app-shell"
-  >
+  <div class:sidebar-collapsed={sidebarCollapsed} class="app-shell">
     <header class="mobile-topbar">
       <div class="mobile-context">
         <a class="mobile-brand" href="/people" aria-label={`${churchName} home`}>
@@ -377,45 +238,9 @@
         </a>
         <p class="mobile-workspace-name">{mobileWorkspaceLabel}</p>
       </div>
-      <button
-        bind:this={menuButton}
-        aria-controls="application-sidebar"
-        aria-expanded={mobileNavigationOpen}
-        aria-hidden={mobileNavigationRendered ? 'true' : undefined}
-        aria-label="Open application menu"
-        class="mobile-menu-button"
-        inert={mobileNavigationRendered}
-        onclick={() =>
-          mobileNavigationOpen ? closeMobileNavigation() : void openMobileNavigation()}
-        tabindex={mobileNavigationRendered ? -1 : undefined}
-        type="button"
-      >
-        <IconMenu2 aria-hidden="true" size={22} stroke={1.8} />
-      </button>
     </header>
 
-    {#if mobileNavigationRendered}
-      <button
-        aria-hidden="true"
-        aria-label="Close application menu"
-        class:closing={mobileNavigationClosing}
-        class="sidebar-backdrop"
-        onclick={closeMobileNavigation}
-        tabindex="-1"
-        type="button"
-      ></button>
-    {/if}
-
-    <aside
-      bind:this={sidebarElement}
-      class:mobile-open={mobileNavigationOpen}
-      class="sidebar"
-      id="application-sidebar"
-      aria-label="Application navigation"
-      aria-hidden={isMobile && !mobileNavigationOpen ? 'true' : undefined}
-      inert={isMobile && !mobileNavigationOpen}
-      ontransitionend={handleMobileSidebarTransitionEnd}
-    >
+    <aside class="sidebar" id="application-sidebar" aria-label="Application navigation">
       <div class="sidebar-header">
         <a class="brand" href="/people" aria-label={`${churchName} People and Membership`}>
           <EgliseChurchMark />
@@ -439,17 +264,6 @@
             <IconArrowBarRight aria-hidden="true" size={20} stroke={1.8} />
           </span>
         </button>
-
-        <button
-          bind:this={drawerCloseButton}
-          aria-label="Close application menu"
-          class="drawer-close-button"
-          onclick={closeMobileNavigation}
-          onkeydown={handleDrawerCloseKeydown}
-          type="button"
-        >
-          <IconX aria-hidden="true" size={22} stroke={1.8} />
-        </button>
       </div>
 
       <nav class="navigation" aria-label="Product areas">
@@ -466,7 +280,6 @@
                 class="nav-link"
                 class:active={page.url.pathname.startsWith('/people')}
                 href="/people"
-                onclick={closeMobileNavigation}
               >
                 <IconUsersGroup aria-hidden="true" size={21} stroke={1.8} />
                 <span class="nav-copy">People &amp; Membership</span>
@@ -483,7 +296,6 @@
                   class="nav-link"
                   class:active={page.url.pathname.startsWith('/attendance')}
                   href="/attendance"
-                  onclick={closeMobileNavigation}
                 >
                   <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
                   <span class="nav-copy">Attendance</span>
@@ -496,7 +308,6 @@
                   class="nav-link"
                   class:active={page.url.pathname.startsWith('/welfare')}
                   href="/welfare"
-                  onclick={closeMobileNavigation}
                 >
                   <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
                   <span class="nav-copy">Welfare</span>
@@ -509,7 +320,6 @@
                   class="nav-link"
                   class:active={page.url.pathname.startsWith('/reports')}
                   href="/reports"
-                  onclick={closeMobileNavigation}
                 >
                   <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
                   <span class="nav-copy">Reports</span>
@@ -522,7 +332,6 @@
                   class="nav-link"
                   class:active={page.url.pathname.startsWith('/resources')}
                   href="/resources"
-                  onclick={closeMobileNavigation}
                 >
                   <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
                   <span class="nav-copy">Resources</span>
@@ -535,7 +344,6 @@
                   class="nav-link"
                   class:active={page.url.pathname.startsWith('/announcements')}
                   href="/announcements"
-                  onclick={closeMobileNavigation}
                 >
                   <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
                   <span class="nav-copy">Announcements</span>
@@ -548,7 +356,6 @@
                   class="nav-link"
                   class:active={page.url.pathname.startsWith('/bible-study')}
                   href="/bible-study"
-                  onclick={closeMobileNavigation}
                 >
                   <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
                   <span class="nav-copy">Bible Study</span>
@@ -561,7 +368,6 @@
                   class="nav-link"
                   class:active={page.url.pathname.startsWith('/care-school')}
                   href="/care-school"
-                  onclick={closeMobileNavigation}
                 >
                   <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
                   <span class="nav-copy">Care School</span>
@@ -593,7 +399,6 @@
               class="nav-link"
               class:active={page.url.pathname === '/settings'}
               href="/settings"
-              onclick={closeMobileNavigation}
             >
               <IconSettings aria-hidden="true" size={21} stroke={1.8} />
               <span class="nav-copy">Settings</span>
@@ -612,11 +417,38 @@
       />
     </aside>
 
-    <main id="main-content" class="content" inert={isMobile && mobileNavigationOpen} tabindex="-1">
+    <main id="main-content" class="content" tabindex="-1">
       <div class="content-motif" aria-hidden="true"></div>
 
       {@render children()}
     </main>
+
+    <nav aria-label="Primary mobile navigation" class="mobile-bottom-navigation">
+      <a
+        aria-current={page.url.pathname.startsWith('/people') ? 'page' : undefined}
+        class:active={page.url.pathname.startsWith('/people')}
+        href="/people"
+      >
+        <IconUsersGroup aria-hidden="true" size={21} stroke={1.8} />
+        <span>People</span>
+      </a>
+      <a
+        aria-current={page.url.pathname.startsWith('/attendance') ? 'page' : undefined}
+        class:active={page.url.pathname.startsWith('/attendance')}
+        href="/attendance"
+      >
+        <IconCalendarCheck aria-hidden="true" size={21} stroke={1.8} />
+        <span>Attendance</span>
+      </a>
+      <a
+        aria-current={mobileWorkspaceActive ? 'page' : undefined}
+        class:active={mobileWorkspaceActive}
+        href="/workspace"
+      >
+        <IconMenu2 aria-hidden="true" size={21} stroke={1.8} />
+        <span>Workspace</span>
+      </a>
+    </nav>
   </div>
 {/if}
 

@@ -285,11 +285,12 @@ test('collapses desktop navigation while preserving active module semantics', as
   await expect(page.locator('.pilot-context')).toHaveCount(0);
 
   await page.setViewportSize({ width: 960, height: 844 });
-  await expect(page.locator('.app-shell')).not.toHaveClass(/sidebar-collapsed/);
-
-  await page.getByRole('button', { name: 'Open application menu' }).click();
-  await expect(page.locator('#application-sidebar a.nav-link[href="/people"]')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Expand application navigation' })).toBeHidden();
+  await expect(sidebar).toBeHidden();
+  await expect(page.getByRole('navigation', { name: 'Primary mobile navigation' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'People', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page'
+  );
 });
 
 test('keeps sidebar groups compact and reserves its footer for the administrator', async ({
@@ -376,50 +377,66 @@ test('settles desktop navigation immediately when reduced motion is requested', 
   await expect(page.locator('.app-shell')).toHaveClass(/sidebar-collapsed/);
 });
 
-test('opens and closes the mobile application drawer with a focus return', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('uses visible mobile destinations and a full-screen workspace index', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
   await page.goto('/people');
 
   await expect(page.locator('.mobile-topbar .mobile-workspace-name')).toHaveText(
     'People & Membership'
   );
 
-  const menu = page.locator('.mobile-menu-button');
   const sidebar = page.locator('#application-sidebar');
-  const peopleLink = sidebar.locator('a.nav-link[href="/people"]');
+  const navigation = page.getByRole('navigation', { name: 'Primary mobile navigation' });
 
-  await expect(sidebar).toHaveAttribute('inert', '');
-  await expect(page.getByRole('link', { name: 'People and Membership', exact: true })).toHaveCount(
-    0
+  await expect(sidebar).toBeHidden();
+  await expect(navigation).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'People', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page'
   );
 
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
-  await expect(peopleLink).not.toBeFocused();
+  await navigation.getByRole('link', { name: 'Workspace' }).click();
 
-  await menu.click();
-  await expect(sidebar.getByRole('link', { name: 'Announcements' })).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'People and Membership', exact: true })
-  ).toBeVisible();
-  await expect(sidebar).not.toHaveAttribute('inert', '');
-  await expect(sidebar.getByRole('button', { name: 'Close application menu' })).toBeFocused();
-  await expect(page.getByRole('button', { name: 'Close application menu' })).toHaveCount(1);
-  await expect(menu).toHaveAttribute('aria-hidden', 'true');
-  await expect(menu).toHaveAttribute('inert', '');
-  await expect(menu).toHaveAttribute('tabindex', '-1');
-  await expect(page.locator('.sidebar-backdrop')).toHaveAttribute('aria-hidden', 'true');
-  await expect(page.locator('.sidebar-backdrop')).toHaveAttribute('tabindex', '-1');
+  await expect(page).toHaveURL(/\/workspace$/);
+  await expect(page.getByRole('heading', { name: 'Find what you need.' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Workspace' })).toHaveAttribute(
+    'aria-current',
+    'page'
+  );
+  await expect(page.getByRole('link', { name: /Reports/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
 
-  await expect(sidebar.getByRole('link', { name: 'Announcements' })).toHaveCount(1);
+  const mobileLayout = await page.evaluate(() => {
+    const viewportWidth = document.documentElement.clientWidth;
+    const interactiveItems = Array.from(
+      document.querySelectorAll<HTMLElement>('.mobile-bottom-navigation a, .workspace-list a')
+    );
 
-  await sidebar.getByRole('button', { name: 'Close application menu' }).click();
-  await expect(menu).toBeFocused();
+    return {
+      documentWidth: document.documentElement.scrollWidth,
+      itemBounds: interactiveItems.map((element) => {
+        const bounds = element.getBoundingClientRect();
 
-  await menu.click();
-  await page.keyboard.press('Escape');
-  await expect(menu).toBeFocused();
+        return { left: bounds.left, right: bounds.right };
+      }),
+      viewportWidth
+    };
+  });
+
+  expect(mobileLayout.documentWidth).toBe(mobileLayout.viewportWidth);
+  expect(mobileLayout.itemBounds).not.toHaveLength(0);
+
+  for (const item of mobileLayout.itemBounds) {
+    expect(item.left).toBeGreaterThanOrEqual(0);
+    expect(item.right).toBeLessThanOrEqual(mobileLayout.viewportWidth);
+  }
+
+  await page.getByRole('link', { name: /Reports/ }).click();
+  await expect(page).toHaveURL(/\/reports$/);
+  await expect(navigation.getByRole('link', { name: 'Workspace' })).toHaveAttribute(
+    'aria-current',
+    'page'
+  );
 });
 
 test('identifies the active workspace in the mobile top bar', async ({ page }) => {

@@ -313,6 +313,10 @@
   }
 
   @media (max-width: 960px) {
+    .eglise-time-picker input {
+      padding-right: 52px;
+    }
+
     .eglise-time-picker-toggle {
       top: 0;
       right: 0;
