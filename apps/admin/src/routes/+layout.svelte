@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { onMount, tick } from 'svelte';
 
-  import { page } from '$app/state';
+  import { navigating, page } from '$app/state';
   import IconBible from '@tabler/icons-svelte-runes/icons/bible';
   import IconArrowBarLeft from '@tabler/icons-svelte-runes/icons/arrow-bar-left';
   import IconArrowBarRight from '@tabler/icons-svelte-runes/icons/arrow-bar-right';
@@ -41,6 +41,8 @@
   let menuButton = $state<HTMLButtonElement | undefined>(undefined);
   let sessionReady = $state(false);
   let isLoggingOut = $state(false);
+  let navigationFeedbackTimer: number | undefined;
+  let routeProgressVisible = $state(false);
 
   const isAuthenticationRoute = $derived(
     page.url.pathname === '/login' ||
@@ -305,6 +307,25 @@
       void goto('/people', { replaceState: true });
     }
   });
+
+  $effect(() => {
+    if (navigationFeedbackTimer !== undefined) {
+      clearTimeout(navigationFeedbackTimer);
+      navigationFeedbackTimer = undefined;
+    }
+
+    if (navigating.to) {
+      navigationFeedbackTimer = window.setTimeout(() => {
+        routeProgressVisible = true;
+      }, 150);
+    } else {
+      routeProgressVisible = false;
+    }
+
+    return () => {
+      if (navigationFeedbackTimer !== undefined) clearTimeout(navigationFeedbackTimer);
+    };
+  });
 </script>
 
 <svelte:head>
@@ -314,6 +335,11 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <a class="skip-link" href="#main-content">Skip to main content</a>
+
+{#if routeProgressVisible}
+  <div aria-hidden="true" class="route-progress"></div>
+  <p class="sr-only" role="status">Loading page</p>
+{/if}
 
 {#if isAuthenticationRoute || isErrorRoute}
   {@render children()}
@@ -440,6 +466,84 @@
                   <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
                   <span class="nav-copy">Attendance</span>
                   <span aria-hidden="true" class="nav-tooltip">Attendance</span>
+                </a>
+              {:else if module === 'Welfare'}
+                <a
+                  aria-current={page.url.pathname.startsWith('/welfare') ? 'page' : undefined}
+                  aria-label="Welfare"
+                  class="nav-link"
+                  class:active={page.url.pathname.startsWith('/welfare')}
+                  href="/welfare"
+                  onclick={closeMobileNavigation}
+                >
+                  <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                  <span class="nav-copy">Welfare</span>
+                  <span aria-hidden="true" class="nav-tooltip">Welfare</span>
+                </a>
+              {:else if module === 'Reports'}
+                <a
+                  aria-current={page.url.pathname.startsWith('/reports') ? 'page' : undefined}
+                  aria-label="Reports"
+                  class="nav-link"
+                  class:active={page.url.pathname.startsWith('/reports')}
+                  href="/reports"
+                  onclick={closeMobileNavigation}
+                >
+                  <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                  <span class="nav-copy">Reports</span>
+                  <span aria-hidden="true" class="nav-tooltip">Reports</span>
+                </a>
+              {:else if module === 'Resources'}
+                <a
+                  aria-current={page.url.pathname.startsWith('/resources') ? 'page' : undefined}
+                  aria-label="Resources"
+                  class="nav-link"
+                  class:active={page.url.pathname.startsWith('/resources')}
+                  href="/resources"
+                  onclick={closeMobileNavigation}
+                >
+                  <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                  <span class="nav-copy">Resources</span>
+                  <span aria-hidden="true" class="nav-tooltip">Resources</span>
+                </a>
+              {:else if module === 'Announcements'}
+                <a
+                  aria-current={page.url.pathname.startsWith('/announcements') ? 'page' : undefined}
+                  aria-label="Announcements"
+                  class="nav-link"
+                  class:active={page.url.pathname.startsWith('/announcements')}
+                  href="/announcements"
+                  onclick={closeMobileNavigation}
+                >
+                  <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                  <span class="nav-copy">Announcements</span>
+                  <span aria-hidden="true" class="nav-tooltip">Announcements</span>
+                </a>
+              {:else if module === 'Bible Study'}
+                <a
+                  aria-current={page.url.pathname.startsWith('/bible-study') ? 'page' : undefined}
+                  aria-label="Bible Study"
+                  class="nav-link"
+                  class:active={page.url.pathname.startsWith('/bible-study')}
+                  href="/bible-study"
+                  onclick={closeMobileNavigation}
+                >
+                  <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                  <span class="nav-copy">Bible Study</span>
+                  <span aria-hidden="true" class="nav-tooltip">Bible Study</span>
+                </a>
+              {:else if module === 'Care School'}
+                <a
+                  aria-current={page.url.pathname.startsWith('/care-school') ? 'page' : undefined}
+                  aria-label="Care School"
+                  class="nav-link"
+                  class:active={page.url.pathname.startsWith('/care-school')}
+                  href="/care-school"
+                  onclick={closeMobileNavigation}
+                >
+                  <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                  <span class="nav-copy">Care School</span>
+                  <span aria-hidden="true" class="nav-tooltip">Care School</span>
                 </a>
               {:else}
                 <div class="nav-future nav-link">

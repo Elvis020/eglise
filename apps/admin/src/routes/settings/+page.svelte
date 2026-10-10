@@ -51,6 +51,8 @@
     { value: 'people_viewer', label: 'Viewer' }
   ];
 
+  const ownerRoleOptions: EgliseSelectOption[] = [{ value: 'owner', label: 'Owner' }];
+
   const accessStatusOptions: EgliseSelectOption[] = [
     { value: 'all', label: 'All access' },
     { value: 'active', label: 'Active access' },
@@ -523,9 +525,9 @@
                 <thead>
                   <tr>
                     <th scope="col">Person</th>
-                    <th scope="col">Status</th>
                     <th scope="col">Access</th>
-                    <th scope="col">Expires</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Expiry</th>
                     <th class="access-actions-heading" scope="col">Actions</th>
                   </tr>
                 </thead>
@@ -538,26 +540,17 @@
                         {/if}
                         <span class="access-person-email">{row.email}</span>
                       </th>
-                      <td data-label="Status">
-                        <span
-                          aria-label={row.status === 'active'
-                            ? 'Active access'
-                            : 'Pending invitation'}
-                          class:pending={row.status === 'pending'}
-                          class="access-status-icon"
-                          title={row.status === 'active' ? 'Active access' : 'Pending invitation'}
-                        >
+                      <td data-label="Access">
+                        <span class:pending={row.status === 'pending'} class="access-status">
                           {#if row.status === 'active'}
-                            <IconCircleCheck aria-hidden="true" size={22} stroke={1.8} />
+                            <IconCircleCheck aria-hidden="true" size={18} stroke={1.8} />
                           {:else}
-                            <IconClockHour4 aria-hidden="true" size={22} stroke={1.8} />
+                            <IconClockHour4 aria-hidden="true" size={18} stroke={1.8} />
                           {/if}
-                          <span class="sr-only">
-                            {row.status === 'active' ? 'Active access' : 'Pending invitation'}
-                          </span>
+                          <span>{row.status === 'active' ? 'Active' : 'Pending'}</span>
                         </span>
                       </td>
-                      <td data-label="Access">
+                      <td data-label="Role">
                         {#if row.status === 'active' && row.role !== 'owner'}
                           <form
                             class="role-change-form"
@@ -576,8 +569,9 @@
                             </label>
                             <EgliseSelect
                               id={`member-role-${row.userId}`}
-                              value={memberRoles[row.userId] ?? row.role}
+                              menuMode="floating"
                               options={inviteRoleOptions}
+                              value={memberRoles[row.userId] ?? row.role}
                               onchange={(value) => (memberRoles[row.userId] = value)}
                             />
                             <PendingButton
@@ -591,14 +585,23 @@
                               Save role
                             </PendingButton>
                           </form>
+                        {:else if row.status === 'active'}
+                          <EgliseSelect
+                            disabled
+                            id={`member-role-${row.userId}`}
+                            options={ownerRoleOptions}
+                            value="owner"
+                          />
                         {:else}
-                          <span class:access-owner-label={row.role === 'owner'}>
-                            {roleLabel(row.role)}
-                          </span>
+                          <span>{roleLabel(row.role)}</span>
                         {/if}
                       </td>
-                      <td data-label="Expires">
-                        {row.status === 'pending' ? invitationExpiry(row.expiresAt) : '—'}
+                      <td data-label="Expiry">
+                        {#if row.status === 'active'}
+                          <span aria-hidden="true">—</span><span class="sr-only">No expiry</span>
+                        {:else}
+                          {invitationExpiry(row.expiresAt)}
+                        {/if}
                       </td>
                       <td class="access-actions" data-label="Actions">
                         <div class="access-action-controls">
@@ -673,30 +676,32 @@
               </table>
             </div>
 
-            <div class="access-pagination" aria-label="Access table pagination">
+            <div class="access-pagination">
               <p>
                 Showing {accessRangeStart}–{accessRangeEnd} of {data.accessTotalCount}{' '}
                 {data.accessTotalCount === 1 ? 'record' : 'records'}
               </p>
-              <div>
-                <button
-                  class="button secondary compact-action"
-                  disabled={accessPage === 1}
-                  onclick={() => updateAccessFilters({ page: accessPage - 1 })}
-                  type="button"
-                >
-                  Previous
-                </button>
-                <span>Page {accessPage} of {accessPageCount}</span>
-                <button
-                  class="button secondary compact-action"
-                  disabled={accessPage === accessPageCount}
-                  onclick={() => updateAccessFilters({ page: accessPage + 1 })}
-                  type="button"
-                >
-                  Next
-                </button>
-              </div>
+              {#if accessPageCount > 1}
+                <nav aria-label="Access table pagination">
+                  <button
+                    class="button secondary compact-action"
+                    disabled={accessPage === 1}
+                    onclick={() => updateAccessFilters({ page: accessPage - 1 })}
+                    type="button"
+                  >
+                    Previous
+                  </button>
+                  <span>Page {accessPage} of {accessPageCount}</span>
+                  <button
+                    class="button secondary compact-action"
+                    disabled={accessPage === accessPageCount}
+                    onclick={() => updateAccessFilters({ page: accessPage + 1 })}
+                    type="button"
+                  >
+                    Next
+                  </button>
+                </nav>
+              {/if}
             </div>
           </section>
         {:else}
@@ -876,25 +881,26 @@
     background: var(--surface-raised);
   }
   .access-table {
+    min-width: 960px;
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
     text-align: left;
   }
   .access-person-column {
-    width: 40%;
+    width: 28%;
   }
   .access-status-column {
     width: 14%;
   }
   .access-role-column {
-    width: 24%;
+    width: 28%;
   }
   .access-expiry-column {
-    width: 14%;
+    width: 12%;
   }
   .access-actions-column {
-    width: 8%;
+    width: 18%;
   }
   .access-table th,
   .access-table td {
@@ -928,19 +934,20 @@
     font-weight: 400;
   }
   .access-person-email {
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .access-owner-label {
+  .access-status {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
     color: var(--primary);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
   }
-  .access-status-icon {
-    display: inline-grid;
-    width: 28px;
-    height: 28px;
-    place-items: center;
-    color: var(--primary);
-  }
-  .access-status-icon.pending {
+  .access-status.pending {
     color: #70551d;
   }
   .role-change-form {
@@ -992,7 +999,6 @@
   }
   .access-actions {
     text-align: right;
-    white-space: nowrap;
   }
   .access-action-controls {
     display: flex;
@@ -1038,12 +1044,12 @@
   .access-pagination p {
     margin: 0;
   }
-  .access-pagination > div {
+  .access-pagination nav {
     display: flex;
     gap: 12px;
     align-items: center;
   }
-  @media (max-width: 760px) {
+  @media (max-width: 960px) {
     .access-form {
       grid-template-columns: 1fr;
     }
@@ -1069,6 +1075,9 @@
       display: block;
       width: 100%;
     }
+    .access-table {
+      min-width: 0;
+    }
     .access-table thead {
       display: none;
     }
@@ -1085,7 +1094,7 @@
       display: grid;
       grid-template-columns: minmax(88px, 0.42fr) minmax(0, 1fr);
       gap: 12px;
-      align-items: center;
+      align-items: start;
     }
     .access-table td.access-empty {
       padding: 16px 0;
@@ -1099,17 +1108,29 @@
       font-size: 14px;
     }
     .role-change-form {
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: 1fr;
+    }
+    .role-change-form :global(.eglise-select) {
+      min-width: 0;
+    }
+    .role-change-form :global(.button) {
+      width: 100%;
     }
     .access-actions {
       width: 100%;
     }
+    .access-action-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
     .access-action-controls .button {
+      grid-column: 1 / -1;
       width: 100%;
       margin-top: 4px;
     }
     .access-action-controls .icon-action {
-      width: 44px;
+      width: 100%;
       min-height: 44px;
       margin-top: 4px;
     }
@@ -1117,7 +1138,7 @@
       align-items: flex-start;
       flex-direction: column;
     }
-    .access-pagination > div {
+    .access-pagination nav {
       width: 100%;
       justify-content: space-between;
     }

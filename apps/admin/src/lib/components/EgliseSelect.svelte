@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { onMount, tick } from 'svelte';
 
   export type EgliseSelectOption = {
     value: string;
@@ -11,19 +11,23 @@
     value = $bindable(),
     options,
     disabled = false,
+    menuMode = 'inline',
     onchange
   }: {
     id: string;
     value: string;
     options: EgliseSelectOption[];
     disabled?: boolean;
+    menuMode?: 'floating' | 'inline';
     onchange?: (value: string) => void;
   } = $props();
 
   let isOpen = $state(false);
   let activeIndex = $state(0);
   let button: HTMLButtonElement;
+  let listbox = $state<HTMLUListElement>();
   let root: HTMLDivElement;
+  let floatingMenuStyle = $state('');
 
   let listboxId = $derived(`${id}-listbox`);
 
@@ -43,6 +47,31 @@
 
     activeIndex = index;
     isOpen = true;
+
+    if (menuMode === 'floating') {
+      void tick().then(positionFloatingMenu);
+    }
+  }
+
+  function positionFloatingMenu(): void {
+    if (!isOpen || menuMode !== 'floating') return;
+
+    const triggerBounds = button.getBoundingClientRect();
+    const menuHeight = Math.min(240, options.length * 48 + 8);
+    const spaceBelow = window.innerHeight - triggerBounds.bottom - 8;
+    const spaceAbove = triggerBounds.top - 8;
+    const openUpward = spaceBelow < Math.min(menuHeight, 160) && spaceAbove > spaceBelow;
+    const availableHeight = Math.max(80, openUpward ? spaceAbove : spaceBelow);
+    const top = openUpward
+      ? Math.max(8, triggerBounds.top - Math.min(menuHeight, availableHeight) - 4)
+      : triggerBounds.bottom + 4;
+
+    floatingMenuStyle = [
+      `left: ${Math.max(8, triggerBounds.left)}px`,
+      `top: ${top}px`,
+      `width: ${triggerBounds.width}px`,
+      `max-height: ${Math.min(menuHeight, availableHeight)}px`
+    ].join('; ');
   }
 
   function close(restoreFocus = false): void {
@@ -126,9 +155,25 @@
       close();
     }
   }
+
+  function handleDocumentScroll(event: Event): void {
+    if (
+      isOpen &&
+      menuMode === 'floating' &&
+      !(event.target instanceof Node && listbox?.contains(event.target))
+    ) {
+      close();
+    }
+  }
+
+  onMount(() => {
+    document.addEventListener('scroll', handleDocumentScroll, true);
+
+    return () => document.removeEventListener('scroll', handleDocumentScroll, true);
+  });
 </script>
 
-<svelte:window onpointerdown={handleWindowPointerdown} />
+<svelte:window onpointerdown={handleWindowPointerdown} onresize={positionFloatingMenu} />
 
 <div bind:this={root} class="eglise-select">
   <button
@@ -151,7 +196,15 @@
   </button>
 
   {#if isOpen}
-    <ul class="eglise-select-listbox" id={listboxId} role="listbox" aria-labelledby={id}>
+    <ul
+      bind:this={listbox}
+      class="eglise-select-listbox"
+      class:eglise-select-listbox-floating={menuMode === 'floating'}
+      id={listboxId}
+      role="listbox"
+      aria-labelledby={id}
+      style={menuMode === 'floating' ? floatingMenuStyle : undefined}
+    >
       {#each options as option, index}
         <li
           aria-selected={option.value === value}

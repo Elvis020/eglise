@@ -13,6 +13,7 @@ import {
   invitationEncryptionSecret,
   isSupabaseAuthConfigured
 } from '$lib/server/supabase';
+import { invalidateWorkspaceAccessForUser } from '$lib/server/workspace-access-cache';
 import type { Actions, PageServerLoad } from './$types';
 
 type WorkspaceRole = 'owner' | 'people_administrator' | 'people_editor' | 'people_viewer';
@@ -279,6 +280,8 @@ export const actions: Actions = {
       return fail(500, { accessError: 'We could not change access. Please try again.' });
     }
 
+    invalidateWorkspaceAccessForUser(userId);
+
     return { accessMessage: `Access changed to ${roleLabels[role]}.` };
   },
 
@@ -299,6 +302,8 @@ export const actions: Actions = {
     if (revokeError) {
       return fail(500, { accessError: 'We could not remove access. Please try again.' });
     }
+
+    invalidateWorkspaceAccessForUser(userId);
 
     return { accessMessage: 'Workspace access removed.' };
   },

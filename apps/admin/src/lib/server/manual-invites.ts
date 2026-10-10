@@ -24,11 +24,23 @@ export async function requireOwnerWorkspace(locals: App.Locals) {
     throw error(401, 'Sign in to manage workspace access.');
   }
 
-  if (locals.workspace?.role !== 'owner') {
+  const { data: membership, error: membershipError } = await locals.supabase
+    .from('workspace_memberships')
+    .select('workspace:workspaces(id)')
+    .eq('user_id', locals.user.id)
+    .eq('role', 'owner')
+    .is('revoked_at', null)
+    .maybeSingle();
+
+  const workspace = Array.isArray(membership?.workspace)
+    ? membership.workspace[0]
+    : membership?.workspace;
+
+  if (membershipError || !workspace || typeof workspace.id !== 'string') {
     throw error(403, 'Only the workspace owner can manage access.');
   }
 
-  return locals.workspace.id;
+  return workspace.id;
 }
 
 export async function acceptManualInvite(input: {

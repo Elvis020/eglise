@@ -1,4 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { invalidateWorkspaceAccessForSession } from '$lib/server/workspace-access-cache';
 
 export const POST: RequestHandler = async ({ locals }) => {
   if (!locals.supabase) {
@@ -10,6 +11,8 @@ export const POST: RequestHandler = async ({ locals }) => {
   if (error) {
     return json({ error: 'We could not sign you out. Please try again.' }, { status: 500 });
   }
+
+  if (locals.sessionId) invalidateWorkspaceAccessForSession(locals.sessionId);
 
   return json({ ok: true });
 };

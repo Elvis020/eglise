@@ -391,8 +391,6 @@
   .record-options {
     margin-top: 24px;
     padding: 16px 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
   }
 
   .record-options summary {

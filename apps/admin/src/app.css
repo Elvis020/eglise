@@ -84,6 +84,30 @@ a:focus-visible {
 .skip-link:focus {
   top: 16px;
 }
+.route-progress {
+  position: fixed;
+  z-index: 20;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+}
+.route-progress::before {
+  display: block;
+  width: 38%;
+  height: 100%;
+  background: var(--primary);
+  content: '';
+  transform: translateX(-120%);
+  animation: route-progress 900ms cubic-bezier(0.32, 0, 0.2, 1) infinite;
+}
+@keyframes route-progress {
+  to {
+    transform: translateX(430%);
+  }
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -359,6 +383,9 @@ a:focus-visible {
 .nav-link:focus-visible {
   background: #39503d;
 }
+.nav-link > svg {
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
+}
 .nav-future {
   color: #c7d2c3;
   cursor: not-allowed;
@@ -521,6 +548,12 @@ a:focus-visible {
   justify-content: center;
   gap: 0;
   padding: 9px 0;
+}
+.sidebar-collapsed .nav-link:hover {
+  background: transparent;
+}
+.sidebar-collapsed .nav-link:hover > svg {
+  transform: scale(1.08);
 }
 .sidebar-collapsed .nav-link.active::before {
   position: absolute;
@@ -707,9 +740,13 @@ a:focus-visible {
   margin: 0 auto;
 }
 .directory-page {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
   margin: 0 auto;
 }
 .directory-page .import-prompt {
+  margin-top: auto;
   margin-bottom: 0;
 }
 .page-head {
@@ -864,6 +901,11 @@ a:focus-visible {
   background: var(--surface-raised);
   box-shadow: 0 8px 20px #24271f26;
   list-style: none;
+}
+.eglise-select-listbox-floating {
+  position: fixed;
+  z-index: 10;
+  right: auto;
 }
 .eglise-select-listbox li {
   min-height: 40px;
@@ -1076,6 +1118,7 @@ a:focus-visible {
   padding: 16px;
 }
 .directory-page > .import-prompt {
+  margin-bottom: 0;
   padding: 16px;
 }
 .directory-page .controls .field input,
@@ -2137,6 +2180,7 @@ dialog p {
   }
   .directory-page > .import-prompt {
     display: block;
+    margin-bottom: 0;
     padding: 16px;
   }
   .directory-page .import-prompt .button {

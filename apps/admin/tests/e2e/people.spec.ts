@@ -196,9 +196,7 @@ test('uses a profile placeholder and a quiet bottom membership note on person re
   expect(layout.noteBottom).toBeCloseTo(layout.pageBottom, 1);
 });
 
-test('collapses desktop navigation while preserving semantics and unavailable module boundaries', async ({
-  page
-}) => {
+test('collapses desktop navigation while preserving active module semantics', async ({ page }) => {
   await page.setViewportSize({ width: 961, height: 800 });
   await page.goto('/people');
 
@@ -215,13 +213,10 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
     '/attendance'
   );
 
-  const reports = page.locator('#application-sidebar .nav-future').filter({ hasText: 'Reports' });
+  const reports = page.getByRole('link', { name: 'Reports' });
 
-  await expect(reports).toHaveJSProperty('tagName', 'DIV');
-  await expect(reports).not.toHaveAttribute('role');
-  await expect(reports).not.toHaveAttribute('tabindex');
-  await expect(reports).not.toHaveAttribute('href');
-  await expect(page.getByRole('link', { name: 'Reports' })).toHaveCount(0);
+  await expect(reports).toHaveAttribute('href', '/reports');
+  await expect(reports).not.toHaveAttribute('aria-current');
   await expect(page.locator('#application-sidebar a[href^="/planned/"]')).toHaveCount(0);
   await expect(page.getByText(/Coming later|Planned next/)).toHaveCount(0);
 
@@ -246,20 +241,25 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
   expect(layout.transform).toBe('none');
   expect(layout.clipPath).toBe('none');
 
-  await reports.hover();
-  const reportsTooltip = reports.locator('.nav-tooltip');
+  const welfare = page.getByRole('link', { name: 'Welfare' });
 
-  await expect(reportsTooltip).toBeVisible();
-  await expect(reportsTooltip).toHaveAttribute('aria-hidden', 'true');
-  await expect(reportsTooltip).toHaveCSS('opacity', '1');
+  await expect(welfare).toHaveAttribute('href', '/welfare');
+  await expect(welfare).not.toHaveAttribute('aria-current');
+
+  await welfare.hover();
+  const welfareTooltip = welfare.locator('.nav-tooltip');
+
+  await expect(welfareTooltip).toBeVisible();
+  await expect(welfareTooltip).toHaveAttribute('aria-hidden', 'true');
+  await expect(welfareTooltip).toHaveCSS('opacity', '1');
 
   const collapsedGeometry = await page.evaluate(() => {
     const activeLink = document.querySelector<HTMLElement>('.nav-link.active');
     const activeIcon = activeLink?.querySelector<HTMLElement>('svg');
     const sidebar = document.querySelector<HTMLElement>('#application-sidebar');
     const tooltip = Array.from(
-      document.querySelectorAll<HTMLElement>('.nav-future .nav-tooltip')
-    ).find((element) => element.textContent?.includes('Reports'));
+      document.querySelectorAll<HTMLElement>('.nav-link .nav-tooltip')
+    ).find((element) => element.textContent?.includes('Welfare'));
 
     return {
       activeDotColor: activeLink ? getComputedStyle(activeLink, '::before').backgroundColor : '',
@@ -279,7 +279,7 @@ test('collapses desktop navigation while preserving semantics and unavailable mo
   ).toBeLessThan(collapsedGeometry.activeIconLeft - collapsedGeometry.activeLinkLeft);
   expect(collapsedGeometry.tooltipLeft).toBeGreaterThan(collapsedGeometry.sidebarRight);
 
-  await expect(reports).toHaveCSS('opacity', '0.66');
+  await expect(welfare).toHaveCSS('opacity', '1');
 
   await expect(sidebar.getByText('Refresh resets every sample record.')).toHaveCount(0);
   await expect(page.locator('.pilot-context')).toHaveCount(0);
@@ -395,9 +395,7 @@ test('opens and closes the mobile application drawer with a focus return', async
   await expect(peopleLink).not.toBeFocused();
 
   await menu.click();
-  await expect(
-    sidebar.locator('.nav-future .nav-copy').filter({ hasText: 'Announcements' })
-  ).toBeVisible();
+  await expect(sidebar.getByRole('link', { name: 'Announcements' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'People and Membership', exact: true })
   ).toBeVisible();
@@ -410,10 +408,7 @@ test('opens and closes the mobile application drawer with a focus return', async
   await expect(page.locator('.sidebar-backdrop')).toHaveAttribute('aria-hidden', 'true');
   await expect(page.locator('.sidebar-backdrop')).toHaveAttribute('tabindex', '-1');
 
-  await expect(sidebar.getByRole('link', { name: 'Announcements' })).toHaveCount(0);
-  await expect(
-    sidebar.locator('.nav-future').filter({ hasText: 'Announcements' })
-  ).not.toHaveAttribute('tabindex');
+  await expect(sidebar.getByRole('link', { name: 'Announcements' })).toHaveCount(1);
 
   await sidebar.getByRole('button', { name: 'Close application menu' }).click();
   await expect(menu).toBeFocused();
@@ -658,9 +653,10 @@ test('pages through the complete 25-person directory with truthful ranges and bo
   await expect(next).toBeDisabled();
 });
 
-test('keeps the sample import prompt as a flowing low-priority directory footer', async ({
+test('anchors the sample import prompt to the bottom of the directory workspace', async ({
   page
 }) => {
+  await page.setViewportSize({ width: 1280, height: 1400 });
   await page.goto('/people');
 
   const summary = page.getByRole('region', { name: 'Directory filters' });
@@ -671,17 +667,17 @@ test('keeps the sample import prompt as a flowing low-priority directory footer'
   await expect(page.getByText('Showing 1–1 of 1 record')).toBeVisible();
   await expect(importPrompt).toHaveCSS('position', 'static');
 
-  const footerFlow = await page.evaluate(() => {
-    const pagination = document.querySelector<HTMLElement>('.directory-pagination');
+  const footerPosition = await page.evaluate(() => {
+    const content = document.querySelector<HTMLElement>('#main-content');
     const prompt = document.querySelector<HTMLElement>('.directory-page .import-prompt');
 
     return {
-      paginationBottom: pagination?.getBoundingClientRect().bottom ?? 0,
-      promptTop: prompt?.getBoundingClientRect().top ?? 0
+      contentBottom: content?.getBoundingClientRect().bottom ?? 0,
+      promptBottom: prompt?.getBoundingClientRect().bottom ?? 0
     };
   });
 
-  expect(footerFlow.promptTop).toBeGreaterThan(footerFlow.paginationBottom);
+  expect(footerPosition.promptBottom).toBeCloseTo(footerPosition.contentBottom, 0);
 });
 
 test('keeps fixed ten-row pagination on a tall desktop while keeping the directory footer visible', async ({
@@ -809,12 +805,12 @@ test('keeps the desktop rail sized to the viewport while the directory manages i
   expect((await sidebar.boundingBox())?.height).toBeCloseTo(720, 0);
 });
 
-test('scrolls a constrained desktop sidebar to its lower unavailable areas', async ({ page }) => {
+test('scrolls a constrained desktop sidebar to its lower communication areas', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 360 });
   await page.goto('/people');
 
   const sidebar = page.locator('#application-sidebar');
-  const announcements = sidebar.locator('.nav-future').filter({ hasText: 'Announcements' });
+  const announcements = sidebar.getByRole('link', { name: 'Announcements' });
 
   await expect(sidebar).toHaveCSS('overflow-y', 'auto');
 
@@ -842,7 +838,7 @@ test('scrolls a constrained desktop sidebar to its lower unavailable areas', asy
   expect(announcementPosition.announcementBottom).toBeLessThanOrEqual(
     announcementPosition.sidebarBottom
   );
-  await expect(announcements).not.toHaveAttribute('tabindex');
+  await expect(announcements).toHaveAttribute('href', '/announcements');
 });
 
 test('uses dense directory controls on desktop and keeps mobile control sizing unchanged', async ({
