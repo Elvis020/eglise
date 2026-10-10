@@ -2105,7 +2105,7 @@ dialog p {
   .mobile-workspace-name {
     display: flex;
     min-width: 0;
-    align-self: stretch;
+    align-self: center;
     align-items: center;
     margin: 0;
     overflow: hidden;
