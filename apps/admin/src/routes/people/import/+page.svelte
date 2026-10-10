@@ -119,13 +119,7 @@
       });
 
       rows = workbook.rows.map(({ rowNumber, values }) => {
-        const row = validatePeopleImportRow(
-          values,
-          rowNumber,
-          currentPeople,
-          new Date(),
-          existingPeopleByName
-        );
+        const row = validatePeopleImportRow(values, rowNumber, currentPeople, existingPeopleByName);
         const hasMatchingWorkbookName = (nameCounts.get(normalisePersonName(row.name)) ?? 0) > 1;
 
         return row.state === 'ready' && hasMatchingWorkbookName
@@ -224,10 +218,8 @@
     <div>
       <h2 id="upload-title">1. Use the {PEOPLE_IMPORT_TEMPLATE_VERSION} template</h2>
       <p>
-        Use the columns Full name, Person type, Phone number, Neighbourhood, and Date of birth.
-        Accepted person types: {acceptedPersonKinds
-          .map((kind) => personKindLabels[kind])
-          .join(', ')}.
+        Use the columns Full name, Person type, Phone number, and Neighbourhood. Accepted person
+        types: {acceptedPersonKinds.map((kind) => personKindLabels[kind]).join(', ')}.
       </p>
     </div>
     <div class="import-upload-actions">
@@ -283,9 +275,6 @@
             {excludedRows.length} excluded
           </p>
         </div>
-        <span class="row-note">
-          Dates of birth are checked only for eligibility and are not shown or saved.
-        </span>
       </div>
 
       <div class="table-wrap">

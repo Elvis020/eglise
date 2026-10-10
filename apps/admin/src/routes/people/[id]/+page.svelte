@@ -47,9 +47,7 @@
         <PersonAvatar size="large" />
         <div>
           <h1 tabindex="-1">{person.name}</h1>
-          <p class="page-intro">
-            Person record. Date of birth is not stored, displayed, or searchable.
-          </p>
+          <p class="page-intro">Person record and membership journey.</p>
         </div>
       </div>
     </header>

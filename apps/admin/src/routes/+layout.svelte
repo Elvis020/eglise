@@ -10,11 +10,13 @@
   import IconChartBar from '@tabler/icons-svelte-runes/icons/chart-bar';
   import IconFolder from '@tabler/icons-svelte-runes/icons/folder';
   import IconHeartHandshake from '@tabler/icons-svelte-runes/icons/heart-handshake';
+  import IconLogout from '@tabler/icons-svelte-runes/icons/logout';
   import IconMenu2 from '@tabler/icons-svelte-runes/icons/menu-2';
   import IconSchool from '@tabler/icons-svelte-runes/icons/school';
   import IconSettings from '@tabler/icons-svelte-runes/icons/settings';
   import IconSpeakerphone from '@tabler/icons-svelte-runes/icons/speakerphone';
   import IconUsersGroup from '@tabler/icons-svelte-runes/icons/users-group';
+  import IconX from '@tabler/icons-svelte-runes/icons/x';
 
   import '../app.css';
 
@@ -36,6 +38,8 @@
   let logoutGuard: ((continueLogout: () => Promise<void>) => boolean) | undefined;
   let navigationFeedbackTimer: number | undefined;
   let routeProgressVisible = $state(false);
+  let mobileNavigation = $state<HTMLDialogElement>();
+  let mobileNavigationOpen = $state(false);
 
   const isAuthenticationRoute = $derived(
     page.url.pathname === '/login' ||
@@ -83,10 +87,6 @@
                       ? 'Workspace'
                       : 'People & Membership'
   );
-  const mobileWorkspaceActive = $derived(
-    !page.url.pathname.startsWith('/people') && !page.url.pathname.startsWith('/attendance')
-  );
-
   const navigationGroups = [
     { label: 'Essentials', modules: ['Attendance', 'Reports'] },
     { label: 'Care & formation', modules: ['Welfare', 'Bible Study', 'Care School'] },
@@ -109,6 +109,35 @@
 
   function moduleIcon(module: keyof typeof moduleIcons) {
     return moduleIcons[module];
+  }
+
+  const moduleRoutes: Record<keyof typeof moduleIcons, string> = {
+    Attendance: '/attendance',
+    Reports: '/reports',
+    Welfare: '/welfare',
+    'Bible Study': '/bible-study',
+    'Care School': '/care-school',
+    Resources: '/resources',
+    Announcements: '/announcements'
+  };
+
+  function moduleHref(module: keyof typeof moduleIcons): string {
+    return moduleRoutes[module];
+  }
+
+  function isMobileRouteActive(href: string): boolean {
+    return page.url.pathname.startsWith(href);
+  }
+
+  function openMobileNavigation(): void {
+    if (!mobileNavigation) return;
+
+    mobileNavigation.showModal();
+    mobileNavigationOpen = true;
+  }
+
+  function closeMobileNavigation(): void {
+    if (mobileNavigation?.open) mobileNavigation.close();
   }
 
   async function completeLogOut() {
@@ -148,6 +177,11 @@
     if (isLoggingOut || logoutGuard?.(completeLogOut)) return;
 
     void completeLogOut();
+  }
+
+  function requestMobileLogout(): void {
+    closeMobileNavigation();
+    requestLogout();
   }
 
   function registerLogoutGuard(guard: (continueLogout: () => Promise<void>) => boolean) {
@@ -239,6 +273,16 @@
         </a>
         <p class="mobile-workspace-name">{mobileWorkspaceLabel}</p>
       </div>
+      <button
+        aria-controls="mobile-navigation"
+        aria-expanded={mobileNavigationOpen}
+        aria-label="Open application navigation"
+        class="mobile-navigation-toggle"
+        onclick={openMobileNavigation}
+        type="button"
+      >
+        <IconMenu2 aria-hidden="true" size={24} stroke={1.8} />
+      </button>
     </header>
 
     <aside class="sidebar" id="application-sidebar" aria-label="Application navigation">
@@ -424,32 +468,104 @@
       {@render children()}
     </main>
 
-    <nav aria-label="Primary mobile navigation" class="mobile-bottom-navigation">
-      <a
-        aria-current={page.url.pathname.startsWith('/people') ? 'page' : undefined}
-        class:active={page.url.pathname.startsWith('/people')}
-        href="/people"
+    <dialog
+      bind:this={mobileNavigation}
+      aria-labelledby="mobile-navigation-title"
+      class="mobile-navigation-dialog"
+      id="mobile-navigation"
+      onclose={() => (mobileNavigationOpen = false)}
+    >
+      <header class="mobile-navigation-header">
+        <div>
+          <p class="dialog-context">{churchName}</p>
+          <h2 id="mobile-navigation-title">Navigate</h2>
+        </div>
+        <button
+          aria-label="Close application navigation"
+          class="mobile-navigation-close"
+          onclick={closeMobileNavigation}
+          type="button"
+        >
+          <IconX aria-hidden="true" size={24} stroke={1.8} />
+        </button>
+      </header>
+
+      <nav aria-label="Primary mobile navigation" class="mobile-navigation-list">
+        <section class="mobile-navigation-group" aria-labelledby="mobile-navigation-people">
+          <p id="mobile-navigation-people">Essentials</p>
+          <a
+            aria-current={page.url.pathname.startsWith('/people') ? 'page' : undefined}
+            class:active={page.url.pathname.startsWith('/people')}
+            href="/people"
+            onclick={closeMobileNavigation}
+          >
+            <IconUsersGroup aria-hidden="true" size={21} stroke={1.8} />
+            <span>People &amp; Membership</span>
+          </a>
+          {#each navigationGroups[0].modules as module}
+            {@const ModuleIcon = moduleIcon(module as keyof typeof moduleIcons)}
+            {@const href = moduleHref(module as keyof typeof moduleIcons)}
+            <a
+              aria-current={isMobileRouteActive(href) ? 'page' : undefined}
+              class:active={isMobileRouteActive(href)}
+              {href}
+              onclick={closeMobileNavigation}
+            >
+              <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+              <span>{module}</span>
+            </a>
+          {/each}
+        </section>
+
+        {#each navigationGroups.slice(1) as group, groupIndex}
+          <section
+            class="mobile-navigation-group"
+            aria-labelledby={`mobile-navigation-group-${groupIndex}`}
+          >
+            <p id={`mobile-navigation-group-${groupIndex}`}>{group.label}</p>
+            {#each group.modules as module}
+              {@const ModuleIcon = moduleIcon(module as keyof typeof moduleIcons)}
+              {@const href = moduleHref(module as keyof typeof moduleIcons)}
+              <a
+                aria-current={isMobileRouteActive(href) ? 'page' : undefined}
+                class:active={isMobileRouteActive(href)}
+                {href}
+                onclick={closeMobileNavigation}
+              >
+                <ModuleIcon aria-hidden="true" size={21} stroke={1.8} />
+                <span>{module}</span>
+              </a>
+            {/each}
+          </section>
+        {/each}
+
+        {#if canAccessSettings}
+          <section class="mobile-navigation-group" aria-labelledby="mobile-navigation-workspace">
+            <p id="mobile-navigation-workspace">Workspace</p>
+            <a
+              aria-current={page.url.pathname === '/settings' ? 'page' : undefined}
+              class:active={page.url.pathname === '/settings'}
+              href="/settings"
+              onclick={closeMobileNavigation}
+            >
+              <IconSettings aria-hidden="true" size={21} stroke={1.8} />
+              <span>Settings</span>
+            </a>
+          </section>
+        {/if}
+      </nav>
+
+      <button
+        aria-busy={isLoggingOut || undefined}
+        class="mobile-navigation-logout"
+        disabled={isLoggingOut}
+        onclick={requestMobileLogout}
+        type="button"
       >
-        <IconUsersGroup aria-hidden="true" size={21} stroke={1.8} />
-        <span>People</span>
-      </a>
-      <a
-        aria-current={page.url.pathname.startsWith('/attendance') ? 'page' : undefined}
-        class:active={page.url.pathname.startsWith('/attendance')}
-        href="/attendance"
-      >
-        <IconCalendarCheck aria-hidden="true" size={21} stroke={1.8} />
-        <span>Attendance</span>
-      </a>
-      <a
-        aria-current={mobileWorkspaceActive ? 'page' : undefined}
-        class:active={mobileWorkspaceActive}
-        href="/workspace"
-      >
-        <IconMenu2 aria-hidden="true" size={21} stroke={1.8} />
-        <span>Workspace</span>
-      </a>
-    </nav>
+        <IconLogout aria-hidden="true" size={20} stroke={1.8} />
+        {isLoggingOut ? 'Logging out…' : 'Log out'}
+      </button>
+    </dialog>
   </div>
 {/if}
 

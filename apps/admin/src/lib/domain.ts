@@ -1,5 +1,3 @@
-export const MINIMUM_AGE = 16;
-
 export type Membership = {
   recognised: boolean;
   assimilationCompletedOn: string;
@@ -479,26 +477,6 @@ export function formatRecordDate(date: string): string {
     year: 'numeric',
     timeZone: 'UTC'
   }).format(new Date(`${date}T00:00:00Z`));
-}
-
-export function ageOn(dateOfBirth: Date, today: Date): number {
-  const birthdayThisYear = new Date(
-    today.getFullYear(),
-    dateOfBirth.getMonth(),
-    dateOfBirth.getDate()
-  );
-
-  return today.getFullYear() - dateOfBirth.getFullYear() - Number(today < birthdayThisYear);
-}
-
-export function isEligible(
-  dateOfBirth: string,
-  today = new Date(),
-  minimumAge = MINIMUM_AGE
-): boolean {
-  const date = new Date(`${dateOfBirth}T00:00:00`);
-
-  return Boolean(dateOfBirth) && !Number.isNaN(date.getTime()) && ageOn(date, today) >= minimumAge;
 }
 
 export function createId(name: string): string {

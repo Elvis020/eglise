@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ageOn,
   createPerson,
   initialPeople,
-  isEligible,
   isOnOrBefore,
   isValidPhone,
   normalisePhone,
@@ -55,57 +53,31 @@ describe('person pilot rules', () => {
     ).toEqual({});
   });
 
-  it('accepts people at the age boundary and excludes people below it', () => {
-    const today = new Date('2026-09-30T12:00:00');
-
-    expect(ageOn(new Date('2010-09-30T00:00:00'), today)).toBe(16);
-    expect(isEligible('2010-09-30', today)).toBe(true);
-    expect(isEligible('2010-10-01', today)).toBe(false);
-  });
-
-  it('validates import rows without retaining dates of birth', () => {
+  it('validates import rows without collecting dates of birth', () => {
     const ready = validatePeopleImportRow(
       {
         name: 'Mira Daniels',
         kind: 'Visitor',
         phone: '+233 24 555 0142',
-        neighbourhood: 'Cantonments',
-        dateOfBirth: 40356
+        neighbourhood: 'Cantonments'
       },
       2,
-      initialPeople,
-      new Date('2026-09-30T12:00:00')
+      initialPeople
     );
     const duplicate = validatePeopleImportRow(
       {
         name: '  Ama   Owusu ',
         kind: 'Visitor',
         phone: '',
-        neighbourhood: '',
-        dateOfBirth: '01/01/1990'
+        neighbourhood: ''
       },
       3,
-      initialPeople,
-      new Date('2026-09-30T12:00:00')
-    );
-    const underAge = validatePeopleImportRow(
-      {
-        name: 'Kweku Lamptey',
-        kind: 'Person',
-        phone: '024 555 0142',
-        neighbourhood: '',
-        dateOfBirth: '2010-10-01'
-      },
-      4,
-      initialPeople,
-      new Date('2026-09-30T12:00:00')
+      initialPeople
     );
 
     expect(ready.state).toBe('ready');
     expect(duplicate.state).toBe('review');
     expect(duplicate.possibleMatchId).toBe('ama-owusu');
-    expect(underAge).toMatchObject({ state: 'excluded', reason: 'Age requirements were not met.' });
-    expect(ready).not.toHaveProperty('dateOfBirth');
   });
 
   it('reuses a normalized person index when checking a batch for duplicates', () => {
@@ -115,12 +87,10 @@ describe('person pilot rules', () => {
         name: '  Ama   Owusu ',
         kind: 'Visitor',
         phone: '',
-        neighbourhood: '',
-        dateOfBirth: '01/01/1990'
+        neighbourhood: ''
       },
       3,
       initialPeople,
-      new Date('2026-09-30T12:00:00'),
       index
     );
 

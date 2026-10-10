@@ -15,28 +15,24 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('imports approved workbook rows while excluding invalid rows', async ({ page }) => {
-  const workbook = writeXlsxFile(
-    [
-      ['Full name', 'Person type', 'Phone number', 'Neighbourhood', 'Date of birth'],
-      ['Nana Badu', 'Person', '024 555 0142', 'Osu', new Date('1990-01-01')],
-      ['Ama Owusu', 'Visitor', '', 'Adabraka', new Date('1990-01-01')],
-      ['Kweku Lamptey', 'Person', '024 555 0142', 'Madina', new Date('2015-01-01')]
-    ],
-    { dateFormat: 'dd/mm/yyyy' }
-  );
+test('imports approved workbook rows without collecting dates of birth', async ({ page }) => {
+  const workbook = writeXlsxFile([
+    ['Full name', 'Person type', 'Phone number', 'Neighbourhood'],
+    ['Nana Badu', 'Person', '024 555 0142', 'Osu'],
+    ['Ama Owusu', 'Visitor', '', 'Adabraka'],
+    ['Kweku Lamptey', 'Person', '024 555 0142', 'Madina']
+  ]);
   const buffer = await workbook.toBuffer();
 
   await page.goto('/people/import');
   await page.getByLabel('2. Upload completed workbook').setInputFiles({
-    name: 'people-v1.xlsx',
+    name: 'people-v2.xlsx',
     mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     buffer
   });
 
   await expect(page.getByRole('heading', { name: 'Review workbook rows' })).toBeVisible();
-  await expect(page.getByText('Age requirements were not met.')).toBeVisible();
-  await expect(page.locator('.import-review')).not.toContainText('2015-01-01');
+  await expect(page.getByText('2 ready · 1 need review · 0 excluded')).toBeVisible();
   await page.getByLabel('Create separately').check();
   await page.getByRole('button', { name: 'Confirm import' }).click();
   await expect(page.getByRole('heading', { name: 'Confirm import' })).toBeVisible();
@@ -45,19 +41,16 @@ test('imports approved workbook rows while excluding invalid rows', async ({ pag
   await expect(page.getByText('Import complete')).toBeVisible();
   await expect(
     page.getByText(
-      'Created 2 people. Excluded 1 row was not added. Deferred 0 rows need later review.'
+      'Created 3 people. Excluded 0 rows were not added. Deferred 0 rows need later review.'
     )
   ).toBeVisible();
 });
 
 test('lets a possible duplicate be deferred without creating or merging it', async ({ page }) => {
-  const workbook = writeXlsxFile(
-    [
-      ['Full name', 'Person type', 'Phone number', 'Neighbourhood', 'Date of birth'],
-      ['Ama Owusu', 'Visitor', '', 'Adabraka', new Date('1990-01-01')]
-    ],
-    { dateFormat: 'dd/mm/yyyy' }
-  );
+  const workbook = writeXlsxFile([
+    ['Full name', 'Person type', 'Phone number', 'Neighbourhood'],
+    ['Ama Owusu', 'Visitor', '', 'Adabraka']
+  ]);
   const buffer = await workbook.toBuffer();
 
   await page.goto('/people/import');
@@ -286,8 +279,9 @@ test('collapses desktop navigation while preserving active module semantics', as
 
   await page.setViewportSize({ width: 960, height: 844 });
   await expect(sidebar).toBeHidden();
+  await page.getByRole('button', { name: 'Open application navigation' }).click();
   await expect(page.getByRole('navigation', { name: 'Primary mobile navigation' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'People', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'People & Membership' })).toHaveAttribute(
     'aria-current',
     'page'
   );
@@ -377,7 +371,9 @@ test('settles desktop navigation immediately when reduced motion is requested', 
   await expect(page.locator('.app-shell')).toHaveClass(/sidebar-collapsed/);
 });
 
-test('uses visible mobile destinations and a full-screen workspace index', async ({ page }) => {
+test('uses a full-screen mobile navigation menu without persistent form chrome', async ({
+  page
+}) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto('/people');
 
@@ -387,29 +383,24 @@ test('uses visible mobile destinations and a full-screen workspace index', async
 
   const sidebar = page.locator('#application-sidebar');
   const navigation = page.getByRole('navigation', { name: 'Primary mobile navigation' });
+  const menu = page.getByRole('dialog', { name: 'Navigate' });
 
   await expect(sidebar).toBeHidden();
-  await expect(navigation).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'People', exact: true })).toHaveAttribute(
-    'aria-current',
-    'page'
-  );
+  await expect(navigation).not.toBeVisible();
+  await expect(page.locator('.mobile-bottom-navigation')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Open application navigation' }).click();
+  await expect(menu).toBeVisible();
 
-  await navigation.getByRole('link', { name: 'Workspace' }).click();
+  const peopleLink = navigation.getByRole('link', { name: 'People & Membership' });
 
-  await expect(page).toHaveURL(/\/workspace$/);
-  await expect(page.getByRole('heading', { name: 'Find what you need.' })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'Workspace' })).toHaveAttribute(
-    'aria-current',
-    'page'
-  );
-  await expect(page.getByRole('link', { name: /Reports/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible();
+  await expect(peopleLink).toHaveAttribute('aria-current', 'page');
+  await expect(peopleLink).toHaveCSS('background-color', 'rgb(238, 232, 218)');
+  await expect(menu.getByRole('button', { name: 'Log out' })).toBeVisible();
 
   const mobileLayout = await page.evaluate(() => {
     const viewportWidth = document.documentElement.clientWidth;
     const interactiveItems = Array.from(
-      document.querySelectorAll<HTMLElement>('.mobile-bottom-navigation a, .workspace-list a')
+      document.querySelectorAll<HTMLElement>('.mobile-navigation-list a')
     );
 
     return {
@@ -431,12 +422,9 @@ test('uses visible mobile destinations and a full-screen workspace index', async
     expect(item.right).toBeLessThanOrEqual(mobileLayout.viewportWidth);
   }
 
-  await page.getByRole('link', { name: /Reports/ }).click();
+  await navigation.getByRole('link', { name: 'Reports', exact: true }).click();
   await expect(page).toHaveURL(/\/reports$/);
-  await expect(navigation.getByRole('link', { name: 'Workspace' })).toHaveAttribute(
-    'aria-current',
-    'page'
-  );
+  await expect(menu).not.toBeVisible();
 });
 
 test('identifies the active workspace in the mobile top bar', async ({ page }) => {
@@ -465,10 +453,11 @@ test('identifies the active workspace in the mobile top bar', async ({ page }) =
   expect(alignment.workspaceCenter).toBeCloseTo(alignment.brandCenter, 0);
 });
 
-test('logs out from Workspace on the first mobile tap', async ({ page }) => {
+test('logs out from the mobile navigation menu on the first tap', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/workspace');
+  await page.goto('/people');
 
+  await page.getByRole('button', { name: 'Open application navigation' }).click();
   await page.getByRole('button', { name: 'Log out' }).click();
 
   await expect(page).toHaveURL(/\/login$/);
@@ -554,18 +543,16 @@ test('ships a standalone offline document without app bundles', async ({ request
   expect(document).not.toContain('/_app/');
 });
 
-test('adds an eligible person without showing their date of birth', async ({ page }) => {
+test('adds a person without collecting their date of birth', async ({ page }) => {
   await page.goto('/people/add');
 
   await page.getByLabel('Full name').fill('Esi Addo');
   await page.getByLabel('Phone number').fill('+233 24 555 0167');
   await page.getByLabel('Neighbourhood').fill('Osu');
-  await page.getByLabel('Date of birth').fill('01/01/2000');
-  await page.getByLabel('Date of birth').blur();
   await page.getByRole('button', { name: 'Save person' }).click();
 
   const notification = page.locator('[data-sonner-toast]').filter({
-    hasText: 'Person saved. Their date of birth was discarded'
+    hasText: 'Person saved.'
   });
 
   await expect(notification).toBeVisible();
@@ -597,7 +584,7 @@ test('adds an eligible person without showing their date of birth', async ({ pag
   await expect(notification).not.toBeVisible();
   await page.getByLabel('Search people').fill('Esi Addo');
   await expect(page.getByRole('link', { name: 'Esi Addo' })).toBeVisible();
-  await expect(page.getByText('2000-01-01')).not.toBeVisible();
+  await expect(page.getByLabel('Date of birth')).toHaveCount(0);
 });
 
 test('adds a visitor without inferring their neighbourhood or membership', async ({ page }) => {
@@ -606,7 +593,6 @@ test('adds a visitor without inferring their neighbourhood or membership', async
   await page.getByRole('combobox', { name: 'Person type' }).click();
   await page.getByRole('option', { name: 'Visitor', exact: true }).click();
   await page.getByLabel('Full name').fill('Mira Daniels');
-  await page.getByLabel('Date of birth').fill('03/10/1990');
   await page.getByRole('button', { name: 'Save person' }).click();
 
   await expect(page).toHaveURL(/\/people$/);
@@ -624,65 +610,15 @@ test('automatically dismisses shared success notifications after a short delay',
   await page.getByLabel('Full name').fill('Akosua Mensah');
   await page.getByLabel('Phone number').fill('+233 24 555 0168');
   await page.getByLabel('Neighbourhood').fill('Labone');
-  await page.getByLabel('Date of birth').fill('01/01/2000');
-  await page.getByLabel('Date of birth').blur();
   await page.getByRole('button', { name: 'Save person' }).click();
 
   const notification = page.locator('[data-sonner-toast]').filter({
-    hasText: 'Person saved. Their date of birth was discarded'
+    hasText: 'Person saved.'
   });
 
   await expect(notification).toBeVisible();
   await page.mouse.move(0, 0);
   await expect(notification).not.toBeVisible({ timeout: 5500 });
-});
-
-test('uses the app-native date picker with local date validation and keyboard selection', async ({
-  page
-}) => {
-  await page.goto('/people/add');
-
-  const dateOfBirth = page.getByLabel('Date of birth');
-
-  await dateOfBirth.fill('31/02/2000');
-  await dateOfBirth.blur();
-  await expect(dateOfBirth).toHaveValue('31/02/2000');
-  await expect(dateOfBirth).toHaveAttribute('aria-invalid', 'true');
-  await expect(page.getByRole('alert')).toContainText('Enter a real date');
-
-  await page.getByRole('button', { name: 'Open calendar' }).click();
-  await expect(page.getByRole('dialog', { name: 'Calendar' })).toBeVisible();
-  await expect(page.getByRole('dialog', { name: 'Calendar' }).locator('select')).toHaveCount(0);
-  await expect(
-    page.getByRole('dialog', { name: 'Calendar' }).locator('input[type="date"]')
-  ).toHaveCount(0);
-
-  const currentYear = String(new Date().getFullYear());
-  const selectedMonth = await page.getByRole('button', { name: 'Choose month' }).textContent();
-  const selectedMonthLabel = selectedMonth?.slice(0, 3) ?? '';
-
-  await page.getByRole('button', { name: 'Choose year' }).click();
-  await expect(page.getByRole('button', { name: currentYear })).toBeFocused();
-  await page.getByRole('button', { name: '2025', exact: true }).click();
-  await expect(page.getByRole('button', { name: selectedMonthLabel, exact: true })).toBeFocused();
-  await page.getByRole('button', { name: selectedMonthLabel, exact: true }).click();
-
-  await page.getByRole('button', { name: 'Choose month' }).click();
-  await expect(page.getByRole('button', { name: selectedMonthLabel, exact: true })).toBeFocused();
-  await page.getByLabel('Full name').click();
-  await expect(page.getByRole('dialog', { name: 'Calendar' })).toHaveCount(0);
-
-  await page.getByRole('button', { name: 'Open calendar' }).click();
-  await page.keyboard.press('ArrowLeft');
-  await page.keyboard.press('Enter');
-
-  await expect(dateOfBirth).toHaveValue(/\d{2}\/\d{2}\/\d{4}/);
-  await expect(page.getByRole('dialog', { name: 'Calendar' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Open calendar' })).toBeFocused();
-
-  await dateOfBirth.fill('01/01/3000');
-  await dateOfBirth.blur();
-  await expect(dateOfBirth).toHaveValue('01/01/3000');
 });
 
 test('uses ancestor-only breadcrumbs and preserves the unsaved-entry guard', async ({ page }) => {
@@ -1106,15 +1042,12 @@ test('does not render stray delimiters after People action groups', async ({ pag
 });
 
 test('requires an explicit possible-duplicate import decision', async ({ page }) => {
-  const workbook = writeXlsxFile(
-    [
-      ['Full name', 'Person type', 'Phone number', 'Neighbourhood', 'Date of birth'],
-      [' '],
-      ['Ama Owusu', 'Visitor', '', 'Adabraka', new Date('1990-01-01')],
-      ['Ama Owusu', 'Visitor', '', 'Adabraka', new Date('1990-01-01')]
-    ],
-    { dateFormat: 'dd/mm/yyyy' }
-  );
+  const workbook = writeXlsxFile([
+    ['Full name', 'Person type', 'Phone number', 'Neighbourhood'],
+    [' '],
+    ['Ama Owusu', 'Visitor', '', 'Adabraka'],
+    ['Ama Owusu', 'Visitor', '', 'Adabraka']
+  ]);
   const buffer = await workbook.toBuffer();
 
   await page.goto('/people/import');
@@ -1274,7 +1207,7 @@ test('floats the membership calendar without changing the form layout', async ({
 });
 
 test('shows adjacent-month calendar dates as disabled context', async ({ page }) => {
-  await page.goto('/people/add');
+  await page.goto('/people/kojo-boateng/membership');
   await page.getByRole('button', { name: 'Open calendar' }).click();
 
   const calendar = page.getByRole('dialog', { name: 'Calendar' });
@@ -1289,11 +1222,11 @@ test('shows adjacent-month calendar dates as disabled context', async ({ page })
   await adjacentMonthDate.evaluate((button) => (button as HTMLButtonElement).click());
 
   await expect(calendar).toBeVisible();
-  await expect(page.getByLabel('Date of birth')).toHaveValue('');
+  await expect(page.getByLabel('Assimilation completion date')).toHaveValue('');
 });
 
 test('moves between months without making adjacent dates selectable', async ({ page }) => {
-  await page.goto('/people/add');
+  await page.goto('/people/kojo-boateng/membership');
   await page.getByRole('button', { name: 'Open calendar' }).click();
 
   const calendar = page.getByRole('dialog', { name: 'Calendar' });

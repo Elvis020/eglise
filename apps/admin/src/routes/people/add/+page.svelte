@@ -7,9 +7,7 @@
   import IconTrash from '@tabler/icons-svelte-runes/icons/trash';
 
   import {
-    MINIMUM_AGE,
     createPerson,
-    isEligible,
     type PersonKind,
     type PersonDetailsErrors,
     validatePersonDetails
@@ -19,7 +17,6 @@
   import PersonDetailsFields from '$lib/components/PersonDetailsFields.svelte';
   import { addPerson } from '$lib/people';
   import { showToast } from '$lib/toast';
-  import EgliseDatePicker from '$lib/components/EgliseDatePicker.svelte';
 
   let form: HTMLFormElement;
   let leaveDialog: HTMLDialogElement;
@@ -31,8 +28,7 @@
   let kind: PersonKind = 'person';
   let phone = '';
   let neighbourhood = '';
-  let dateOfBirth = '';
-  let errors: PersonDetailsErrors & { dateOfBirth?: string } = {};
+  let errors: PersonDetailsErrors = {};
 
   const appShell = useAppShellContext();
 
@@ -40,8 +36,6 @@
     errors = {};
 
     errors = validatePersonDetails({ name, kind, phone, neighbourhood });
-    if (!isEligible(dateOfBirth))
-      errors.dateOfBirth = `This pilot records people aged ${MINIMUM_AGE} or over.`;
 
     return Object.keys(errors).length === 0;
   }
@@ -55,10 +49,9 @@
       return;
     }
 
-    // DOB is intentionally not passed into the person record after this eligibility check.
     addPerson(createPerson(name, phone, neighbourhood, kind));
     dirty = false;
-    showToast('Person saved. Their date of birth was discarded after the eligibility check.');
+    showToast('Person saved.');
     void goto('/people');
   }
 
@@ -173,9 +166,7 @@
   <header class="page-head">
     <div>
       <h1 tabindex="-1">Add a person</h1>
-      <p class="page-intro">
-        Create a person record. Date of birth is used only for the age check, then discarded.
-      </p>
+      <p class="page-intro">Create a person record for the church directory.</p>
     </div>
   </header>
 
@@ -198,21 +189,6 @@
         {errors}
         onchange={() => (dirty = true)}
       />
-      <div class="field">
-        <label for="dateOfBirth">Date of birth</label>
-        <EgliseDatePicker
-          id="dateOfBirth"
-          bind:value={dateOfBirth}
-          ariaInvalid={Boolean(errors.dateOfBirth)}
-          ariaDescribedby="dob-help dob-error"
-          onchange={() => (dirty = true)}
-        />
-        <p class="help" id="dob-help">
-          Private: checked against the pilot minimum age of {MINIMUM_AGE}; never shown, stored, or
-          searchable.
-        </p>
-        <p class="error" id="dob-error">{errors.dateOfBirth ?? ''}</p>
-      </div>
     </div>
     <div class="form-actions person-entry-actions">
       <a class="button secondary" href="/people">
