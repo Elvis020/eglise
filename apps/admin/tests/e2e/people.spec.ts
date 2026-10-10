@@ -708,6 +708,23 @@ test('uses ancestor-only breadcrumbs and preserves the unsaved-entry guard', asy
   await expect(page.getByLabel('Full name')).toHaveValue('Unsaved Person');
 });
 
+test('anchors the unsaved-entry confirmation as a mobile bottom sheet', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/people/add');
+  await page.getByLabel('Full name').fill('Unsaved Person');
+  await page.getByRole('link', { name: 'Cancel' }).click();
+
+  const position = await page.getByRole('dialog').evaluate((sheet) => {
+    const bounds = sheet.getBoundingClientRect();
+
+    return {
+      bottomOffset: window.innerHeight - bounds.bottom
+    };
+  });
+
+  expect(position.bottomOffset).toBeLessThanOrEqual(1);
+});
+
 test('uses the app-native membership combobox and truthful first-page directory controls', async ({
   page
 }) => {

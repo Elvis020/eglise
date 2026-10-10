@@ -1,6 +1,6 @@
 <script lang="ts">
   import { beforeNavigate, goto } from '$app/navigation';
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconDeviceFloppy from '@tabler/icons-svelte-runes/icons/device-floppy';
   import IconEdit from '@tabler/icons-svelte-runes/icons/edit';
@@ -23,7 +23,9 @@
 
   let form: HTMLFormElement;
   let leaveDialog: HTMLDialogElement;
+  let mobileLeaveSheet: HTMLDialogElement;
   let dirty = false;
+  let mobileLeaveSheetOpen = false;
   let pendingNavigation: (() => void) | undefined;
   let name = '';
   let kind: PersonKind = 'person';
@@ -62,14 +64,60 @@
 
   function discard(): void {
     dirty = false;
-    leaveDialog.close();
+    closeLeaveConfirmation();
     pendingNavigation?.();
   }
 
   function stay(): void {
     pendingNavigation = undefined;
-    leaveDialog.close();
+    closeLeaveConfirmation();
     form.focus();
+  }
+
+  function openLeaveConfirmation(): void {
+    if (window.matchMedia('(max-width: 640px)').matches) {
+      mobileLeaveSheetOpen = true;
+      void tick().then(() => mobileLeaveSheet?.querySelector<HTMLButtonElement>('button')?.focus());
+
+      return;
+    }
+
+    leaveDialog.showModal();
+  }
+
+  function closeLeaveConfirmation(): void {
+    if (mobileLeaveSheetOpen) {
+      mobileLeaveSheetOpen = false;
+
+      return;
+    }
+
+    leaveDialog.close();
+  }
+
+  function handleMobileLeaveSheetKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      stay();
+
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    const buttons = Array.from(mobileLeaveSheet.querySelectorAll<HTMLButtonElement>('button'));
+    const firstButton = buttons[0];
+    const lastButton = buttons[buttons.length - 1];
+
+    if (!firstButton || !lastButton) return;
+
+    if (event.shiftKey && document.activeElement === firstButton) {
+      event.preventDefault();
+      lastButton.focus();
+    } else if (!event.shiftKey && document.activeElement === lastButton) {
+      event.preventDefault();
+      firstButton.focus();
+    }
   }
 
   function handleLogoutRequest(continueLogout: () => Promise<void>): boolean {
@@ -78,7 +126,7 @@
     pendingNavigation = () => {
       void continueLogout();
     };
-    leaveDialog.showModal();
+    openLeaveConfirmation();
 
     return true;
   }
@@ -113,7 +161,7 @@
         destination ? `${destination.pathname}${destination.search}${destination.hash}` : '/people'
       );
     };
-    leaveDialog.showModal();
+    openLeaveConfirmation();
   });
 </script>
 
@@ -194,3 +242,71 @@
     </div>
   </form>
 </dialog>
+
+{#if mobileLeaveSheetOpen}
+  <div class="mobile-leave-sheet-layer">
+    <dialog
+      bind:this={mobileLeaveSheet}
+      aria-labelledby="mobile-leave-title"
+      aria-modal="true"
+      class="mobile-leave-sheet"
+      open
+      tabindex="-1"
+      on:keydown={handleMobileLeaveSheetKeydown}
+    >
+      <p class="dialog-context">People &amp; Membership · Add a person</p>
+      <h2 id="mobile-leave-title">Leave unsaved entry?</h2>
+      <p>Your entry will be lost when the page refreshes. It is not stored anywhere.</p>
+      <div class="dialog-actions">
+        <button class="button secondary" type="button" on:click={stay}>
+          <IconEdit aria-hidden="true" size={18} stroke={1.8} />
+          Keep editing
+        </button><button class="button danger-button" type="button" on:click={discard}>
+          <IconTrash aria-hidden="true" size={18} stroke={1.8} />
+          Discard entry
+        </button>
+      </div>
+    </dialog>
+  </div>
+{/if}
+
+<style>
+  .mobile-leave-sheet-layer {
+    position: fixed;
+    z-index: 30;
+    inset: 0;
+    background: #24271f80;
+  }
+
+  .mobile-leave-sheet {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    max-height: min(84dvh, calc(100dvh - env(safe-area-inset-top)));
+    margin: 0;
+    overflow-y: auto;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    color: var(--text-primary);
+    background: var(--surface-raised);
+    box-shadow: 0 -8px 24px rgb(36 39 31 / 12%);
+  }
+
+  .mobile-leave-sheet h2 {
+    margin: 0;
+    font: 400 28px var(--font-display);
+  }
+
+  .mobile-leave-sheet p:not(.dialog-context) {
+    color: var(--text-secondary);
+  }
+
+  @media (min-width: 641px) {
+    .mobile-leave-sheet-layer {
+      display: none;
+    }
+  }
+</style>
