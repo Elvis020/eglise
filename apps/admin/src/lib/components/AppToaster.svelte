@@ -10,7 +10,7 @@
   containerAriaLabel="Notifications"
   duration={4000}
   gap={8}
-  mobileOffset={16}
+  mobileOffset={{ bottom: 'calc(88px + env(safe-area-inset-bottom, 0px))', left: 16, right: 16 }}
   offset={24}
   position="bottom-right"
   theme="light"

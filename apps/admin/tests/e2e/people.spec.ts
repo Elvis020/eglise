@@ -19,7 +19,7 @@ test('imports approved workbook rows without collecting dates of birth', async (
   const workbook = writeXlsxFile([
     ['Full name', 'Person type', 'Phone number', 'Neighbourhood'],
     ['Nana Badu', 'Person', '024 555 0142', 'Osu'],
-    ['Ama Owusu', 'Visitor', '', 'Adabraka'],
+    ['Ama Owusu', 'Visitor', '024 555 0142', 'Adabraka'],
     ['Kweku Lamptey', 'Person', '024 555 0142', 'Madina']
   ]);
   const buffer = await workbook.toBuffer();
@@ -49,7 +49,7 @@ test('imports approved workbook rows without collecting dates of birth', async (
 test('lets a possible duplicate be deferred without creating or merging it', async ({ page }) => {
   const workbook = writeXlsxFile([
     ['Full name', 'Person type', 'Phone number', 'Neighbourhood'],
-    ['Ama Owusu', 'Visitor', '', 'Adabraka']
+    ['Ama Owusu', 'Visitor', '024 555 0142', 'Adabraka']
   ]);
   const buffer = await workbook.toBuffer();
 
@@ -371,9 +371,7 @@ test('settles desktop navigation immediately when reduced motion is requested', 
   await expect(page.locator('.app-shell')).toHaveClass(/sidebar-collapsed/);
 });
 
-test('uses a full-screen mobile navigation menu without persistent form chrome', async ({
-  page
-}) => {
+test('uses mobile quick navigation except while the full-screen menu is open', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto('/people');
 
@@ -387,7 +385,7 @@ test('uses a full-screen mobile navigation menu without persistent form chrome',
 
   await expect(sidebar).toBeHidden();
   await expect(navigation).not.toBeVisible();
-  await expect(page.locator('.mobile-bottom-navigation')).toHaveCount(0);
+  await expect(page.locator('.mobile-bottom-navigation')).toBeVisible();
   await page.getByRole('button', { name: 'Open application navigation' }).click();
   await expect(menu).toBeVisible();
 
@@ -590,12 +588,13 @@ test('adds a visitor without inferring their neighbourhood or membership', async
   await page.getByRole('combobox', { name: 'Person type' }).click();
   await page.getByRole('option', { name: 'Visitor', exact: true }).click();
   await page.getByLabel('Full name').fill('Mira Daniels');
+  await page.getByLabel('Phone number').fill('024 555 0198');
   await page.getByRole('button', { name: 'Save person' }).click();
 
   await expect(page).toHaveURL(/\/people$/);
   await page.getByLabel('Search people').fill('Mira Daniels');
   await expect(page.getByText('Visitor', { exact: true })).toBeVisible();
-  await expect(page.getByText('Not provided', { exact: true })).toHaveCount(2);
+  await expect(page.getByText('Not provided', { exact: true })).toHaveCount(1);
   await expect(page.getByText('Not a member', { exact: true })).toBeVisible();
 });
 
@@ -1042,8 +1041,8 @@ test('requires an explicit possible-duplicate import decision', async ({ page })
   const workbook = writeXlsxFile([
     ['Full name', 'Person type', 'Phone number', 'Neighbourhood'],
     [' '],
-    ['Ama Owusu', 'Visitor', '', 'Adabraka'],
-    ['Ama Owusu', 'Visitor', '', 'Adabraka']
+    ['Ama Owusu', 'Visitor', '024 555 0142', 'Adabraka'],
+    ['Ama Owusu', 'Visitor', '024 555 0142', 'Adabraka']
   ]);
   const buffer = await workbook.toBuffer();
 
@@ -1338,4 +1337,48 @@ test('registers a PWA worker and redirects an offline navigation to the standalo
   await expect(page).toHaveURL(/offline\.html$/);
   await expect(page.getByRole('heading', { name: 'This pilot needs a connection' })).toBeVisible();
   await context.setOffline(false);
+});
+
+test('keeps uploaded-record review and duplicate controls within mobile and tablet widths', async ({
+  page
+}) => {
+  const workbook = writeXlsxFile([
+    ['Full name', 'Person type', 'Phone number', 'Neighbourhood'],
+    [
+      'Ama Owusu',
+      'Visitor',
+      '024 555 0142',
+      'A very long neighbourhood name for responsive review'
+    ],
+    ['Visitor missing phone', 'Visitor', '', 'Osu']
+  ]);
+  const buffer = await workbook.toBuffer();
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/people/import');
+  await expect(page.locator('.sidebar').getByText('Ama Owusu', { exact: true })).toHaveCount(1);
+  await page.getByLabel('2. Upload completed workbook').setInputFiles({
+    name: 'mobile-review.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer
+  });
+  await expect(page.getByRole('heading', { name: 'Review workbook rows' })).toBeVisible();
+  await expect(page.getByText('Phone number needs correction.')).toBeVisible();
+  await page.getByLabel('Create separately').check();
+  for (const width of [320, 390, 960]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    ).toBe(true);
+    await expect(page.getByLabel('Create separately')).toBeChecked();
+    const bounds = await page.getByLabel('2. Upload completed workbook').boundingBox();
+
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    const lastStep = await page.locator('.import-steps li').last().boundingBox();
+
+    expect(lastStep!.x + lastStep!.width).toBeLessThanOrEqual(width);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: 'test-results/import-mobile.png', fullPage: true });
 });

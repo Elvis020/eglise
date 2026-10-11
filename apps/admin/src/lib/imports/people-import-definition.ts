@@ -17,7 +17,7 @@ export type PeopleImportColumn = {
 export const peopleImportColumns: PeopleImportColumn[] = [
   { field: 'name', header: 'Full name', aliases: ['Name'], required: true },
   { field: 'kind', header: 'Person type', aliases: ['Type', 'Kind'], required: true },
-  { field: 'phone', header: 'Phone number', aliases: ['Phone', 'Mobile number'], required: false },
+  { field: 'phone', header: 'Phone number', aliases: ['Phone', 'Mobile number'], required: true },
   {
     field: 'neighbourhood',
     header: 'Neighbourhood',
@@ -132,7 +132,7 @@ export function validatePeopleImportRow(
     };
   }
 
-  if ((kind === 'person' && !phone) || (phone && !isValidPhone(phone))) {
+  if (!phone || (phone && !isValidPhone(phone))) {
     return {
       rowNumber,
       name,

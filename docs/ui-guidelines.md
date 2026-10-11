@@ -149,7 +149,7 @@ The admin shell is a Phase 1 deliverable.
 - Navigation must show the current workspace and make the active state clear without colour alone.
 - In the sidebar, use a small `accent-warm` dot plus modest type weight for the active item; do not turn ordinary navigation into a card or filled row.
 - At desktop widths, the sidebar is 248px expanded and 72px collapsed. At 960px and below, remove the desktop rail completely; never leave it beside a narrow workspace.
-- On phone and tablet widths, the top bar identifies the church and active workspace and includes an explicit hamburger trigger. It opens a full-screen application navigation view with grouped product areas, Settings when permitted, and Log out. Do not use a fixed bottom navigation: it can cover long forms and compete with browser/PWA chrome. Keep the menu's rows at least 44px tall, preserve a visible active state, and provide a visible close action.
+- On phone and tablet widths, the top bar identifies the church and active workspace and includes an explicit hamburger trigger. It opens a full-screen application navigation view with grouped product areas, Settings when permitted, and Log out. Use persistent Home, Settings (when permitted), and history Back navigation below 960px, hidden while the hamburger menu is open. Reserve its full height plus the safe-area inset in the content; forms must remain unobscured. Keep the menu's rows at least 44px tall, preserve a visible active state, and provide a visible close action.
 - Treat 960px as the responsive composition breakpoint. When the shell becomes mobile, route layouts, tables, forms, and actions must also change into their mobile composition rather than waiting for a narrower viewport.
 - On phone widths, use flat, divider-led record lists and locally grouped form sections before introducing stacked card grids. Primary actions span the available width when they conclude a task; keep safe-area insets clear for sticky chrome and sheets.
 - Use breadcrumbs for in-workspace navigation beyond the primary sidebar. Place one compact, single-line breadcrumb row above the page title; use the UI font at 14px, muted separators, and linked ancestor segments only. The page title is the single current-location label, so do not repeat it as a final breadcrumb segment. Do not render breadcrumbs on top-level sidebar destinations. On narrow screens, truncate earlier ancestor segments rather than wrapping the trail.
@@ -177,3 +177,12 @@ A component is not ready until it has:
 ## Change control
 
 Treat this document as the source of truth for in-app UI. Update it before introducing a new component pattern, colour role, type treatment, or interaction convention that would affect more than one screen.
+
+## Attendance and welfare workflow additions
+
+- Attendance calendar filters use Monday-start weeks, calendar months, and calendar years. Summary attendance means distinct people, including open events; label event status and keep manual headcounts separate.
+- Welfare amount cards select a labelled records table. Desktop uses columns; mobile uses flat labelled rows. Recurring support separates paid, outstanding (due but unpaid), and upcoming amounts.
+- Inline person creation stays in the current workflow, with a visible duplicate review and single-column mobile form. Do not stack dialogs. Phone numbers are required for all new or edited person records.
+- The shared date picker may explicitly allow future dates for support schedules and reporting period selection; historical payment dates remain bounded by today.
+- Mobile navigation shows a white loading film until routing settles. Desktop retains the existing progress feedback.
+- These workflows use the existing in-memory prototype data model. Welfare records reset on reload and must not be presented as durable accounting records.

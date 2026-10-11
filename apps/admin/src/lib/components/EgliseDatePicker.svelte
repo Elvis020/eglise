@@ -12,6 +12,7 @@
     id,
     value = $bindable(),
     disabled = false,
+    allowFuture = false,
     ariaInvalid = false,
     ariaDescribedby,
     autocomplete = 'bday',
@@ -20,6 +21,7 @@
     id: string;
     value: string;
     disabled?: boolean;
+    allowFuture?: boolean;
     ariaInvalid?: boolean;
     ariaDescribedby?: string;
     autocomplete?: HTMLInputAttributes['autocomplete'];
@@ -85,7 +87,7 @@
       date.getFullYear() !== year ||
       date.getMonth() !== month - 1 ||
       date.getDate() !== day ||
-      date > today()
+      (!allowFuture && date > today())
     ) {
       return undefined;
     }
@@ -168,7 +170,7 @@
   }
 
   function selectDate(date: Date): void {
-    if (date > today() || date.getMonth() !== viewDate.getMonth()) return;
+    if ((!allowFuture && date > today()) || date.getMonth() !== viewDate.getMonth()) return;
 
     value = toIsoDate(date);
     inputValue = toDisplayDate(date);
@@ -195,7 +197,9 @@
     if (!parsedDate) {
       value = '';
       inputHasUncommittedValue = true;
-      inputError = 'Enter a real date in DD/MM/YYYY format, on or before today.';
+      inputError = allowFuture
+        ? 'Enter a real date in DD/MM/YYYY format.'
+        : 'Enter a real date in DD/MM/YYYY format, on or before today.';
       onchange?.(value);
 
       return;
@@ -217,6 +221,8 @@
   }
 
   function canMoveForward(): boolean {
+    if (allowFuture) return true;
+
     if (activeView === 'days')
       return new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1) <= startOfMonth(today());
     if (activeView === 'months') return viewDate.getFullYear() < today().getFullYear();
@@ -232,7 +238,7 @@
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
     const nextDate = new Date(year, month, Math.min(focusedDate.getDate(), lastDayOfMonth));
 
-    if (nextDate > today()) return;
+    if (!allowFuture && nextDate > today()) return;
 
     focusedDate = nextDate;
     setViewDate(nextDate);
@@ -240,11 +246,11 @@
   }
 
   function moveToYear(year: number): void {
-    if (year > today().getFullYear()) return;
+    if (!allowFuture && year > today().getFullYear()) return;
 
     const month = Math.min(
       viewDate.getMonth(),
-      year === today().getFullYear() ? today().getMonth() : 11
+      !allowFuture && year === today().getFullYear() ? today().getMonth() : 11
     );
 
     setViewDate(new Date(year, month, 1));
@@ -257,7 +263,7 @@
   }
 
   function moveToDecade(year: number): void {
-    if (year > Math.floor(today().getFullYear() / 10) * 10) return;
+    if (!allowFuture && year > Math.floor(today().getFullYear() / 10) * 10) return;
 
     setViewDate(new Date(year, viewDate.getMonth(), 1));
     focusActiveControl();
@@ -270,7 +276,7 @@
   }
 
   function chooseYear(year: number): void {
-    if (year > today().getFullYear()) return;
+    if (!allowFuture && year > today().getFullYear()) return;
 
     moveToYear(year);
     activeView = 'months';
@@ -294,7 +300,7 @@
       focusedDate.getDate() + days
     );
 
-    if (nextDate > today()) return;
+    if (!allowFuture && nextDate > today()) return;
 
     focusedDate = nextDate;
     setViewDate(nextDate);
@@ -486,7 +492,7 @@
               class:outside-month={!day.inCurrentMonth}
               class:selected={parseIsoDate(value) ? sameDay(day.date, parseIsoDate(value)!) : false}
               class:today={sameDay(day.date, today())}
-              disabled={!day.inCurrentMonth || day.date > today()}
+              disabled={!day.inCurrentMonth || (!allowFuture && day.date > today())}
               tabindex={day.inCurrentMonth && sameDay(day.date, focusedDate) ? 0 : -1}
               type="button"
               onkeydown={handleGridKeydown}
@@ -504,7 +510,8 @@
             <button
               aria-current={monthIndex === viewDate.getMonth() ? 'true' : undefined}
               data-month={monthIndex}
-              disabled={viewDate.getFullYear() === today().getFullYear() &&
+              disabled={!allowFuture &&
+                viewDate.getFullYear() === today().getFullYear() &&
                 monthIndex > today().getMonth()}
               type="button"
               onclick={() => chooseMonth(monthIndex)}>{month.slice(0, 3)}</button
@@ -522,7 +529,7 @@
               aria-current={year === viewDate.getFullYear() ? 'true' : undefined}
               class:outside-period={year < decadeStart || year > decadeStart + 9}
               data-year={year}
-              disabled={year > today().getFullYear()}
+              disabled={!allowFuture && year > today().getFullYear()}
               type="button"
               onclick={() => chooseYear(year)}>{year}</button
             >

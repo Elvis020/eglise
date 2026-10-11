@@ -5,8 +5,18 @@
 
   import { attendanceEvents, type AttendanceEvent } from '$lib/attendance';
 
-  let openEvents = $derived($attendanceEvents.filter((event) => event.status === 'open'));
-  let completedEvents = $derived($attendanceEvents.filter((event) => event.status === 'complete'));
+  import { page } from '$app/state';
+  import CalendarPeriodFilter from '$lib/components/CalendarPeriodFilter.svelte';
+  import { calendarSelection } from '$lib/calendar-period';
+  import { buildAttendanceReport } from '$lib/reports';
+
+  const selection = $derived(calendarSelection(page.url.searchParams));
+  const report = $derived(
+    buildAttendanceReport($attendanceEvents, selection.period, selection.anchor)
+  );
+
+  let openEvents = $derived(report.events.filter((event) => event.status === 'open'));
+  let completedEvents = $derived(report.events.filter((event) => event.status === 'complete'));
 
   function formatDate(isoDate: string): string {
     return new Intl.DateTimeFormat('en-GB', {
@@ -40,6 +50,21 @@
     </div>
   </header>
 
+  <CalendarPeriodFilter />
+  <div class="summary-grid attendance-overview">
+    <div class="summary-card">
+      <span>Number of events</span><strong>{report.events.length}</strong>
+    </div>
+    <a class="summary-card" href={`/reports?period=${selection.period}&date=${selection.anchor}`}
+      ><span>Total attendance</span><strong>{report.distinctPeople}</strong><small
+        >Distinct people · View report</small
+      ></a
+    >
+  </div>
+  <p class="help">
+    People attending multiple events count once in this period. Open and completed events are
+    included; manual headcounts are separate.
+  </p>
   <div class="attendance-event-groups">
     <section aria-labelledby="open-events-heading" class="panel attendance-events-panel">
       <div class="section-head">

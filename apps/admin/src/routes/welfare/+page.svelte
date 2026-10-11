@@ -1,223 +1,212 @@
 <script lang="ts">
-  import IconHeartHandshake from '@tabler/icons-svelte-runes/icons/heart-handshake';
-  import IconPlus from '@tabler/icons-svelte-runes/icons/plus';
+  import { page } from '$app/state';
+  import { onMount } from 'svelte';
+  import { todayIso } from '$lib/calendar-period';
+  import { people } from '$lib/people';
+  import {
+    welfareRecords,
+    welfareCategories,
+    welfareTotals,
+    paymentStatus,
+    money,
+    markWelfarePaid,
+    type WelfareCategory
+  } from '$lib/welfare';
+  import DirectoryPagination from '$lib/components/DirectoryPagination.svelte';
+  import { clampPage, pageItems } from '$lib/directory';
+  import EgliseDatePicker from '$lib/components/EgliseDatePicker.svelte';
+  import { showToast } from '$lib/toast';
 
-  import { welfareDiscoveryAreaLabel, welfareDiscoveryItems } from '$lib/welfare';
+  const category = $derived(
+    (welfareCategories.find((item) => item.value === page.url.searchParams.get('category'))
+      ?.value ?? 'recurring-support') as WelfareCategory
+  );
+  const label = $derived(welfareCategories.find((item) => item.value === category)!.label);
+  let query = $state('');
+  let today = $state(todayIso());
+  let paidOn = $state(todayIso());
+  let error = $state('');
+  let status = $state('all');
+  const records = $derived($welfareRecords.filter((record) => record.category === category));
+  const totals = $derived(welfareTotals(records, today));
+  const rows = $derived(
+    records
+      .flatMap((record) =>
+        record.payments.map((payment) => ({
+          record,
+          payment,
+          person: $people.find((person) => person.id === record.personId),
+          status: paymentStatus(payment, today)
+        }))
+      )
+      .filter(
+        (row) =>
+          `${row.record.title} ${row.person?.name} ${row.person?.phone}`
+            .toLowerCase()
+            .includes(query.trim().toLowerCase()) &&
+          (category !== 'recurring-support' || status === 'all' || row.status === status)
+      )
+      .sort((a, b) => a.payment.dueDate.localeCompare(b.payment.dueDate))
+  );
+
+  let currentPage = $state(1);
+  const visibleRows = $derived(pageItems(rows, currentPage, 10));
+
+  $effect(() => {
+    void category;
+    void query;
+    void status;
+    currentPage = 1;
+  });
+
+  $effect(() => {
+    currentPage = clampPage(currentPage, rows.length, 10);
+  });
+
+  onMount(() => {
+    const timer = window.setInterval(() => {
+      today = todayIso();
+    }, 30_000);
+
+    return () => window.clearInterval(timer);
+  });
+
+  function markPaid(recordId: string, paymentId: string): void {
+    error = '';
+    if (!markWelfarePaid(recordId, paymentId, paidOn)) {
+      error = 'Choose a valid payment date no later than today. This payment may already be paid.';
+
+      return;
+    }
+    showToast('Support payment recorded.');
+  }
 </script>
 
 <svelte:head><title>Welfare | Eglise</title></svelte:head>
 
-<section class="page welfare-page">
-  <header class="page-head welfare-page-head">
+<section class="page workflow-page">
+  <header class="page-head">
     <div>
       <p class="eyebrow">Welfare</p>
-      <h1 tabindex="-1">Agree the care model before recording care.</h1>
-      <p class="page-intro">
-        Keep the questions around contributions and support visible without creating sensitive
-        welfare or financial records in a shared pilot account.
-      </p>
+      <h1 tabindex="-1">Support and contributions</h1>
+      <p class="page-intro">Track support given and contributions received.</p>
     </div>
-    <a class="button primary" href="/welfare/new"
-      ><IconPlus aria-hidden="true" size={18} stroke={1.8} />Add discovery item</a
-    >
+    <div class="workflow-actions">
+      <a class="button secondary" href="/welfare/new?category=contributions">Add contribution</a><a
+        class="button primary"
+        href="/welfare/new">Add welfare</a
+      >
+    </div>
   </header>
-
-  <aside aria-labelledby="welfare-boundary-title" class="welfare-boundary">
-    <div>
-      <p class="eyebrow">Restricted discovery</p>
-      <h2 id="welfare-boundary-title">No financial or personal welfare records</h2>
-    </div>
-    <p>
-      This prototype cannot record contributors, recipients, support amounts, assistance cases,
-      approvals, reminders, corrections, or exports. Those workflows need narrower access and named
-      accountability.
-    </p>
-  </aside>
-
-  <section aria-labelledby="welfare-discovery-list-title" class="welfare-discovery-list-section">
-    <div class="welfare-section-heading">
-      <p class="eyebrow">Decision register</p>
-      <h2 id="welfare-discovery-list-title">Questions to resolve before a workflow</h2>
-    </div>
-
-    {#if $welfareDiscoveryItems.length}
-      <div class="welfare-discovery-table-wrap">
-        <table class="welfare-discovery-table">
-          <thead>
-            <tr>
-              <th scope="col">Topic</th>
-              <th scope="col">Area</th>
-              <th scope="col">Decision needed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each $welfareDiscoveryItems as item}
-              <tr>
-                <th data-label="Topic" scope="row">{item.title}</th>
-                <td data-label="Area">{welfareDiscoveryAreaLabel(item.area)}</td>
-                <td data-label="Decision needed">{item.decision}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
-    {:else}
-      <div class="welfare-discovery-empty-state">
-        <IconHeartHandshake aria-hidden="true" size={22} stroke={1.8} />
+  <p class="help">Prototype records are held for this session and reset on reload.</p>
+  <div class="summary-grid" aria-label="Welfare totals">
+    {#each welfareCategories as item}
+      <a
+        class="summary-card"
+        class:selected={category === item.value}
+        aria-current={category === item.value ? 'true' : undefined}
+        href={`/welfare?category=${item.value}#welfare-records`}
+      >
+        <span>{item.label}</span><strong
+          >{money(
+            welfareTotals(
+              $welfareRecords.filter((record) => record.category === item.value),
+              today
+            ).paid
+          )}</strong
+        ><small
+          >{item.value === 'contributions' ? 'Received · View people' : 'Paid · View people'}</small
+        >
+      </a>
+    {/each}
+  </div>
+  <section class="workflow-section" aria-labelledby="welfare-records">
+    <h2 id="welfare-records" tabindex="-1">{label}</h2>
+    {#if category === 'recurring-support'}
+      <dl class="amount-breakdown">
         <div>
-          <h3>No welfare discovery items have been recorded</h3>
-          <p>Start with one policy or ownership question, not a contribution or assistance case.</p>
-          <a href="/welfare/new">Add discovery item</a>
+          <dt>Paid</dt>
+          <dd>{money(totals.paid)}</dd>
         </div>
-      </div>
+        <div>
+          <dt>Outstanding · due but unpaid</dt>
+          <dd>{money(totals.outstanding)}</dd>
+        </div>
+        <div>
+          <dt>Upcoming · future payments</dt>
+          <dd>{money(totals.upcoming)}</dd>
+        </div>
+      </dl>
     {/if}
+    <div class="workflow-controls">
+      <div class="field">
+        <label for="welfare-search">Search {label.toLowerCase()}</label><input
+          id="welfare-search"
+          type="search"
+          bind:value={query}
+          placeholder="Person, phone or support name"
+        />
+      </div>
+      {#if category === 'recurring-support'}
+        <div class="field">
+          <label for="payment-status">Payment status</label><select
+            id="payment-status"
+            bind:value={status}
+            ><option value="all">All payments</option><option value="outstanding"
+              >Outstanding</option
+            ><option value="upcoming">Upcoming</option><option value="paid">Paid</option></select
+          >
+        </div>
+        <div class="field">
+          <label for="paid-date">Date to record when marking paid</label><EgliseDatePicker
+            id="paid-date"
+            bind:value={paidOn}
+            autocomplete="off"
+          />
+        </div>
+      {/if}
+    </div>
+    {#if error}<p class="error" role="alert">{error}</p>{/if}
+    {#if rows.length}
+      <table class="responsive-table">
+        <caption class="sr-only">{label} by person and payment</caption><thead
+          ><tr
+            ><th scope="col">Person</th><th scope="col">Description</th><th scope="col"
+              >Amount (GHS)</th
+            ><th scope="col">{category === 'recurring-support' ? 'Due date' : 'Date'}</th><th
+              scope="col">Payment</th
+            ></tr
+          ></thead
+        ><tbody>
+          {#each visibleRows as row (row.payment.id)}
+            <tr
+              ><th scope="row" data-label="Person"
+                >{row.person?.name ?? 'Person record unavailable'}</th
+              ><td data-label="Description"
+                >{row.record.title}{#if row.record.note}<small>{row.record.note}</small>{/if}</td
+              ><td data-label="Amount">{money(row.payment.amount)}</td><td data-label="Date"
+                >{row.payment.dueDate}</td
+              ><td data-label="Payment"
+                ><div class="payment-cell">
+                  {#if row.payment.paidOn}<span>Paid · {row.payment.paidOn}</span>{:else}<span
+                      >{row.status === 'outstanding' ? 'Outstanding' : 'Upcoming'}</span
+                    ><button
+                      class="button secondary"
+                      type="button"
+                      aria-label={`Mark ${row.record.title} for ${row.person?.name} due ${row.payment.dueDate} paid`}
+                      onclick={() => markPaid(row.record.id, row.payment.id)}>Mark paid</button
+                    >{/if}
+                </div></td
+              ></tr
+            >
+          {/each}
+        </tbody>
+      </table>
+      <DirectoryPagination bind:page={currentPage} pageSize={10} total={rows.length} />
+    {:else}<p class="empty-state-copy">
+        {records.length
+          ? 'No payments match these filters.'
+          : `No ${label.toLowerCase()} recorded yet.`}
+      </p>{/if}
   </section>
 </section>
-
-<style>
-  .welfare-page {
-    display: grid;
-    gap: 40px;
-  }
-  .welfare-page-head,
-  .welfare-boundary,
-  .welfare-discovery-list-section {
-    max-width: 1120px;
-  }
-  .welfare-page-head {
-    margin-bottom: 0;
-  }
-  .welfare-boundary {
-    display: flex;
-    gap: 32px;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 0;
-  }
-  .welfare-boundary .eyebrow,
-  .welfare-section-heading .eyebrow {
-    margin-bottom: 4px;
-  }
-  .welfare-boundary h2,
-  .welfare-section-heading h2 {
-    margin: 0;
-    font: 400 30px/1.15 var(--font-display);
-  }
-  .welfare-boundary > p {
-    max-width: 560px;
-    margin: 0;
-    color: var(--text-secondary);
-  }
-  .welfare-discovery-list-section {
-    display: grid;
-    gap: 20px;
-  }
-  .welfare-discovery-table-wrap {
-    overflow-x: auto;
-  }
-  .welfare-discovery-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-  }
-  .welfare-discovery-table th,
-  .welfare-discovery-table td {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
-  }
-  .welfare-discovery-table thead th {
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .welfare-discovery-table tbody th {
-    min-width: 220px;
-    font-weight: 600;
-  }
-  .welfare-discovery-empty-state {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 14px;
-    max-width: 600px;
-    padding: 20px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface-raised);
-  }
-  .welfare-discovery-empty-state :global(svg) {
-    color: var(--text-secondary);
-  }
-  .welfare-discovery-empty-state h3 {
-    margin: 0;
-    font-size: 16px;
-  }
-  .welfare-discovery-empty-state p {
-    margin: 4px 0 0;
-    color: var(--text-secondary);
-  }
-  .welfare-discovery-empty-state a {
-    display: inline-flex;
-    margin-top: 12px;
-    color: var(--primary);
-    font-weight: 600;
-    text-underline-offset: 3px;
-  }
-  @media (max-width: 960px) {
-    .welfare-page {
-      gap: 32px;
-    }
-    .welfare-page-head,
-    .welfare-boundary {
-      display: block;
-    }
-    .welfare-page-head .button {
-      display: inline-flex;
-      margin-top: 16px;
-    }
-    .welfare-boundary > p {
-      margin-top: 12px;
-    }
-    .welfare-discovery-table-wrap {
-      overflow: visible;
-    }
-    .welfare-discovery-table,
-    .welfare-discovery-table tbody,
-    .welfare-discovery-table tr,
-    .welfare-discovery-table th,
-    .welfare-discovery-table td {
-      display: block;
-    }
-    .welfare-discovery-table thead {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-    .welfare-discovery-table tr {
-      padding: 16px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .welfare-discovery-table th,
-    .welfare-discovery-table td {
-      display: grid;
-      grid-template-columns: minmax(112px, 0.8fr) minmax(0, 1.2fr);
-      gap: 16px;
-      min-width: 0;
-      padding: 5px 0;
-      border: 0;
-    }
-    .welfare-discovery-table th::before,
-    .welfare-discovery-table td::before {
-      content: attr(data-label);
-      color: var(--text-secondary);
-      font-size: 14px;
-      font-weight: 600;
-    }
-  }
-</style>
