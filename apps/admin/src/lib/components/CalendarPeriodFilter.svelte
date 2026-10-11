@@ -2,7 +2,14 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { calendarBounds, calendarSelection, movePeriod, todayIso } from '$lib/calendar-period';
+  import EgliseSelect, { type EgliseSelectOption } from './EgliseSelect.svelte';
   import EgliseDatePicker from './EgliseDatePicker.svelte';
+
+  const periodOptions: EgliseSelectOption[] = [
+    { value: 'week', label: 'Calendar week' },
+    { value: 'month', label: 'Calendar month' },
+    { value: 'year', label: 'Calendar year' }
+  ];
 
   const selection = $derived(calendarSelection(page.url.searchParams));
   let anchor = $state(todayIso());
@@ -23,15 +30,13 @@
 <div class="calendar-filter" aria-label="Calendar period">
   <div class="field">
     <label for="calendar-period">Reporting period</label>
-    <select
+    <EgliseSelect
       id="calendar-period"
       value={selection.period}
-      onchange={(event) => select(event.currentTarget.value, selection.anchor)}
-    >
-      <option value="week">Calendar week</option>
-      <option value="month">Calendar month</option>
-      <option value="year">Calendar year</option>
-    </select>
+      options={periodOptions}
+      menuMode="floating"
+      onchange={(period) => select(period, selection.anchor)}
+    />
   </div>
   <div class="field">
     <label for="calendar-anchor">Date within period</label>

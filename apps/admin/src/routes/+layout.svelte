@@ -466,17 +466,23 @@
 
     {#if !mobileNavigationOpen}
       <nav class="mobile-bottom-navigation" aria-label="Mobile quick navigation">
-        <a href="/people" aria-current={page.url.pathname === '/people' ? 'page' : undefined}
+        <button class="mobile-quick-back" type="button" onclick={() => window.history.back()}
+          ><IconArrowLeft aria-hidden="true" size={22} />Back</button
+        >
+        <a
+          class="mobile-quick-home"
+          href="/people"
+          aria-current={page.url.pathname === '/people' ? 'page' : undefined}
           ><IconHome aria-hidden="true" size={22} />Home</a
         >
-        {#if canAccessSettings}<a
+        {#if canAccessSettings}
+          <a
+            class="mobile-quick-settings"
             href="/settings"
             aria-current={page.url.pathname === '/settings' ? 'page' : undefined}
             ><IconSettings aria-hidden="true" size={22} />Settings</a
-          >{/if}
-        <button type="button" onclick={() => window.history.back()}
-          ><IconArrowLeft aria-hidden="true" size={22} />Back</button
-        >
+          >
+        {/if}
       </nav>
     {/if}
     {#if navigating.to}

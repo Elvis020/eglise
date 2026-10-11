@@ -81,7 +81,8 @@ test('adds a contributor inline and records emergency assistance', async ({ page
   await page.getByRole('button', { name: 'Save contribution' }).click();
   await expect(page.getByRole('row', { name: /New Contributor/ })).toContainText('50.00');
   await page.getByRole('link', { name: 'Add welfare', exact: true }).click();
-  await page.getByLabel('Support type').selectOption('emergency-assistance');
+  await page.getByRole('combobox', { name: 'Support type' }).click();
+  await page.getByRole('option', { name: 'Emergency assistance', exact: true }).click();
   await page.getByLabel('Find a person').fill('New Contributor');
   await page.getByRole('button', { name: /New Contributor/ }).click();
   await page.getByLabel('Support name').fill('Emergency support');

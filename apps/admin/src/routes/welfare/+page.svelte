@@ -14,8 +14,16 @@
   } from '$lib/welfare';
   import DirectoryPagination from '$lib/components/DirectoryPagination.svelte';
   import { clampPage, pageItems } from '$lib/directory';
+  import EgliseSelect, { type EgliseSelectOption } from '$lib/components/EgliseSelect.svelte';
   import EgliseDatePicker from '$lib/components/EgliseDatePicker.svelte';
   import { showToast } from '$lib/toast';
+
+  const statusOptions: EgliseSelectOption[] = [
+    { value: 'all', label: 'All payments' },
+    { value: 'outstanding', label: 'Outstanding' },
+    { value: 'upcoming', label: 'Upcoming' },
+    { value: 'paid', label: 'Paid' }
+  ];
 
   const category = $derived(
     (welfareCategories.find((item) => item.value === page.url.searchParams.get('category'))
@@ -149,13 +157,12 @@
       </div>
       {#if category === 'recurring-support'}
         <div class="field">
-          <label for="payment-status">Payment status</label><select
+          <label for="payment-status">Payment status</label><EgliseSelect
             id="payment-status"
             bind:value={status}
-            ><option value="all">All payments</option><option value="outstanding"
-              >Outstanding</option
-            ><option value="upcoming">Upcoming</option><option value="paid">Paid</option></select
-          >
+            options={statusOptions}
+            menuMode="floating"
+          />
         </div>
         <div class="field">
           <label for="paid-date">Date to record when marking paid</label><EgliseDatePicker
