@@ -15,7 +15,35 @@
     setManualHeadcount
   } from '$lib/attendance';
   import { clampPage, pageItems } from '$lib/directory';
-  import { people } from '$lib/people';
+  import { people, addPerson } from '$lib/people';
+  import type { Person } from '$lib/domain';
+  import InlinePersonForm from '$lib/components/InlinePersonForm.svelte';
+
+  let addingPerson = $state(false);
+  let personError = $state('');
+
+  function addAndCheckIn(person: Person): void {
+    if (!activeEvent || activeEvent.status !== 'open') {
+      personError = 'Reopen this event before adding attendance.';
+
+      return;
+    }
+
+    if (!$people.some((record) => record.id === person.id)) addPerson(person);
+    if (activeEvent.attendeeIds.includes(person.id)) {
+      personError = 'This person is already checked in.';
+
+      return;
+    }
+
+    if (addAttendee(activeEvent.id, person.id)) {
+      addingPerson = false;
+      attendeeQuery = person.name;
+      attendeeInitial = 'all';
+      personError = '';
+      showToast('Person saved and checked in.');
+    }
+  }
   import { showErrorToast, showToast } from '$lib/toast';
 
   const ATTENDANCE_PAGE_SIZE = 6;
@@ -260,6 +288,23 @@
                   No people match this search.
                 </p>{/if}
             </div>
+            {#if activeEvent.status === 'open'}
+              {#if personError}<p class="error" role="alert">{personError}</p>{/if}
+              {#if addingPerson}
+                <InlinePersonForm
+                  onsave={addAndCheckIn}
+                  oncancel={() => {
+                    addingPerson = false;
+                    personError = '';
+                  }}
+                  submitLabel="Save and check in"
+                />
+              {:else}
+                <button class="button secondary" type="button" onclick={() => (addingPerson = true)}
+                  >Add person and check in</button
+                >
+              {/if}
+            {/if}
             <DirectoryPagination
               bind:page={attendeePage}
               pageSize={ATTENDANCE_PAGE_SIZE}

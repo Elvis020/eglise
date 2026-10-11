@@ -46,26 +46,21 @@ const events: AttendanceEvent[] = [
 ];
 
 describe('attendance reporting', () => {
-  it('keeps individual check-ins and manual headcounts as separate sources', () => {
-    const report = buildAttendanceReport(events, 'all');
+  it('counts distinct people across open and complete events, separately from headcounts', () => {
+    const report = buildAttendanceReport(events, 'year', '2026-10-11');
 
-    expect(report.individualCheckIns).toBe(3);
-    expect(report.manualHeadcountTotal).toBe(42);
-    expect(report.manualHeadcountEvents).toBe(1);
-    expect(report.completedEvents.map((event) => event.id)).toEqual([
-      'completed-with-both-sources',
-      'completed-individual-only'
-    ]);
+    expect(report.distinctPeople).toBe(2);
+    expect(report.individualCheckIns).toBe(4);
+    expect(report.manualHeadcountTotal).toBe(51);
+    expect(report.events).toHaveLength(3);
   });
 
-  it('excludes open events and restricts the latest reporting window by completed dates', () => {
-    const report = buildAttendanceReport(events, 'last-7-days');
+  it('uses calendar boundaries rather than the latest event date', () => {
+    const report = buildAttendanceReport(events, 'week', '2026-10-11');
 
-    expect(report.completedEvents.map((event) => event.id)).toEqual([
-      'completed-with-both-sources'
-    ]);
-    expect(report.individualCheckIns).toBe(2);
-    expect(report.manualHeadcountTotal).toBe(42);
-    expect(report.openEvents.map((event) => event.id)).toEqual(['open-event']);
+    expect(report.start).toBe('2026-10-05');
+    expect(report.end).toBe('2026-10-11');
+    expect(report.events.map((event) => event.id)).toEqual(['completed-with-both-sources']);
+    expect(buildAttendanceReport(events, 'month', '2026-08-01').events).toEqual([]);
   });
 });

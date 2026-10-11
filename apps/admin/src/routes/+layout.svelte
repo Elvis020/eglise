@@ -3,6 +3,8 @@
   import { onMount } from 'svelte';
 
   import { navigating, page } from '$app/state';
+  import IconHome from '@tabler/icons-svelte-runes/icons/home';
+  import IconArrowLeft from '@tabler/icons-svelte-runes/icons/arrow-left';
   import IconBible from '@tabler/icons-svelte-runes/icons/bible';
   import IconArrowBarLeft from '@tabler/icons-svelte-runes/icons/arrow-bar-left';
   import IconArrowBarRight from '@tabler/icons-svelte-runes/icons/arrow-bar-right';
@@ -462,7 +464,27 @@
       />
     </aside>
 
-    <main id="main-content" class="content" tabindex="-1">
+    {#if !mobileNavigationOpen}
+      <nav class="mobile-bottom-navigation" aria-label="Mobile quick navigation">
+        <a href="/people" aria-current={page.url.pathname === '/people' ? 'page' : undefined}
+          ><IconHome aria-hidden="true" size={22} />Home</a
+        >
+        {#if canAccessSettings}<a
+            href="/settings"
+            aria-current={page.url.pathname === '/settings' ? 'page' : undefined}
+            ><IconSettings aria-hidden="true" size={22} />Settings</a
+          >{/if}
+        <button type="button" onclick={() => window.history.back()}
+          ><IconArrowLeft aria-hidden="true" size={22} />Back</button
+        >
+      </nav>
+    {/if}
+    {#if navigating.to}
+      <div class="mobile-route-overlay" role="status" aria-live="polite">
+        <span>Loading page…</span>
+      </div>
+    {/if}
+    <main aria-busy={Boolean(navigating.to)} id="main-content" class="content" tabindex="-1">
       <div class="content-motif" aria-hidden="true"></div>
 
       {@render children()}

@@ -50,7 +50,7 @@ describe('person pilot rules', () => {
 
     expect(
       validatePersonDetails({ name: 'Mira Daniels', kind: 'visitor', phone: '', neighbourhood: '' })
-    ).toEqual({});
+    ).toHaveProperty('phone');
   });
 
   it('validates import rows without collecting dates of birth', () => {
@@ -68,7 +68,7 @@ describe('person pilot rules', () => {
       {
         name: '  Ama   Owusu ',
         kind: 'Visitor',
-        phone: '',
+        phone: '024 555 0142',
         neighbourhood: ''
       },
       3,
@@ -86,7 +86,7 @@ describe('person pilot rules', () => {
       {
         name: '  Ama   Owusu ',
         kind: 'Visitor',
-        phone: '',
+        phone: '024 555 0142',
         neighbourhood: ''
       },
       3,

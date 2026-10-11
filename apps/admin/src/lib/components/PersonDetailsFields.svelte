@@ -41,10 +41,12 @@
 </div>
 
 <div class="field">
-  <label for="phone">Phone number <span class="field-optional">Optional for visitors</span></label>
+  <label for="phone">Phone number (required)</label>
   <input
     id="phone"
     bind:value={phone}
+    type="tel"
+    required
     inputmode="tel"
     autocomplete="tel"
     aria-invalid={Boolean(errors.phone)}

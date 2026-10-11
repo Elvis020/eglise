@@ -455,7 +455,7 @@ export function validatePersonDetails(details: PersonDetails): PersonDetailsErro
   const errors: PersonDetailsErrors = {};
 
   if (!details.name.trim()) errors.name = "Enter the person's name.";
-  if (details.kind === 'person' && !details.phone.trim()) {
+  if (!details.phone.trim()) {
     errors.phone = 'Enter a Ghanaian mobile number or an international E.164 number.';
   } else if (details.phone.trim() && !isValidPhone(details.phone)) {
     errors.phone = 'Enter a Ghanaian mobile number or an international E.164 number.';
