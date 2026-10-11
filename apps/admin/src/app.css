@@ -2550,20 +2550,6 @@ dialog p {
   flex-wrap: wrap;
 }
 
-.workflow-fields select,
-.calendar-filter select,
-.workflow-controls select,
-.workflow-form select {
-  width: 100%;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-raised);
-  color: var(--text-primary);
-  font: inherit;
-}
-
 .workflow-fields textarea {
   width: 100%;
   padding: 12px;
@@ -2680,8 +2666,8 @@ a.summary-card.selected {
     position: fixed;
     inset: auto 0 0;
     z-index: 35;
-    display: flex;
-    justify-content: space-around;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--border);
     background: var(--surface-raised);
@@ -2700,6 +2686,20 @@ a.summary-card.selected {
     text-decoration: none;
     background: transparent;
     border: 0;
+  }
+
+  .mobile-quick-back {
+    grid-column: 1;
+  }
+  .mobile-quick-home {
+    grid-column: 2;
+  }
+  .mobile-quick-settings {
+    grid-column: 3;
+  }
+
+  .eglise-select-listbox li {
+    min-height: 44px;
   }
 
   .mobile-bottom-navigation [aria-current='page'] {

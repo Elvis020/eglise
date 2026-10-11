@@ -58,7 +58,11 @@
 
     const triggerBounds = button.getBoundingClientRect();
     const menuHeight = Math.min(240, options.length * 48 + 8);
-    const spaceBelow = window.innerHeight - triggerBounds.bottom - 8;
+    const navigationBounds = document
+      .querySelector('.mobile-bottom-navigation')
+      ?.getBoundingClientRect();
+    const visibleBottom = navigationBounds?.height ? navigationBounds.top : window.innerHeight;
+    const spaceBelow = visibleBottom - triggerBounds.bottom - 8;
     const spaceAbove = triggerBounds.top - 8;
     const openUpward = spaceBelow < Math.min(menuHeight, 160) && spaceAbove > spaceBelow;
     const availableHeight = Math.max(80, openUpward ? spaceAbove : spaceBelow);
@@ -158,12 +162,25 @@
 
   function handleDocumentScroll(event: Event): void {
     if (
-      isOpen &&
-      menuMode === 'floating' &&
-      !(event.target instanceof Node && listbox?.contains(event.target))
-    ) {
+      !isOpen ||
+      menuMode !== 'floating' ||
+      (event.target instanceof Node && listbox?.contains(event.target))
+    )
+      return;
+
+    const bounds = button.getBoundingClientRect();
+    const navigationBounds = document
+      .querySelector('.mobile-bottom-navigation')
+      ?.getBoundingClientRect();
+    const visibleBottom = navigationBounds?.height ? navigationBounds.top : window.innerHeight;
+
+    if (bounds.bottom <= 0 || bounds.top >= visibleBottom) {
       close();
+
+      return;
     }
+
+    positionFloatingMenu();
   }
 
   onMount(() => {

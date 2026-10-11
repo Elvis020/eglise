@@ -5,6 +5,7 @@
   import { useAppShellContext } from '$lib/app-shell-context';
   import { onDestroy } from 'svelte';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import EgliseSelect, { type EgliseSelectOption } from '$lib/components/EgliseSelect.svelte';
   import EgliseDatePicker from '$lib/components/EgliseDatePicker.svelte';
   import PersonPicker from '$lib/components/PersonPicker.svelte';
   import { todayIso } from '$lib/calendar-period';
@@ -15,6 +16,15 @@
     type Recurrence
   } from '$lib/welfare';
   import { showToast } from '$lib/toast';
+
+  const categoryOptions: EgliseSelectOption[] = [
+    { value: 'recurring-support', label: 'Recurring support' },
+    { value: 'emergency-assistance', label: 'Emergency assistance' }
+  ];
+  const recurrenceOptions: EgliseSelectOption[] = [
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' }
+  ];
 
   let category = $state<WelfareCategory>(
     page.url.searchParams.get('category') === 'contributions'
@@ -123,13 +133,13 @@
     {#if error}<p class="error" role="alert">{error}</p>{/if}
     {#if category !== 'contributions'}
       <div class="field">
-        <label for="support-category">Support type</label><select
+        <label for="support-category">Support type</label><EgliseSelect
           id="support-category"
           bind:value={category}
-          ><option value="recurring-support">Recurring support</option><option
-            value="emergency-assistance">Emergency assistance</option
-          ></select
-        >
+          options={categoryOptions}
+          menuMode="floating"
+          onchange={() => (dirty = true)}
+        />
       </div>
     {/if}
     <PersonPicker bind:value={personId} />
@@ -163,11 +173,13 @@
       </div>
       {#if category === 'recurring-support'}
         <div class="field">
-          <label for="support-frequency">Repeat</label><select
+          <label for="support-frequency">Repeat</label><EgliseSelect
             id="support-frequency"
             bind:value={recurrence}
-            ><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select
-          >
+            options={recurrenceOptions}
+            menuMode="floating"
+            onchange={() => (dirty = true)}
+          />
         </div>
         <div class="field">
           <label for="support-end">Schedule end date</label><EgliseDatePicker
