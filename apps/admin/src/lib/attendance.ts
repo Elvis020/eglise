@@ -1,5 +1,7 @@
 import { writable } from 'svelte/store';
 
+import { createDemoAttendanceEvents } from './demo-data';
+
 export type AttendanceEventStatus = 'open' | 'complete';
 
 export type AttendanceEventType = {
@@ -64,7 +66,10 @@ const initialEvents: AttendanceEvent[] = [
 export const attendanceEventTypes = writable<AttendanceEventType[]>(
   initialTypes.map((type) => ({ ...type }))
 );
-export const attendanceEvents = writable<AttendanceEvent[]>(initialEvents.map(cloneEvent));
+export const attendanceEvents = writable<AttendanceEvent[]>([
+  ...createDemoAttendanceEvents(),
+  ...initialEvents.map(cloneEvent)
+]);
 
 function cloneEvent(event: AttendanceEvent): AttendanceEvent {
   return {

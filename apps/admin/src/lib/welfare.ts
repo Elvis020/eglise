@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { todayIso, validDate } from './calendar-period';
+import { createDemoWelfareRecords } from './demo-data';
 
 export type WelfareCategory = 'recurring-support' | 'emergency-assistance' | 'contributions';
 export type Recurrence = 'weekly' | 'monthly';
@@ -16,7 +17,7 @@ export type WelfareRecord = {
   payments: WelfarePayment[];
 };
 export type NewWelfareRecord = Omit<WelfareRecord, 'id' | 'payments'> & { amount: number };
-export const welfareRecords = writable<WelfareRecord[]>([]);
+export const welfareRecords = writable<WelfareRecord[]>(createDemoWelfareRecords());
 export const welfareCategories: { value: WelfareCategory; label: string }[] = [
   { value: 'recurring-support', label: 'Recurring support' },
   { value: 'emergency-assistance', label: 'Emergency assistance' },
